@@ -41,7 +41,7 @@ const events = [
       <nav>
         <a @click="router.push('/')">Home</a>
         <a class="active">Assessment</a>
-        <a>Help</a>
+        <a @click="router.push('/help')" style="cursor:pointer">Help</a>
       </nav>
     </header>
 

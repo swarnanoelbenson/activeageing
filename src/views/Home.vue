@@ -1,8 +1,10 @@
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import myImg from '../assets/myphoto.png'
 
 const router = useRouter()
+const hasSurvey = ref(!!localStorage.getItem('surveyAnswers'))
 </script>
 
 <template>
@@ -10,10 +12,11 @@ const router = useRouter()
     
     <!-- Navbar -->
     <header class="navbar">
-      <div class="logo">ActiveAgeing</div>
+      <div class="logo" style="cursor:pointer" @click="router.push('/')">ActiveAgeing</div>
       <nav>
-        <a>Home</a>
-        <a>Help</a>
+        <a @click="router.push('/')" style="cursor:pointer">Home</a>
+        <a v-if="hasSurvey" @click="router.push('/results')" style="cursor:pointer">Assessment</a>
+        <a @click="router.push('/help')" style="cursor:pointer">Help</a>
       </nav>
     </header>
 
@@ -55,9 +58,9 @@ const router = useRouter()
     <footer class="footer">
       <h3>ActiveAgeing</h3>
       <div class="links">
-        <a>Privacy Policy</a>
-        <a>Terms of Service</a>
-        <a>Contact Support</a>
+        <a @click="router.push('/privacy')" style="cursor:pointer">Privacy Policy</a>
+        <a @click="router.push('/terms')" style="cursor:pointer">Terms of Service</a>
+        <a @click="router.push('/contact')" style="cursor:pointer">Contact Support</a>
       </div>
       <p>© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</p>
     </footer>

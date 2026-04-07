@@ -2,11 +2,11 @@
   <div class="page">
     <!-- NAV -->
     <nav class="nav">
-      <span class="logo">ActiveAgeing</span>
+      <span class="logo" style="cursor:pointer" @click="router.push('/')">ActiveAgeing</span>
       <div class="nav-links">
-        <a href="#" class="nav-link">Home</a>
-        <a href="#" class="nav-link active">Assessment</a>
-        <a href="#" class="nav-link">Help</a>
+        <a class="nav-link" style="cursor:pointer" @click="router.push('/')">Home</a>
+        <a class="nav-link active">Assessment</a>
+        <a class="nav-link" style="cursor:pointer" @click="router.push('/help')">Help</a>
       </div>
     </nav>
 
@@ -132,6 +132,17 @@
         </div>
       </div>
 
+      <!-- YOUR ASSESSMENT ANSWERS -->
+      <div v-if="surveyAnswers" class="next-steps" :class="{ visible }" style="transition-delay: 450ms; margin-top: 40px;">
+        <h2 class="section-title">Your Assessment Answers</h2>
+        <div class="answers-grid">
+          <div v-for="(answer, i) in surveyAnswers" :key="i" class="answer-card">
+            <div class="answer-label">Q{{ i + 1 }}</div>
+            <div class="answer-value">{{ answer }}</div>
+          </div>
+        </div>
+      </div>
+
     </main>
 
     <!-- FOOTER -->
@@ -156,6 +167,7 @@ const router = useRouter()
 
 const visible = ref(false)
 const chartReady = ref(false)
+const surveyAnswers = ref(null)
 
 const radius = 80
 const stroke = 12
@@ -169,6 +181,9 @@ const offset = computed(() => {
 onMounted(() => {
   setTimeout(() => { visible.value = true }, 80)
   setTimeout(() => { chartReady.value = true }, 400)
+
+  const cached = localStorage.getItem('surveyAnswers')
+  if (cached) surveyAnswers.value = JSON.parse(cached)
 })
 </script>
 
@@ -508,5 +523,30 @@ onMounted(() => {
 .footer-copy {
   font-size: 12px;
   color: #888;
+}
+
+/* ANSWERS GRID */
+.answers-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.answer-card {
+  background: #ede9e1;
+  border-radius: 14px;
+  padding: 16px 20px;
+}
+.answer-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #0b5d57;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.answer-value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a2e2b;
 }
 </style>
