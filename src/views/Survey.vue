@@ -103,8 +103,19 @@ function goBack() {
   }
 }
 
-function submitSurvey() {
+async function submitSurvey() {
   if (!answers.value[step.value - 1]) return
+
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/api/survey`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ answers: answers.value })
+  })
+
+  const data = await res.json()
+  localStorage.setItem('surveyAnswers', JSON.stringify(answers.value))
+  localStorage.setItem('surveyResult', JSON.stringify(data))
+
   router.push({ name: 'Results' })
 }
 </script>
@@ -113,10 +124,10 @@ function submitSurvey() {
   <div class="page-wrapper">
     <!-- Navbar -->
     <header class="navbar">
-      <div class="logo">ActiveAgeing</div>
+      <div class="logo" style="cursor:pointer" @click="router.push('/')">ActiveAgeing</div>
       <nav>
-        <a href="#">Home</a>
-        <a href="#">Help</a>
+        <a @click="router.push('/')" style="cursor:pointer">Home</a>
+        <a @click="router.push('/help')" style="cursor:pointer">Help</a>
       </nav>
     </header>
 
