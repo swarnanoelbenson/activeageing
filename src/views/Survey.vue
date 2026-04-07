@@ -106,13 +106,15 @@ function goBack() {
 async function submitSurvey() {
   if (!answers.value[step.value - 1]) return
 
-  await fetch(`${import.meta.env.VITE_API_URL}/api/survey`, {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/api/survey`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ answers: answers.value })
   })
 
+  const data = await res.json()
   localStorage.setItem('surveyAnswers', JSON.stringify(answers.value))
+  localStorage.setItem('surveyResult', JSON.stringify(data))
 
   router.push({ name: 'Results' })
 }

@@ -40,7 +40,7 @@
               <circle stroke="#e8824a" fill="transparent" stroke-width="2"
                 stroke-dasharray="4 4" :r="normalizedRadius - 18" cx="100" cy="100" />
               <circle
-                stroke="#1a5c52" fill="transparent" stroke-width="12"
+                :stroke="catColor" fill="transparent" stroke-width="12"
                 stroke-linecap="round"
                 :stroke-dasharray="`${circumference} ${circumference}`"
                 :stroke-dashoffset="offset"
@@ -49,7 +49,7 @@
               />
             </svg>
             <div class="chart-label">
-              <span class="chart-percent">{{ chartReady ? '75%' : '0%' }}</span>
+              <span class="chart-percent">{{ chartReady ? chartPercent + '%' : '0%' }}</span>
               <span class="chart-sub">Active</span>
             </div>
           </div>
@@ -57,7 +57,7 @@
           <!-- Legend -->
           <div class="legend">
             <span class="legend-item">
-              <span class="dot dot-teal"></span>Your Level
+              <span class="dot" :style="{ background: catColor }"></span>Your Level
             </span>
             <span class="legend-item">
               <span class="dot dot-orange"></span>AU Benchmark (65+)
@@ -69,16 +69,13 @@
         <div class="right-col">
 
           <!-- Building Momentum -->
-          <div class="card card-dark">
+          <div class="card card-dark" :style="{ background: catColor }">
             <div class="status-row">
               <span class="status-icon">🚀</span>
               <span class="status-label">Current Status</span>
             </div>
-            <h2 class="momentum-title">Building Momentum</h2>
-            <p class="momentum-desc">
-              You're on the right path! Your consistent activity level is laying the
-              groundwork for improved long-term mobility and energy.
-            </p>
+            <h2 class="momentum-title">{{ momentumLabel }}</h2>
+            <p class="momentum-desc">{{ momentumDesc }}</p>
           </div>
 
           <!-- Steady Progress -->
@@ -149,9 +146,9 @@
     <footer class="footer">
       <div class="footer-logo">ActiveAgeing</div>
       <div class="footer-links">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-        <a href="#">Contact Support</a>
+        <a style="cursor:pointer" @click="router.push('/privacy')">Privacy Policy</a>
+        <a style="cursor:pointer" @click="router.push('/terms')">Terms of Service</a>
+        <a style="cursor:pointer" @click="router.push('/contact')">Contact Support</a>
       </div>
       <p class="footer-copy">© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</p>
     </footer>
@@ -168,14 +165,22 @@ const router = useRouter()
 const visible = ref(false)
 const chartReady = ref(false)
 const surveyAnswers = ref(null)
+const surveyResult = ref(null)
 
 const radius = 80
 const stroke = 12
 const normalizedRadius = radius - stroke / 2
 const circumference = normalizedRadius * 2 * Math.PI
 
+const chartPercent = computed(() => surveyResult.value?.chartPercent ?? 75)
+const momentumLabel = computed(() => surveyResult.value?.category?.label ?? 'Building Momentum')
+const momentumDesc = computed(() => surveyResult.value?.category?.momentum_desc ?? 'You\'re on the right path! Your consistent activity level is laying the groundwork for improved long-term mobility and energy.')
+
+const catColorMap = { 1: '#e53e3e', 2: '#e8824a', 3: '#d4a017', 4: '#1a5c52' }
+const catColor = computed(() => catColorMap[surveyResult.value?.catId] ?? '#1a5c52')
+
 const offset = computed(() => {
-  return circumference - (chartReady.value ? 75 / 100 : 0) * circumference
+  return circumference - (chartReady.value ? chartPercent.value / 100 : 0) * circumference
 })
 
 onMounted(() => {
@@ -184,6 +189,9 @@ onMounted(() => {
 
   const cached = localStorage.getItem('surveyAnswers')
   if (cached) surveyAnswers.value = JSON.parse(cached)
+
+  const result = localStorage.getItem('surveyResult')
+  if (result) surveyResult.value = JSON.parse(result)
 })
 </script>
 
