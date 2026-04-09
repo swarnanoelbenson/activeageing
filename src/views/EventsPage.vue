@@ -294,9 +294,20 @@ body {
 }
 
 /* RESPONSIVE */
-@media (max-width: 900px) {
-  .cards {
-    flex-direction: column;
-  }
+@media (max-width: 768px) {
+  .navbar { padding: 16px 20px; }
+  .logo { font-size: 18px; }
+  .navbar a { font-size: 14px; margin-left: 14px; }
+
+  .container { padding: 0 20px; }
+  .hero { margin-top: 32px; }
+  .hero h1 { font-size: 28px; }
+  .desc { font-size: 14px; }
+
+  .cards { flex-direction: column; }
+  .card { width: 100%; }
+
+  .footer { padding: 24px 20px; }
+  .footer-links { flex-wrap: wrap; gap: 12px; }
 }
 </style>

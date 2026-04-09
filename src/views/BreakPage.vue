@@ -95,4 +95,13 @@ function finishForToday() {
 .footer-logo { color: #0b5d57; margin-bottom: 12px; }
 .footer-links { display: flex; justify-content: center; gap: 20px; margin-bottom: 12px; }
 .footer-links a { color: #555; text-decoration: none; }
+
+@media (max-width: 768px) {
+  .navbar { padding: 16px 20px; }
+  .logo { font-size: 18px; }
+  .nav-links { gap: 20px; font-size: 14px; }
+  .main { padding: 32px 20px; }
+  .title { font-size: 28px; }
+  .subtitle { font-size: 14px; }
+}
 </style>

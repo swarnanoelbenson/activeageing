@@ -48,4 +48,11 @@ const router = useRouter()
 .footer-links a { font-size: 13px; color: #555; font-weight: 500; cursor: pointer; }
 .footer-links a:hover { color: #0b5d57; }
 .footer-copy { font-size: 12px; color: #888; }
+@media (max-width: 768px) {
+  .nav { padding: 16px 20px; }
+  .logo { font-size: 18px; }
+  .nav-links { gap: 20px; font-size: 14px; }
+  .main { padding: 32px 20px; }
+  .title { font-size: 28px; }
+}
 </style>

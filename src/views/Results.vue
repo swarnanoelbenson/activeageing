@@ -575,6 +575,29 @@ onMounted(() => {
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
 }
+
+/* MOBILE */
+@media (max-width: 768px) {
+  .nav { padding: 16px 20px; }
+  .nav-links { gap: 20px; font-size: 14px; }
+  .logo { font-size: 18px; }
+
+  .main { padding: 24px 20px 48px; }
+
+  .title { font-size: 28px; }
+  .subtitle { font-size: 14px; }
+
+  .grid { grid-template-columns: 1fr; }
+  .right-col { gap: 16px; }
+
+  .steps-grid { grid-template-columns: 1fr; }
+  .step { flex-direction: row; }
+
+  .answers-grid { grid-template-columns: 1fr 1fr; }
+
+  .footer { padding: 24px 20px; }
+  .footer-links { flex-wrap: wrap; gap: 12px; justify-content: center; }
+}
 .answer-card {
   background: #ede9e1;
   border-radius: 14px;

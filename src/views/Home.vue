@@ -243,22 +243,29 @@ body {
     color: #0b5d57; 
 } 
 
-/* Responsive */ 
-@media (max-width: 900px) { 
-    .hero { 
-        flex-direction: column; 
-        text-align: center; 
-    }
-    .hero-text { 
-        text-align: center; 
-    } 
-    .hero-img img { 
-        width: 250px; 
-        margin-top: 20px; 
-    } 
-    .card { 
-        width: 90%; 
-        padding: 40px 20px; 
-    } 
+/* Responsive */
+@media (max-width: 768px) {
+  .homepage-container { padding: 0 20px; }
+
+  .nav { padding: 16px 0; }
+  .logo { font-size: 18px; }
+  .nav-links { gap: 20px; font-size: 14px; }
+
+  .hero {
+    flex-direction: column;
+    text-align: center;
+    margin-top: 32px;
+    gap: 24px;
+  }
+  .hero-text { text-align: center; }
+  .hero-text h1 { font-size: 26px; }
+  .desc { font-size: 14px; }
+  .hero-img img { width: 220px; }
+
+  .cta { font-size: 16px; padding: 14px 28px; width: 100%; }
+
+  .card { width: 100%; padding: 32px 20px; }
+  .card h2 { font-size: 22px; }
+  .card p { font-size: 14px; }
 }
 </style>

@@ -441,11 +441,14 @@ nav a.active {
 .footer-copy { font-size: 12px; color: #888; }
 
 /* ── Responsive ── */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
   .options-grid { grid-template-columns: 1fr; }
   .survey-container { padding: 16px 20px 40px; }
   .navbar { padding: 16px 20px; }
-  .question-title { font-size: 24px; }
+  .logo { font-size: 18px; }
+  nav a { font-size: 14px; margin-left: 16px; }
+  .question-title { font-size: 22px; }
+  .question-subtitle { font-size: 13px; }
   .btn-row { flex-direction: column-reverse; gap: 12px; }
   .btn-back, .btn-next, .btn-submit { width: 100%; text-align: center; }
 }

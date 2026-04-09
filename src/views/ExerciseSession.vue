@@ -226,4 +226,10 @@ onMounted(() => {
   .card { flex-direction: column; }
   .card-left, .card-right { width: 100%; padding: 24px; }
 }
+
+@media (max-width: 768px) {
+  .navbar { padding: 16px 20px; }
+  .logo { font-size: 18px; }
+  .nav-links { gap: 20px; font-size: 14px; }
+}
 </style>
