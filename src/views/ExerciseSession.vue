@@ -175,6 +175,7 @@ onMounted(() => {
   color: #1a2e2b;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
 .navbar { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; width: 100%; margin: 0 auto; padding: 20px 40px; }
@@ -228,7 +229,7 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
-  .navbar { padding: 16px 20px; }
+  .navbar { padding: 16px 20px; box-sizing: border-box; width: 100%; }
   .logo { font-size: 18px; }
   .nav-links { gap: 20px; font-size: 14px; }
 
