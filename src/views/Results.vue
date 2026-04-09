@@ -587,11 +587,28 @@ onMounted(() => {
   .title { font-size: 28px; }
   .subtitle { font-size: 14px; }
 
-  .grid { grid-template-columns: 1fr; }
-  .right-col { gap: 16px; }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-light,
+  .card-dark,
+  .card-white {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .right-col {
+    width: 100%;
+    gap: 16px;
+  }
 
   .steps-grid { grid-template-columns: 1fr; }
-  .step { flex-direction: row; }
+
+  .step {
+    width: 100%;
+    box-sizing: border-box;
+  }
 
   .answers-grid { grid-template-columns: 1fr 1fr; }
 

@@ -231,5 +231,21 @@ onMounted(() => {
   .navbar { padding: 16px 20px; }
   .logo { font-size: 18px; }
   .nav-links { gap: 20px; font-size: 14px; }
+
+  .progress-wrap { padding: 0 20px 16px; }
+  .main { padding: 16px 20px 40px; }
+
+  .card {
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 16px;
+  }
+  .card-left { padding: 24px 20px; }
+  .card-right { padding: 24px 20px; }
+
+  .exercise-title { font-size: 24px; }
+  .figure-svg { width: 140px; height: 160px; }
+
+  .btn-primary, .btn-secondary { padding: 14px; font-size: 14px; }
 }
 </style>

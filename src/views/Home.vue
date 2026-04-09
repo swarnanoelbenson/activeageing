@@ -264,7 +264,7 @@ body {
 
   .cta { font-size: 16px; padding: 14px 28px; width: 100%; }
 
-  .card { width: 100%; padding: 32px 20px; }
+  .card { width: 100%; box-sizing: border-box; margin: 40px 0; padding: 32px 20px; }
   .card h2 { font-size: 22px; }
   .card p { font-size: 14px; }
 }
