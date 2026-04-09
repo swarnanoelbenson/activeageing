@@ -1,11 +1,11 @@
 <template>
   <div class="page">
     <nav class="navbar">
-      <div class="logo">ActiveAgeing</div>
+      <div class="logo" @click="router.push('/')">ActiveAgeing</div>
       <div class="nav-links">
-        <a href="#" class="nav-link">Home</a>
-        <a href="#" class="nav-link active">Assessment</a>
-        <a href="#" class="nav-link">Help</a>
+        <a class="nav-link" @click="router.push('/')">Home</a>
+        <a class="nav-link active">Assessment</a>
+        <!-- <a class="nav-link" @click="router.push('/help')">Help</a> -->
       </div>
     </nav>
 
@@ -178,11 +178,10 @@ onMounted(() => {
 }
 
 .navbar { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; width: 100%; margin: 0 auto; padding: 20px 40px; }
-.logo { font-weight: 700; font-size: 20px; color: #0b5d57; }
-.nav-links { display: flex; gap: 28px; font-size: 14px; font-weight: 500; }
-.nav-link { color: #5a6b67; text-decoration: none; }
-.nav-link.active { color: #0b5d57; text-decoration: none; border-bottom: 1.5px solid #0b5d57;
-  padding-bottom: 2px; }
+.logo { font-weight: 700; font-size: 20px; color: #0b5d57; cursor: pointer; }
+.nav-links { display: flex; gap: 32px; font-size: 16px; font-weight: 500; }
+.nav-link { color: #0b5d57; text-decoration: none; cursor: pointer; }
+.nav-link.active { text-decoration: underline; text-underline-offset: 4px; }
 
 .progress-wrap { max-width: 1200px; margin: 0 auto; width: 100%; padding: 0 40px 20px; display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto; align-items: center; gap: 0 12px; }
 .progress-label { display: flex; align-items: center; gap: 7px; grid-column: 1; grid-row: 1; }

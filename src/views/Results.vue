@@ -6,7 +6,7 @@
       <div class="nav-links">
         <a class="nav-link" style="cursor:pointer" @click="router.push('/')">Home</a>
         <a class="nav-link active">Assessment</a>
-        <a class="nav-link" style="cursor:pointer" @click="router.push('/help')">Help</a>
+        <!-- <a class="nav-link" style="cursor:pointer" @click="router.push('/help')">Help</a> -->
       </div>
     </nav>
 
@@ -22,6 +22,12 @@
           You're establishing a wonderful foundation. With a few intentional shifts,
           you're perfectly positioned to reach your peak vitality.
         </p>
+      </div>
+
+      <!-- RANDOM FACT -->
+      <div v-if="randomFact" class="fact-box" :class="{ visible }" style="transition-delay: 80ms;">
+        <span class="fact-icon">💡</span>
+        <p class="fact-text">{{ randomFact }}</p>
       </div>
 
       <!-- TWO COLUMN GRID -->
@@ -162,10 +168,19 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
+const facts = [
+  '"Every step counts!" — Telling us your routine helps us build a plan that fits your life, not someone else\'s.',
+  '"You\'re not alone!" — Understanding your activity helps us recommend exercises that are safe and right for you.',
+  '"Progress, not perfection!" — Knowing your stamina ensures we set goals that challenge without overwhelming.',
+  '"You\'re doing great!" — This helps us curate exercises that honour your body\'s current needs.',
+  '"Keep going!" — Your energy profile helps us schedule activity at the right intensity for you.',
+]
+
 const visible = ref(false)
 const chartReady = ref(false)
 const surveyAnswers = ref(null)
 const surveyResult = ref(null)
+const randomFact = ref('')
 
 const radius = 80
 const stroke = 12
@@ -192,6 +207,8 @@ onMounted(() => {
 
   const result = localStorage.getItem('surveyResult')
   if (result) surveyResult.value = JSON.parse(result)
+
+  randomFact.value = facts[Math.floor(Math.random() * facts.length)]
 })
 </script>
 
@@ -222,17 +239,18 @@ onMounted(() => {
 .nav-links {
   display: flex;
   gap: 32px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
 }
 .nav-link {
-  color: #5a6b67;
+  color: #0b5d57;
   text-decoration: none;
+  cursor: pointer;
 }
 .nav-link.active {
-  color: #1a5c52;
+  color: #0b5d57;
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: 4px;
 }
 
 /* MAIN */
@@ -241,6 +259,24 @@ onMounted(() => {
   margin: 0 auto;
   padding: 40px 40px 80px;
 }
+
+/* FACT BOX */
+.fact-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #e8f4f3;
+  border-left: 4px solid #0b5d57;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 32px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.fact-box.visible { opacity: 1; transform: translateY(0); }
+.fact-icon { font-size: 20px; flex-shrink: 0; }
+.fact-text { font-size: 14px; color: #1a5c52; font-style: italic; line-height: 1.5; margin: 0; }
 
 /* HEADER */
 .header {
@@ -261,10 +297,10 @@ onMounted(() => {
   margin-bottom: 16px;
 }
 .subtitle {
-  font-size: 16px;
+  font-size: 20px;
   color: #5a6b67;
   line-height: 1.65;
-  max-width: 420px;
+  max-width: 820px;
 }
 
 /* GRID */
@@ -307,12 +343,12 @@ onMounted(() => {
   text-align: left;
 }
 .card-title {
-  font-size: 18px;
+  font-size: 25px;
   font-weight: 700;
   margin-bottom: 6px;
 }
 .card-desc {
-  font-size: 13px;
+  font-size: 20px;
   color: #5a6b67;
   margin-bottom: 28px;
   line-height: 1.5;
@@ -368,12 +404,12 @@ onMounted(() => {
   gap: 6px;
 }
 .dot {
-  width: 10px; height: 10px;
+  width: 20px; height: 20px;
   border-radius: 50%;
   display: inline-block;
 }
 .dot-teal { background: #1a5c52; }
-.dot-orange { border: 2px dashed #e8824a; background: transparent; }
+.dot-orange { border: 1px dashed #e8824a; background: transparent; }
 
 /* RIGHT COLUMN */
 .right-col {
@@ -391,21 +427,21 @@ onMounted(() => {
 }
 .status-icon { font-size: 18px; }
 .status-label {
-  font-size: 10px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.6);
 }
 .momentum-title {
-  font-size: 26px;
+  font-size: 25px;
   font-weight: 700;
   color: #ffffff;
   margin-bottom: 12px;
   line-height: 1.15;
 }
 .momentum-desc {
-  font-size: 14px;
+  font-size: 15px;
   color: rgba(255,255,255,0.75);
   line-height: 1.6;
 }
@@ -422,13 +458,13 @@ onMounted(() => {
   margin-bottom: 14px;
 }
 .progress-title {
-  font-size: 17px;
+  font-size: 25px;
   font-weight: 700;
   margin-bottom: 8px;
   color: #0f3d35;
 }
 .progress-desc {
-  font-size: 13px;
+  font-size: 15px;
   color: #5a6b67;
   line-height: 1.65;
 }
@@ -444,7 +480,7 @@ onMounted(() => {
   transform: translateY(0);
 }
 .section-title {
-  font-size: 22px;
+  font-size: 25px;
   font-weight: 700;
   margin-bottom: 16px;
   color: #0f3d35;
@@ -487,19 +523,19 @@ onMounted(() => {
 .step-name {
   font-weight: 700;
   color: #ffffff;
-  font-size: 15px;
+  font-size: 25px;
   margin-bottom: 4px;
 }
 .step-name-dark { color: #0f3d35; }
 .step-desc {
-  font-size: 12px;
+  font-size: 15px;
   color: rgba(255,255,255,0.65);
   line-height: 1.5;
 }
 .step-desc-dark { color: #5a6b67; }
 .step-arrow {
   color: rgba(255,255,255,0.7);
-  font-size: 20px;
+  font-size: 25px;
 }
 .step-arrow-dark { color: #5a6b67; opacity: 0.6; }
 
@@ -510,7 +546,7 @@ onMounted(() => {
   padding: 32px 48px 24px;
 }
 .footer-logo {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #0b5d57;
   margin-bottom: 12px;
@@ -523,7 +559,7 @@ onMounted(() => {
 }
 .footer-links a {
   text-decoration: none;
-  font-size: 13px;
+  font-size: 15px;
   color: #555;
   font-weight: 500;
 }
@@ -545,7 +581,7 @@ onMounted(() => {
   padding: 16px 20px;
 }
 .answer-label {
-  font-size: 11px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.1em;
   color: #0b5d57;
@@ -553,7 +589,7 @@ onMounted(() => {
   margin-bottom: 6px;
 }
 .answer-value {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 500;
   color: #1a2e2b;
 }

@@ -1,10 +1,10 @@
 <template>
   <div class="page">
     <nav class="navbar">
-      <div class="logo">ActiveAgeing</div>
+      <div class="logo" @click="router.push('/')">ActiveAgeing</div>
       <div class="nav-links">
-        <a href="#" class="nav-link">Home</a>
-        <a href="#" class="nav-link">Help</a>
+        <a class="nav-link" @click="router.push('/')">Home</a>
+        <!-- <a class="nav-link" @click="router.push('/help')">Help</a> -->
       </div>
     </nav>
 
@@ -71,9 +71,9 @@ function finishForToday() {
 .page { min-height: 100vh; background: #f4f1eb; font-family: 'Poppins', sans-serif; color: #1a2e2b; display: flex; flex-direction: column; }
 
 .navbar { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; width: 100%; padding: 20px 40px; }
-.logo { font-weight: 700; font-size: 20px; color: #0b5d57; }
-.nav-links { display: flex; gap: 28px; font-size: 14px; font-weight: 500; }
-.nav-link { color: #5a6b67; text-decoration: none; }
+.logo { font-weight: 700; font-size: 20px; color: #0b5d57; cursor: pointer; }
+.nav-links { display: flex; gap: 32px; font-size: 16px; font-weight: 500; }
+.nav-link { color: #0b5d57; text-decoration: none; cursor: pointer; }
 
 .main { flex: 1; max-width: 680px; margin: 0 auto; width: 100%; padding: 60px 40px; }
 

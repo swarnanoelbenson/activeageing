@@ -4,95 +4,82 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-const step = ref(1)
-const total = 6
+const total = 5
 
 const questions = [
   {
-    text: 'How often do you currently exercise or do physical activity?',
+    text: 'How often do you currently do physical activity or exercise?',
     subtitle: 'We want to ensure your journey is safe and comfortable.',
     options: [
-      { label: 'Every day', desc: 'I exercise or stay active daily.', icon: '🏃' },
-      { label: 'A few times a week', desc: 'I am active several times per week.', icon: '🚶' },
-      { label: 'Once a week', desc: 'I try to stay active at least weekly.', icon: '🧘' },
-      { label: 'Rarely or never', desc: 'I have not been active recently.', icon: '🛋️' }
-    ],
-    motivation: '"Every step counts!"\nTelling us your routine helps us build a plan that fits your life — not someone else\'s.'
+      { label: 'Every day',           desc: 'I exercise or stay active daily.',           icon: '🏃' },
+      { label: 'A few times a week',  desc: 'I am active several times per week.',        icon: '🚶' },
+      { label: 'Once a week',         desc: 'I try to stay active at least weekly.',      icon: '🧘' },
+      { label: 'Rarely or never',     desc: 'I have not been active recently.',           icon: '🛋️' }
+    ]
   },
   {
-    text: 'How would you describe your mobility?',
+    text: 'How long are you usually active in one session?',
     subtitle: 'We want to ensure your journey is safe and comfortable.',
     options: [
-      { label: 'I move freely without assistance', desc: 'No limitations on my movement.', icon: '🚶' },
-      { label: 'I have some limitations but manage well', desc: 'Minor restrictions, but I cope fine.', icon: '🦶' },
-      { label: 'I need support or aids to move around', desc: 'I use assistance for mobility.', icon: '🦯' },
-      { label: 'N/A', desc: 'This does not apply to me.', icon: '—' }
-    ],
-    motivation: '"You\'re not alone!"\nUnderstanding your mobility helps us recommend exercises that are safe, effective, and right for you.'
+      { label: 'Less than 15 minutes', desc: 'Short bursts work best for me.',          icon: '⏱️' },
+      { label: '15 to 30 minutes',     desc: 'I can manage a brief session.',           icon: '🕒' },
+      { label: '30 to 60 minutes',     desc: 'I enjoy a moderate workout length.',      icon: '🕑' },
+      { label: 'More than 60 minutes', desc: 'I love longer activity sessions.',        icon: '🏅' }
+    ]
   },
   {
-    text: 'How long can you comfortably stay active in one session?',
+    text: 'On a typical day, how much time do you spend sitting or being inactive?',
     subtitle: 'We want to ensure your journey is safe and comfortable.',
     options: [
-      { label: 'Less than 15 minutes', desc: 'Short bursts work best for me.', icon: '⏱️' },
-      { label: '15 to 30 minutes', desc: 'I can manage a brief session.', icon: '🕒' },
-      { label: '30 to 60 minutes', desc: 'I enjoy a moderate workout length.', icon: '🕑' },
-      { label: 'More than 60 minutes', desc: 'I love longer activity sessions.', icon: '🏅' }
-    ],
-    motivation: '"Progress, not perfection!"\nKnowing your stamina ensures we set goals that challenge you without overwhelming you.'
+      { label: 'Very little',      desc: 'I am mostly on my feet throughout the day.',            icon: '🏃' },
+      { label: 'Some of the day',  desc: 'I sit for part of the day but move regularly.',         icon: '🪑' },
+      { label: 'A lot of the day', desc: 'I spend most of my time sitting.',                      icon: '💺' },
+      { label: 'Most of the day',  desc: 'I am seated or inactive for almost all of the day.',   icon: '🛋️' }
+    ]
   },
   {
-    text: 'Do you currently experience any of the following?',
-    subtitle: 'We want to ensure your journey is safe and comfortable. Tell us about any areas where you might need extra support.',
-    options: [
-      { label: 'None', desc: 'I feel great and ready to move with full energy.', icon: '😊' },
-      { label: 'Joint Pain or stiffness', desc: 'I experience occasional or regular stiffness or aching.', icon: '🦴' },
-      { label: 'Breathlessness during light activity', desc: 'I find myself short of breath during light activities.', icon: '💨' },
-      { label: 'Balance issues', desc: 'I sometimes feel unsteady or need to hold onto things.', icon: '🧍' }
-    ],
-    motivation: '"You\'re doing great!"\nThis helps us curate exercises that honor your body\'s current needs. We\'re here to support you every step of the way.'
-  },
-  {
-    text: 'How would you describe your energy levels on a typical day?',
+    text: 'On most nights, how many hours do you sleep?',
     subtitle: 'We want to ensure your journey is safe and comfortable.',
     options: [
-      { label: 'I feel energetic and active', desc: 'I have plenty of energy throughout the day.', icon: '⚡' },
-      { label: 'I have moderate energy but tire easily', desc: 'I manage but fatigue sets in quickly.', icon: '🔋' },
-      { label: 'I feel tired most of the time', desc: 'Low energy is a daily challenge for me.', icon: '😴' },
-      { label: 'N/A', desc: 'This does not apply to me.', icon: '—' }
-    ],
-    motivation: '"Keep going!"\nYour energy profile helps us schedule activity at the right times and intensity for you.'
+      { label: 'Less than 6 hours',       desc: 'I often get very little sleep.',              icon: '😫' },
+      { label: '6 to less than 7 hours',  desc: 'I get a bit under the recommended amount.',   icon: '😴' },
+      { label: '7 to 8 hours',            desc: 'I get a healthy amount of sleep.',            icon: '🌙' },
+      { label: 'More than 8 hours',       desc: 'I tend to sleep longer than most.',           icon: '💤' }
+    ]
   },
   {
-    text: 'How often do you leave your home for social or physical activities?',
-    subtitle: 'We want to ensure your journey is safe and comfortable. ',
+    text: 'How rested do you usually feel when you wake up?',
+    subtitle: 'We want to ensure your journey is safe and comfortable.',
     options: [
-      { label: 'Daily', desc: 'I go out every day for social or physical activities.', icon: '🌞' },
-      { label: 'A few times a week', desc: 'I head out several times a week.', icon: '🚶' },
-      { label: 'Once a week or less', desc: 'I go out about once a week or less often.', icon: '📅' },
-      { label: 'Rarely or never', desc: 'I mostly stay at home.', icon: '🏠' }
-    ],
-    motivation: null
+      { label: 'Very rested',    desc: 'I wake up feeling refreshed and ready to go.',    icon: '⚡' },
+      { label: 'Fairly rested',  desc: 'I feel reasonably refreshed most mornings.',      icon: '🔋' },
+      { label: 'A little tired', desc: 'I often wake feeling a bit groggy.',              icon: '😪' },
+      { label: 'Very tired',     desc: 'I rarely feel rested when I wake up.',            icon: '😩' }
+    ]
   }
 ]
 
+const step    = ref(1)
 const answers = ref(Array(total).fill(null))
 
-const isFinalStep = computed(() => step.value === total)
-
+const isFinalStep    = computed(() => step.value === total)
 const progressPercent = computed(() => (step.value / total) * 100)
-
 const currentQuestion = computed(() => questions[step.value - 1])
+const showBack        = computed(() => step.value > 1)
+const showNext        = computed(() => answers.value[step.value - 1] !== null && step.value < total)
+const showSubmit      = computed(() => step.value === total && answers.value[step.value - 1] !== null)
 
 function selectOption(option) {
   answers.value[step.value - 1] = option.label
+  if (step.value < total) {
+    setTimeout(() => { step.value++ })
+  } else {
+    setTimeout(() => { submitSurvey() })
+  }
 }
 
 function goNext() {
-  if (!answers.value[step.value - 1]) return
-  if (step.value < total) {
-    step.value++
-  }
+  if (step.value < total) step.value++
 }
 
 function goBack() {
@@ -106,17 +93,22 @@ function goBack() {
 async function submitSurvey() {
   if (!answers.value[step.value - 1]) return
 
-  const res = await fetch(`${import.meta.env.VITE_API_URL}/api/survey`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ answers: answers.value })
-  })
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/survey`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ answers: answers.value })
+    })
 
-  const data = await res.json()
-  localStorage.setItem('surveyAnswers', JSON.stringify(answers.value))
-  localStorage.setItem('surveyResult', JSON.stringify(data))
+    const data = await res.json()
+    localStorage.setItem('surveyAnswers', JSON.stringify(answers.value))
+    localStorage.setItem('surveyResult', JSON.stringify(data))
 
-  router.push({ name: 'Results' })
+    router.push({ name: 'Results' })
+  } catch (err) {
+    console.error('Submit failed:', err)
+    alert('Something went wrong: ' + err.message)
+  }
 }
 </script>
 
@@ -124,10 +116,10 @@ async function submitSurvey() {
   <div class="page-wrapper">
     <!-- Navbar -->
     <header class="navbar">
-      <div class="logo" style="cursor:pointer" @click="router.push('/')">ActiveAgeing</div>
+      <div class="logo" @click="router.push('/')">ActiveAgeing</div>
       <nav>
-        <a @click="router.push('/')" style="cursor:pointer">Home</a>
-        <a @click="router.push('/help')" style="cursor:pointer">Help</a>
+        <a @click="router.push('/')">Home</a>
+        <a @click="router.push('/help')">Help</a>
       </nav>
     </header>
 
@@ -169,25 +161,12 @@ async function submitSurvey() {
         </div>
       </div>
 
-      <!-- Motivation box (steps 1–5 only) -->
-      <div v-if="!isFinalStep && currentQuestion.motivation" class="motivation-box">
-        <div class="motivation-icon">👍</div>
-        <div class="motivation-text">
-          <strong>{{ currentQuestion.motivation.split('\n')[0] }}</strong>
-          <p>{{ currentQuestion.motivation.split('\n')[1] }}</p>
-        </div>
-      </div>
-
-      <!-- Buttons: steps 1–5 -->
-      <div v-if="!isFinalStep" class="btn-row">
-        <button class="btn-back" @click="goBack">← BACK</button>
-        <button class="btn-next" @click="goNext">NEXT →</button>
-      </div>
-
-      <!-- Buttons: final step 6 -->
-      <div v-else class="btn-col">
-        <button class="btn-submit" @click="submitSurvey">Submit My Assessment →</button>
-        <button class="btn-back-outline" @click="goBack">← BACK</button>
+      <!-- Buttons -->
+      <div class="btn-row">
+        <button v-if="showBack" class="btn-back" @click="goBack">← BACK</button>
+        <div v-else></div>
+        <button v-if="showSubmit" class="btn-submit" @click="submitSurvey">Submit My Assessment →</button>
+        <button v-else-if="showNext" class="btn-next" @click="goNext">NEXT →</button>
       </div>
     </main>
 
@@ -195,9 +174,9 @@ async function submitSurvey() {
     <footer class="footer">
       <div class="footer-logo">ActiveAgeing</div>
       <div class="footer-links">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-        <a href="#">Contact Support</a>
+        <a @click="router.push('/privacy')">Privacy Policy</a>
+        <a @click="router.push('/terms')">Terms of Service</a>
+        <a @click="router.push('/contact')">Contact Support</a>
       </div>
       <p class="footer-copy">© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</p>
     </footer>
@@ -207,11 +186,7 @@ async function submitSurvey() {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 .page-wrapper {
   font-family: 'Poppins', sans-serif;
@@ -231,21 +206,26 @@ async function submitSurvey() {
 }
 
 .logo {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: #0b5d57;
+  cursor: pointer;
 }
 
 nav a {
   margin-left: 28px;
   text-decoration: none;
-  color: #333;
-  font-size: 14px;
+  color: #0b5d57;
+  font-size: 16px;
   font-weight: 500;
+  cursor: pointer;
 }
 
-nav a:hover {
-  color: #0b5d57;
+nav a:hover { color: #084a45; }
+
+nav a.active {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 /* ── Main ── */
@@ -258,9 +238,7 @@ nav a:hover {
 }
 
 /* ── Progress ── */
-.progress-section {
-  margin-bottom: 32px;
-}
+.progress-section { margin-bottom: 32px; }
 
 .progress-meta {
   display: flex;
@@ -348,10 +326,7 @@ nav a:hover {
   transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
-.option-card:hover {
-  border-color: #0b5d57;
-  background: #dff0ee;
-}
+.option-card:hover { border-color: #0b5d57; background: #dff0ee; }
 
 .option-card.selected {
   border-color: #0b5d57;
@@ -379,50 +354,9 @@ nav a:hover {
   margin-bottom: 4px;
 }
 
-.option-text p {
-  font-size: 12px;
-  color: #555;
-  line-height: 1.4;
-}
+.option-text p { font-size: 12px; color: #555; line-height: 1.4; }
 
-/* ── Motivation box ── */
-.motivation-box {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 28px;
-  background: #fde8e8;
-  border-radius: 14px;
-  padding: 20px 24px;
-}
-
-.motivation-icon {
-  font-size: 26px;
-  background: #fff;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.motivation-text strong {
-  font-size: 14px;
-  font-weight: 600;
-  color: #7a1c1c;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.motivation-text p {
-  font-size: 13px;
-  color: #8b3333;
-  line-height: 1.5;
-}
-
-/* ── Buttons: steps 1–5 ── */
+/* ── Buttons ── */
 .btn-row {
   display: flex;
   justify-content: space-between;
@@ -444,10 +378,7 @@ nav a:hover {
   transition: background 0.2s, color 0.2s;
 }
 
-.btn-back:hover {
-  background: #c14f4f;
-  color: #fff;
-}
+.btn-back:hover { background: #c14f4f; color: #fff; }
 
 .btn-next {
   padding: 14px 40px;
@@ -463,59 +394,23 @@ nav a:hover {
   transition: background 0.2s;
 }
 
-.btn-next:hover {
-  background: #074a46;
-}
-
-/* ── Buttons: final step 6 ── */
-.btn-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  margin-top: 36px;
-}
+.btn-next:hover { background: #074a46; }
 
 .btn-submit {
-  width: 100%;
-  max-width: 480px;
-  padding: 18px 32px;
+  padding: 14px 40px;
   background: #0b5d57;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   color: #fff;
   font-family: 'Poppins', sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.04em;
   cursor: pointer;
   transition: background 0.2s;
 }
 
-.btn-submit:hover {
-  background: #074a46;
-}
-
-.btn-back-outline {
-  width: 100%;
-  max-width: 480px;
-  padding: 16px 32px;
-  background: transparent;
-  border: 2px solid #c14f4f;
-  border-radius: 12px;
-  color: #c14f4f;
-  font-family: 'Poppins', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-
-.btn-back-outline:hover {
-  background: #c14f4f;
-  color: #fff;
-}
+.btn-submit:hover { background: #074a46; }
 
 /* ── Footer ── */
 .footer {
@@ -525,12 +420,7 @@ nav a:hover {
   padding: 32px 48px 24px;
 }
 
-.footer-logo {
-  font-size: 16px;
-  font-weight: 700;
-  color: #0b5d57;
-  margin-bottom: 12px;
-}
+.footer-logo { font-size: 16px; font-weight: 700; color: #0b5d57; margin-bottom: 12px; }
 
 .footer-links {
   display: flex;
@@ -544,44 +434,19 @@ nav a:hover {
   font-size: 13px;
   color: #555;
   font-weight: 500;
+  cursor: pointer;
 }
 
-.footer-links a:hover {
-  color: #0b5d57;
-}
-
-.footer-copy {
-  font-size: 12px;
-  color: #888;
-}
+.footer-links a:hover { color: #0b5d57; }
+.footer-copy { font-size: 12px; color: #888; }
 
 /* ── Responsive ── */
 @media (max-width: 600px) {
-  .options-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .survey-container {
-    padding: 16px 20px 40px;
-  }
-
-  .navbar {
-    padding: 16px 20px;
-  }
-
-  .question-title {
-    font-size: 24px;
-  }
-
-  .btn-row {
-    flex-direction: column-reverse;
-    gap: 12px;
-  }
-
-  .btn-back,
-  .btn-next {
-    width: 100%;
-    text-align: center;
-  }
+  .options-grid { grid-template-columns: 1fr; }
+  .survey-container { padding: 16px 20px 40px; }
+  .navbar { padding: 16px 20px; }
+  .question-title { font-size: 24px; }
+  .btn-row { flex-direction: column-reverse; gap: 12px; }
+  .btn-back, .btn-next, .btn-submit { width: 100%; text-align: center; }
 }
 </style>

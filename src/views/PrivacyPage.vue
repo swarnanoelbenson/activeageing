@@ -4,7 +4,7 @@
       <span class="logo" @click="router.push('/')">ActiveAgeing</span>
       <div class="nav-links">
         <a class="nav-link" @click="router.push('/')">Home</a>
-        <a @click="router.push('/help')" style="cursor:pointer">Help</a>
+        <!-- <a class="nav-link" @click="router.push('/help')">Help</a> -->
       </div>
     </nav>
 
@@ -35,8 +35,9 @@ const router = useRouter()
 .page { min-height: 100vh; background: #f4f1eb; font-family: 'Poppins', sans-serif; color: #1a2e2b; display: flex; flex-direction: column; }
 .nav { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 20px 40px; width: 100%; box-sizing: border-box; }
 .logo { font-weight: 700; font-size: 20px; color: #0b5d57; cursor: pointer; }
-.nav-links { display: flex; gap: 32px; font-size: 14px; font-weight: 500; }
-.nav-link { color: #5a6b67; text-decoration: none; cursor: pointer; }
+.nav-links { display: flex; gap: 32px; font-size: 16px; font-weight: 500; }
+.nav-link { color: #0b5d57; text-decoration: none; cursor: pointer; }
+.nav-link.active { text-decoration: underline; text-underline-offset: 4px; }
 .main { max-width: 1200px; margin: 0 auto; padding: 60px 40px; flex: 1; width: 100%; box-sizing: border-box; }
 .title { font-size: 40px; font-weight: 700; color: #0f3d35; margin-bottom: 24px; }
 .todo { font-size: 16px; color: #5a6b67; }

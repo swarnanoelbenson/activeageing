@@ -8,8 +8,8 @@ const { getScore, getCategoryId, getChartPercent } = require("../utils/scoring")
 router.post("/", async (req, res) => {
   const { answers } = req.body;
 
-  if (!answers || answers.length !== 6) {
-    return res.status(400).json({ error: "Expected 6 answers" });
+  if (!answers || answers.length !== 5) {
+    return res.status(400).json({ error: "Expected 5 answers" });
   }
 
   const score = getScore(answers);
@@ -19,8 +19,8 @@ router.post("/", async (req, res) => {
   try {
     await pool.query(
       `INSERT INTO survey_responses
-        (exercise_frequency, mobility, session_duration, health_conditions, energy_level, social_frequency, score, cat_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        (exercise_frequency, session_duration, inactivity_level, sleep_hours, restedness, score, cat_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [...answers, score, catId]
     );
 

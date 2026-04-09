@@ -11,14 +11,14 @@ const hasSurvey = ref(!!localStorage.getItem('surveyAnswers'))
   <div class="homepage-container">
     
     <!-- Navbar -->
-    <header class="navbar">
-      <div class="logo" style="cursor:pointer" @click="router.push('/')">ActiveAgeing</div>
-      <nav>
-        <a @click="router.push('/')" style="cursor:pointer">Home</a>
-        <a v-if="hasSurvey" @click="router.push('/results')" style="cursor:pointer">Assessment</a>
-        <a @click="router.push('/help')" style="cursor:pointer">Help</a>
-      </nav>
-    </header>
+    <nav class="nav">
+      <span class="logo" style="cursor:pointer" @click="router.push('/')">ActiveAgeing</span>
+      <div class="nav-links">
+        <a class="nav-link active">Home</a>
+        <a class="nav-link" style="cursor:pointer" @click="router.push('/results')">Assessment</a>
+        <!-- <a class="nav-link" style="cursor:pointer" @click="router.push('/help')">Help</a> -->
+      </div>
+    </nav>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -86,7 +86,7 @@ body {
 }
 
 /* Navbar */
-.navbar {
+.nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -95,20 +95,29 @@ body {
 
 .logo {
   font-weight: 700;
-  color: #0b5d57;
   font-size: 20px;
-}
-
-.navbar a {
-  margin-left: 20px;
-  text-decoration: none;
   color: #0b5d57;
-  transition: color 0.2s;
-
+  cursor: pointer;
 }
 
-.navbar a:hover { 
-    color: #084a45; 
+.nav-links {
+  display: flex;
+  gap: 32px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.nav-link {
+  color: #0b5d57;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.nav-link:hover { color: #084a45; }
+
+.nav-link.active {
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 
@@ -155,11 +164,12 @@ body {
 .cta {
   background: #0b5d57;
   color: white;
-  font-size: 16px; 
-  padding: 12px 24px; 
-  border-radius: 8px; 
-  border: none; 
-  cursor: pointer; 
+  font-size: 20px;
+  font-weight: 600;
+  padding: 18px 40px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
   transition: all 0.2s;
 }
 

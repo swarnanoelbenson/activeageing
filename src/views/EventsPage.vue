@@ -143,16 +143,16 @@ body {
   margin-left: 20px;
   text-decoration: none;
   color: #0b5d57;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
 }
 
-.navbar a:hover {
-  color: #084a45;
-}
+.navbar a:hover { color: #084a45; }
 
 .navbar .active {
-  border-bottom: 2px solid #0b5d57;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 /* HERO */

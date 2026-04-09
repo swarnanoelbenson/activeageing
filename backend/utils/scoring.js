@@ -1,59 +1,53 @@
 // Maps each survey answer label to a score (1–4)
 const scoreMap = {
-  // Q1: Exercise frequency
-  "Every day": 4,
-  "A few times a week": 3,
-  "Once a week": 2,
-  "Rarely or never": 1,
+  // Q1: exercise_frequency
+  "Every day":           4,
+  "A few times a week":  3,
+  "Once a week":         2,
+  "Rarely or never":     1,
 
-  // Q2: Mobility
-  "I move freely without assistance": 4,
-  "I have some limitations but manage well": 3,
-  "I need support or aids to move around": 2,
-
-  // Q3: Session duration
+  // Q2: session_duration
   "Less than 15 minutes": 1,
-  "15 to 30 minutes": 2,
-  "30 to 60 minutes": 3,
+  "15 to 30 minutes":     2,
+  "30 to 60 minutes":     3,
   "More than 60 minutes": 4,
 
-  // Q4: Health conditions
-  "None": 4,
-  "Joint Pain or stiffness": 3,
-  "Breathlessness during light activity": 2,
-  "Balance issues": 2,
+  // Q3: inactivity_level (more inactive = lower score)
+  "Very little":      4,
+  "Some of the day":  3,
+  "A lot of the day": 2,
+  "Most of the day":  1,
 
-  // Q5: Energy levels
-  "I feel energetic and active": 4,
-  "I have moderate energy but tire easily": 3,
-  "I feel tired most of the time": 2,
+  // Q4: sleep_hours (7-8 hours is optimal)
+  "Less than 6 hours":      1,
+  "6 to less than 7 hours": 2,
+  "7 to 8 hours":           4,
+  "More than 8 hours":      3,
 
-  // Q6: Social frequency
-  "Daily": 4,
-  "Once a week or less": 2,
-
-  // Neutral fallback for N/A answers
-  "N/A": 3,
+  // Q5: restedness
+  "Very rested":    4,
+  "Fairly rested":  3,
+  "A little tired": 2,
+  "Very tired":     1,
 };
 
-// Total score range: 6 (min) to 24 (max)
-// Categories split into 4 equal-ish bands
+// Total score range: 5 (min) to 20 (max)
 function getScore(answers) {
   return answers.reduce((total, answer) => {
-    return total + (scoreMap[answer] ?? 2); // default 2 if unknown
+    return total + (scoreMap[answer] ?? 2);
   }, 0);
 }
 
 function getCategoryId(score) {
-  if (score <= 10) return 1; // Gentle Start
-  if (score <= 15) return 2; // Building Momentum
-  if (score <= 20) return 3; // Active Mover
+  if (score <= 8)  return 1; // Gentle Start
+  if (score <= 12) return 2; // Building Momentum
+  if (score <= 16) return 3; // Active Mover
   return 4;                  // Peak Vitality
 }
 
-// Chart percent shown on Results page (relative to max score of 24)
+// Chart percent relative to max score of 20
 function getChartPercent(score) {
-  return Math.round((score / 24) * 100);
+  return Math.round((score / 20) * 100);
 }
 
 module.exports = { getScore, getCategoryId, getChartPercent };
