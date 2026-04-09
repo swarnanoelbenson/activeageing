@@ -238,10 +238,11 @@ onMounted(() => {
   .card {
     width: 100%;
     box-sizing: border-box;
-    margin: 40px 0;
     border-radius: 24px;
+    overflow: hidden;
+    margin: 0 0 24px;
   }
-  .card-left { padding: 32px 20px; }
+  .card-left { width: 100%; padding: 32px 20px; }
   .card-right { padding: 32px 20px; }
 
   .exercise-title { font-size: 24px; }
