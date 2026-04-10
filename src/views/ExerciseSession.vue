@@ -361,7 +361,11 @@ onMounted(() => {
 @media (max-width: 768px) {
   .navbar { padding: 16px 20px; }
   .logo { font-size: 18px; }
-  .nav-links { gap: 10px; font-size: 14px; }
+  .nav-links { gap: 20px; font-size: 14px; }
+
+
+
+
 
   .progress-wrap { padding: 0 20px 16px; }
   .main { padding: 24px 20px 48px; }
