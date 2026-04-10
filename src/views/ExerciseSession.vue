@@ -353,22 +353,35 @@ onMounted(() => {
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
-  .card { flex-direction: column; }
-  .card-left { width: 100%; padding: 32px 24px; }
-  .card-right { padding: 32px 24px; }
-}
-
-@media (max-width: 768px) {
-  .navbar { padding: 16px 20px; }
+  .navbar {
+    padding: 16px 20px;
+    box-sizing: border-box;
+    width: 100%;
+  }
   .logo { font-size: 18px; }
-  .nav-links { gap: 20px; font-size: 14px; }
+  .nav-links { gap: 16px; font-size: 14px; }
 
-  .progress-wrap { padding: 0 20px 16px; }
-  .main { padding: 24px 20px 48px; }
+  .progress-wrap {
+    padding: 0 20px 16px;
+    box-sizing: border-box;
+    width: 100%;
+  }
 
-  .card { width: 100%; box-sizing: border-box; }
-  .card-left { padding: 24px 20px; }
-  .card-right { padding: 24px 20px; }
+  .main {
+    padding: 24px 20px 48px;
+    box-sizing: border-box;
+    width: 100%;
+  }
+
+  .card {
+    flex-direction: column;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .card-left { width: 100%; padding: 24px 20px; }
+  .card-right { padding: 24px 20px; box-sizing: border-box; }
+
+  .step-text { word-break: break-word; }
 
   .exercise-title { font-size: 24px; }
   .figure-svg { width: 140px; height: 160px; }
