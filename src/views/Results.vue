@@ -84,56 +84,24 @@
             <p class="momentum-desc">{{ momentumDesc }}</p>
           </div>
 
-          <!-- Steady Progress -->
-          <div class="card card-white">
-            <div class="progress-icon">📈</div>
-            <h3 class="progress-title">Steady Progress</h3>
-            <p class="progress-desc">
-              You are currently exceeding the national average for daily steps by 15%.
-              This consistency is the key to maintaining joint health and metabolic balance.
-            </p>
+          <!-- Action Buttons -->
+          <div class="card card-white action-card">
+            <div class="action-btn action-btn-dark" @click="router.push('/exercise')">
+              <span class="action-btn-icon">✦</span>
+              <span class="action-btn-label">Guided Exercise Session</span>
+              <span class="action-btn-arrow">→</span>
+            </div>
+            <div class="action-btn action-btn-light" @click="router.push('/events')">
+              <span class="action-btn-icon">📅</span>
+              <span class="action-btn-label action-btn-label-dark">Explore Events</span>
+              <span class="action-btn-arrow action-btn-arrow-dark">→</span>
+            </div>
           </div>
 
         </div>
       </div>
 
-      <!-- YOUR NEXT STEPS -->
-      <div class="next-steps" :class="{ visible }" style="transition-delay: 300ms;">
-        <h2 class="section-title">Your Next Steps</h2>
-        <div class="steps-grid">
 
-          <div class="step step-dark"
-            @click="router.push('/exercise')"
-            @mouseenter="e => e.currentTarget.classList.add('hovered')"
-            @mouseleave="e => e.currentTarget.classList.remove('hovered')"
-          >
-            <div class="step-left">
-              <div class="step-icon step-icon-light">✦</div>
-              <div>
-                <div class="step-name">Guided Exercise Session</div>
-                <div class="step-desc">Tailored specifically to your current<br />momentum and mobility needs.</div>
-              </div>
-            </div>
-            <span class="step-arrow">→</span>
-          </div>
-
-          <div class="step step-light"
-            @click="router.push('/events')"
-            @mouseenter="e => e.currentTarget.classList.add('hovered')"
-            @mouseleave="e => e.currentTarget.classList.remove('hovered')"
-          >
-            <div class="step-left">
-              <div class="step-icon step-icon-teal">📅</div>
-              <div>
-                <div class="step-name step-name-dark">Explore Local Events</div>
-                <div class="step-desc step-desc-dark">Connect with others through community<br />walking groups and hobbies.</div>
-              </div>
-            </div>
-            <span class="step-arrow step-arrow-dark">→</span>
-          </div>
-
-        </div>
-      </div>
 
       <!-- YOUR ASSESSMENT ANSWERS -->
       <div v-if="surveyAnswers" class="next-steps" :class="{ visible }" style="transition-delay: 450ms; margin-top: 40px;">
@@ -188,11 +156,26 @@ const normalizedRadius = radius - stroke / 2
 const circumference = normalizedRadius * 2 * Math.PI
 
 const chartPercent = computed(() => surveyResult.value?.chartPercent ?? 75)
-const momentumLabel = computed(() => surveyResult.value?.category?.label ?? 'Building Momentum')
-const momentumDesc = computed(() => surveyResult.value?.category?.momentum_desc ?? 'You\'re on the right path! Your consistent activity level is laying the groundwork for improved long-term mobility and energy.')
 
-const catColorMap = { 1: '#e53e3e', 2: '#e8824a', 3: '#d4a017', 4: '#1a5c52' }
-const catColor = computed(() => catColorMap[surveyResult.value?.catId] ?? '#1a5c52')
+const categoryLabelMap = {
+  'Just Getting Started': 'Just Getting Started',
+  'Building Momentum':    'Building Momentum',
+  'Thriving':             'Thriving',
+}
+const categoryDescMap = {
+  'Just Getting Started': 'Every journey starts with a single step. Small, consistent movements will build your strength and confidence over time.',
+  'Building Momentum':    'You\'re on the right path! Your consistent activity level is laying the groundwork for improved long-term mobility and energy.',
+  'Thriving':             'Excellent work! Your active lifestyle is a powerful foundation for sustained health and vitality.',
+}
+const catColorMap = {
+  'Just Getting Started': '#e53e3e',
+  'Building Momentum':    '#e8824a',
+  'Thriving':             '#1a5c52',
+}
+
+const momentumLabel = computed(() => categoryLabelMap[surveyResult.value?.categoryName] ?? surveyResult.value?.category?.label ?? 'Building Momentum')
+const momentumDesc  = computed(() => categoryDescMap[surveyResult.value?.categoryName]  ?? surveyResult.value?.category?.description ?? 'You\'re on the right path!')
+const catColor      = computed(() => catColorMap[surveyResult.value?.categoryName] ?? '#1a5c52')
 
 const offset = computed(() => {
   return circumference - (chartReady.value ? chartPercent.value / 100 : 0) * circumference
@@ -290,7 +273,7 @@ onMounted(() => {
   transform: translateY(0);
 }
 .title {
-  font-size: clamp(36px, 6vw, 52px);
+  font-size: clamp(30px, 6vw, 25px);
   font-weight: 700;
   color: #0f3d35;
   line-height: 1.1;
@@ -300,7 +283,7 @@ onMounted(() => {
   font-size: 20px;
   color: #5a6b67;
   line-height: 1.65;
-  max-width: 820px;
+  max-width: 80%;
 }
 
 /* GRID */
@@ -329,6 +312,8 @@ onMounted(() => {
   position: relative;
   overflow: hidden;
   text-align: left;
+  flex: 1;
+  padding: 24px;
 }
 .card-dark::before {
   content: '';
@@ -341,6 +326,7 @@ onMounted(() => {
 .card-white {
   background: #ffffff;
   text-align: left;
+  flex: 2;
 }
 .card-title {
   font-size: 25px;
@@ -425,49 +411,70 @@ onMounted(() => {
   gap: 8px;
   margin-bottom: 12px;
 }
-.status-icon { font-size: 18px; }
+.status-icon { font-size: 14px; }
 .status-label {
-  font-size: 15px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.6);
 }
 .momentum-title {
-  font-size: 25px;
+  font-size: 20px;
   font-weight: 700;
   color: #ffffff;
   margin-bottom: 12px;
   line-height: 1.15;
 }
 .momentum-desc {
-  font-size: 15px;
+  font-size: 12px;
   color: rgba(255,255,255,0.75);
   line-height: 1.6;
 }
 
-/* STEADY PROGRESS */
-.progress-icon {
-  width: 42px; height: 42px;
-  border-radius: 50%;
-  background: #fde8da;
+/* ACTION CARD */
+.action-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: center;
+}
+.action-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  margin-bottom: 14px;
+  gap: 14px;
+  border-radius: 14px;
+  padding: 20px 22px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  flex: 1;
 }
-.progress-title {
-  font-size: 25px;
+.action-btn:hover { transform: translateY(-2px); }
+.action-btn-dark {
+  background: #1a5c52;
+  box-shadow: 0 4px 12px rgba(26,92,82,0.15);
+}
+.action-btn-dark:hover { box-shadow: 0 8px 24px rgba(26,92,82,0.25); }
+.action-btn-light {
+  background: #ede9e1;
+}
+.action-btn-light:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+.action-btn-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.action-btn-label {
+  font-size: 17px;
   font-weight: 700;
-  margin-bottom: 8px;
-  color: #0f3d35;
+  color: #ffffff;
+  flex: 1;
 }
-.progress-desc {
-  font-size: 15px;
-  color: #5a6b67;
-  line-height: 1.65;
+.action-btn-label-dark { color: #0f3d35; }
+.action-btn-arrow {
+  font-size: 20px;
+  color: rgba(255,255,255,0.7);
 }
+.action-btn-arrow-dark { color: #5a6b67; }
 
 /* NEXT STEPS */
 .next-steps {
@@ -585,7 +592,7 @@ onMounted(() => {
 
   .main { max-width: 100%; margin: 0; padding: 24px 20px 48px; }
 
-  .title { font-size: 28px; }
+  .title { font-size: 25px; }
   .subtitle { font-size: 14px; }
 
   .grid {

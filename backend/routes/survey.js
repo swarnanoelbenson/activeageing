@@ -1,10 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
-const { getScore, getCategoryId, getChartPercent } = require("../utils/scoring");
+const {
+  getActivityScore,
+  getModifierScore,
+  getCategoryName,
+  getModifierName,
+  getChartPercent,
+} = require("../utils/scoring");
 
 // POST /api/survey
-// Body: { answers: [answer1, answer2, answer3, answer4, answer5, answer6] }
+// Body: { answers: [exercise_frequency, session_duration, inactivity_level, sleep_hours, restedness] }
 router.post("/", async (req, res) => {
   const { answers } = req.body;
 
@@ -12,33 +18,46 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "Expected 5 answers" });
   }
 
-  const score = getScore(answers);
-  const catId = getCategoryId(score);
-  const chartPercent = getChartPercent(score);
+  const [q1, q2, q3, q4, q5] = answers;
+  const activityScore = getActivityScore(answers);
+  const modifierScore = getModifierScore(answers);
+  const categoryName  = getCategoryName(activityScore);
+  const modifierName  = getModifierName(modifierScore);
+  const chartPercent  = getChartPercent(activityScore);
 
   try {
+    // Store in user_checkins
     await pool.query(
-      `INSERT INTO survey_responses
-        (exercise_frequency, session_duration, inactivity_level, sleep_hours, restedness, score, cat_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [...answers, score, catId]
+      `INSERT INTO user_checkins
+        (exercise_frequency, session_duration, inactivity_level, sleep_hours, restedness,
+         activity_score, modifier_score, category_name, modifier_name)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [q1, q2, q3, q4, q5, activityScore, modifierScore, categoryName, modifierName]
     );
 
-    // Fetch the category, momentum, and exercises for this category
-    const [[category]] = await pool.query(
-      `SELECT c.cat_id, c.name, c.description, m.label, m.description AS momentum_desc
-       FROM category c
-       LEFT JOIN momentum m ON m.cat_id = c.cat_id
-       WHERE c.cat_id = ?`,
-      [catId]
+    // Fetch category description
+    const [[categoryRow]] = await pool.query(
+      `SELECT category_name, description FROM category_thresholds WHERE category_name = ?`,
+      [categoryName]
     );
 
+    // Fetch exercises for this category + modifier combination
     const [exercises] = await pool.query(
-      `SELECT exe_id, name, gif, steps FROM exercise WHERE cat_id = ?`,
-      [catId]
+      `SELECT exercise_name, duration_minutes, instructions, notes
+       FROM exercise_recommendations
+       WHERE category_name = ? AND modifier_name = ?`,
+      [categoryName, modifierName]
     );
 
-    res.json({ score, catId, chartPercent, category, exercises });
+    res.json({
+      activityScore,
+      modifierScore,
+      categoryName,
+      modifierName,
+      chartPercent,
+      category: categoryRow,
+      exercises,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Database error" });

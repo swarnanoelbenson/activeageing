@@ -2,27 +2,26 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 
-// GET /api/results/:catId
-// Returns category info, momentum, and exercises for a given category
-router.get("/:catId", async (req, res) => {
-  const catId = parseInt(req.params.catId);
-
-  if (!catId || catId < 1 || catId > 4) {
-    return res.status(400).json({ error: "Invalid category id" });
-  }
+// GET /api/results/:categoryName/:modifierName
+// Returns category info and exercises for a given category + modifier
+router.get("/:categoryName/:modifierName", async (req, res) => {
+  const { categoryName, modifierName } = req.params;
 
   try {
     const [[category]] = await pool.query(
-      `SELECT c.cat_id, c.name, c.description, m.label, m.description AS momentum_desc
-       FROM category c
-       LEFT JOIN momentum m ON m.cat_id = c.cat_id
-       WHERE c.cat_id = ?`,
-      [catId]
+      `SELECT category_name, description FROM category_thresholds WHERE category_name = ?`,
+      [categoryName]
     );
 
+    if (!category) {
+      return res.status(404).json({ error: "Category not found" });
+    }
+
     const [exercises] = await pool.query(
-      `SELECT exe_id, name, gif, steps FROM exercise WHERE cat_id = ?`,
-      [catId]
+      `SELECT exercise_name, duration_minutes, instructions, notes
+       FROM exercise_recommendations
+       WHERE category_name = ? AND modifier_name = ?`,
+      [categoryName, modifierName]
     );
 
     res.json({ category, exercises });
