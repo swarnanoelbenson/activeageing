@@ -86,13 +86,13 @@
     </main>
 
     <footer class="footer">
-      <h3 class="footer-logo">ActiveAgeing</h3>
+      <div class="footer-logo">ActiveAgeing</div>
       <div class="footer-links">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-        <a href="#">Contact Support</a>
+        <a @click="router.push('/privacy')">Privacy Policy</a>
+        <a @click="router.push('/terms')">Terms of Service</a>
+        <a @click="router.push('/contact')">Contact Support</a>
       </div>
-      <p>© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</p>
+      <p class="footer-copy">© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</p>
     </footer>
   </div>
 </template>
@@ -171,19 +171,39 @@ onMounted(() => {
 .page {
   min-height: 100vh;
   background: #f4f1eb;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Poppins', 'Arial', sans-serif;
   color: #1a2e2b;
   display: flex;
   flex-direction: column;
 }
 
-.navbar { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; width: 100%; margin: 0 auto; padding: 20px 40px; }
+/* NAV — matches Results */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 20px 40px;
+}
 .logo { font-weight: 700; font-size: 20px; color: #0b5d57; cursor: pointer; }
 .nav-links { display: flex; gap: 32px; font-size: 16px; font-weight: 500; }
 .nav-link { color: #0b5d57; text-decoration: none; cursor: pointer; }
 .nav-link.active { text-decoration: underline; text-underline-offset: 4px; }
 
-.progress-wrap { max-width: 1200px; margin: 0 auto; width: 100%; padding: 0 40px 20px; display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto; align-items: center; gap: 0 12px; }
+/* PROGRESS */
+.progress-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 40px 20px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0 12px;
+}
 .progress-label { display: flex; align-items: center; gap: 7px; grid-column: 1; grid-row: 1; }
 .progress-dot { width: 8px; height: 8px; border-radius: 50%; background: #0b5d57; }
 .progress-text { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: #5a6b67; text-transform: uppercase; }
@@ -191,40 +211,151 @@ onMounted(() => {
 .progress-track { grid-column: 1 / 4; grid-row: 2; height: 8px; background: #d5cfc4; border-radius: 99px; margin-top: 8px; overflow: hidden; }
 .progress-fill { height: 100%; background: #0b5d57; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
 
-.main { max-width: 1200px; margin: 0 auto; width: 100%; padding: 20px 40px 60px; flex: 1; }
-.card { background: #ffffff; border-radius: 24px; display: flex; overflow: hidden; opacity: 0; transform: translateY(16px); transition: 0.5s ease; }
+/* MAIN — matches Results padding */
+.main {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 40px 40px 80px;
+  flex: 1;
+}
+
+/* CARD — outer uses ede9e1 like Results card-light */
+.card {
+  background: #ede9e1;
+  border-radius: 20px;
+  display: flex;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
 .card.visible { opacity: 1; transform: translateY(0); }
 
-.card-left { background: #f0ede6; width: 42%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 32px; gap: 32px; }
+/* LEFT panel — white like Results card-white */
+.card-left {
+  background: #ffffff;
+  width: 38%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 32px;
+  gap: 28px;
+}
 .figure-svg { width: 200px; height: 220px; }
-.encouragement { background: #e8824a; color: #ffffff; font-size: 14px; font-weight: 600; padding: 10px 24px; border-radius: 10px; }
+.encouragement {
+  background: #0b5d57;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 10px;
+}
 
-.card-right { flex: 1; padding: 44px; display: flex; flex-direction: column; text-align: left; /* 核心修改：确保右侧容器左对齐 */ }
-.exercise-title { font-size: 38px; font-weight: 700; color: #0b5d57; margin: 0 0 20px; text-align: left; }
+/* RIGHT panel — matches Results card-light */
+.card-right {
+  flex: 1;
+  padding: 44px;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
 
+/* Exercise title — matches Results .momentum-title style */
+.exercise-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #0f3d35;
+  margin: 0 0 20px;
+  line-height: 1.2;
+}
+
+/* Tags */
 .tags { display: flex; gap: 10px; margin-bottom: 28px; }
-.tag { display: flex; align-items: center; gap: 6px; border: 1.5px solid #c8c2b8; border-radius: 8px; padding: 6px 14px; font-size: 13px; color: #3a4a48; }
+.tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid #c8c2b8;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: #5a6b67;
+}
 
-.instructions-label { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; margin-bottom: 20px; text-align: left; }
+/* Instructions */
+.instructions-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f3d35;
+  margin-bottom: 20px;
+}
 .label-bar { width: 4px; height: 16px; background: #0b5d57; border-radius: 2px; }
 
-.steps { list-style: none; padding: 0; margin: 0 0 32px; display: flex; flex-direction: column; gap: 16px; text-align: left; /* 核心修改：步骤文字靠左 */ }
-.step-item { display: flex; align-items: flex-start; gap: 14px; text-align: left; }
-.step-num { min-width: 28px; height: 28px; border-radius: 50%; background: #0b5d57; color: #ffffff; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.step-text { font-size: 14px; line-height: 1.65; color: #3a4a48; text-align: left; }
+/* Steps — matches Results step desc style */
+.steps { list-style: none; padding: 0; margin: 0 0 32px; display: flex; flex-direction: column; gap: 16px; }
+.step-item { display: flex; align-items: flex-start; gap: 14px; }
+.step-num {
+  min-width: 28px; height: 28px;
+  border-radius: 50%;
+  background: #0b5d57;
+  color: #ffffff;
+  font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.step-text { font-size: 14px; line-height: 1.65; color: #5a6b67; }
 
+/* Buttons — match Results step cards */
 .actions { display: flex; flex-direction: column; gap: 12px; margin-top: auto; }
-.btn-primary { background: #0b5d57; color: #ffffff; border: none; border-radius: 12px; padding: 16px; font-weight: 600; cursor: pointer; }
-.btn-secondary { background: #ede9e1; color: #1a2e2b; border: none; border-radius: 12px; padding: 16px; font-weight: 600; cursor: pointer; }
+.btn-primary {
+  background: #1a5c52;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-primary:hover { background: #0f3d35; }
+.btn-secondary {
+  background: #ffffff;
+  color: #1a2e2b;
+  border: none;
+  border-radius: 12px;
+  padding: 16px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-secondary:hover { background: #f0ede6; }
 
-.footer { text-align: center; padding: 40px 0; color: #555; }
-.footer-logo { color: #0b5d57; margin-bottom: 12px; }
-.footer-links { display: flex; justify-content: center; gap: 20px; margin-bottom: 12px; }
-.footer-links a { color: #555; text-decoration: none; }
+/* FOOTER — matches Results */
+.footer {
+  border-top: 1px solid #ddd;
+  text-align: center;
+  padding: 32px 48px 24px;
+}
+.footer-logo { font-size: 16px; font-weight: 700; color: #0b5d57; margin-bottom: 12px; }
+.footer-links { display: flex; justify-content: center; gap: 24px; margin-bottom: 10px; }
+.footer-links a { font-size: 13px; color: #555; font-weight: 500; cursor: pointer; text-decoration: none; }
+.footer-links a:hover { color: #0b5d57; }
+.footer-copy { font-size: 12px; color: #888; }
 
+/* RESPONSIVE */
 @media (max-width: 900px) {
   .card { flex-direction: column; }
-  .card-left, .card-right { width: 100%; padding: 24px; }
+  .card-left { width: 100%; padding: 32px 24px; }
+  .card-right { padding: 32px 24px; }
 }
 
 @media (max-width: 768px) {
@@ -233,21 +364,17 @@ onMounted(() => {
   .nav-links { gap: 20px; font-size: 14px; }
 
   .progress-wrap { padding: 0 20px 16px; }
-  .main { padding: 16px 20px 40px; }
+  .main { padding: 24px 20px 48px; }
 
-  .card {
-    width: 100%;
-    box-sizing: border-box;
-    border-radius: 24px;
-    overflow: hidden;
-    margin: 0 0 24px;
-  }
-  .card-left { width: 100%; padding: 32px 20px; }
-  .card-right { padding: 32px 20px; }
+  .card { width: 100%; box-sizing: border-box; }
+  .card-left { padding: 24px 20px; }
+  .card-right { padding: 24px 20px; }
 
   .exercise-title { font-size: 24px; }
   .figure-svg { width: 140px; height: 160px; }
+  .btn-primary, .btn-secondary { padding: 14px; }
 
-  .btn-primary, .btn-secondary { padding: 14px; font-size: 14px; }
+  .footer { padding: 24px 20px; }
+  .footer-links { flex-wrap: wrap; gap: 12px; }
 }
 </style>
