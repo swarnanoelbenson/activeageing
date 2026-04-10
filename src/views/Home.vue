@@ -245,7 +245,7 @@ body {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .homepage-container { padding: 0 20px; }
+  .homepage-container { max-width: 100%; margin: 0; padding: 0 20px; overflow-x: hidden; }
 
   .nav { padding: 16px 0; }
   .logo { font-size: 18px; }

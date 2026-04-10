@@ -68,7 +68,7 @@ function finishForToday() {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-.page { min-height: 100vh; background: #f4f1eb; font-family: 'Poppins', sans-serif; color: #1a2e2b; display: flex; flex-direction: column; }
+.page { min-height: 100vh; background: #f4f1eb; font-family: 'Poppins', sans-serif; color: #1a2e2b; display: flex; flex-direction: column; overflow-x: hidden; width: 100%; box-sizing: border-box; }
 
 .navbar { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; width: 100%; padding: 20px 40px; }
 .logo { font-weight: 700; font-size: 20px; color: #0b5d57; cursor: pointer; }
@@ -97,11 +97,13 @@ function finishForToday() {
 .footer-links a { color: #555; text-decoration: none; }
 
 @media (max-width: 768px) {
-  .navbar { padding: 16px 20px; }
+  .navbar { max-width: 100%; margin: 0; padding: 16px 20px; box-sizing: border-box; width: 100%; }
   .logo { font-size: 18px; }
   .nav-links { gap: 20px; font-size: 14px; }
-  .main { padding: 32px 20px; }
+  .main { max-width: 100%; margin: 0; padding: 32px 20px; box-sizing: border-box; width: 100%; }
   .title { font-size: 28px; }
   .subtitle { font-size: 14px; }
+  .actions { flex-direction: column; align-items: stretch; }
+  .btn-primary { justify-content: center; }
 }
 </style>

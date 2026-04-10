@@ -442,9 +442,10 @@ nav a.active {
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
+  .page-wrapper { overflow-x: hidden; width: 100%; }
   .options-grid { grid-template-columns: 1fr; }
-  .survey-container { padding: 16px 20px 40px; }
-  .navbar { padding: 16px 20px; }
+  .survey-container { max-width: 100%; margin: 0; padding: 16px 20px 40px; }
+  .navbar { max-width: 100%; margin: 0; padding: 16px 20px; }
   .logo { font-size: 18px; }
   nav a { font-size: 14px; margin-left: 16px; }
   .question-title { font-size: 22px; }

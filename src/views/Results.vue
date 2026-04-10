@@ -578,11 +578,12 @@ onMounted(() => {
 
 /* MOBILE */
 @media (max-width: 768px) {
-  .nav { padding: 16px 20px; }
+  .page { overflow-x: hidden; width: 100%; }
+  .nav { max-width: 100%; margin: 0; padding: 16px 20px; }
   .nav-links { gap: 20px; font-size: 14px; }
   .logo { font-size: 18px; }
 
-  .main { padding: 24px 20px 48px; }
+  .main { max-width: 100%; margin: 0; padding: 24px 20px 48px; }
 
   .title { font-size: 28px; }
   .subtitle { font-size: 14px; }

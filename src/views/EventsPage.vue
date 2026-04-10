@@ -295,6 +295,7 @@ body {
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
+  .container { max-width: 100%; margin: 0; padding: 0 20px; overflow-x: hidden; }
   .navbar { padding: 16px 20px; }
   .logo { font-size: 18px; }
   .navbar a { font-size: 14px; margin-left: 14px; }
