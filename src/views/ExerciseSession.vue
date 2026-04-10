@@ -353,13 +353,15 @@ onMounted(() => {
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
+  .card { flex-direction: column; }
+  .card-left { width: 100%; padding: 32px 24px; }
+  .card-right { padding: 32px 24px; }
+}
+
+@media (max-width: 768px) {
   .navbar { padding: 16px 20px; }
   .logo { font-size: 18px; }
   .nav-links { gap: 20px; font-size: 14px; }
-
-
-
-
 
   .progress-wrap { padding: 0 20px 16px; }
   .main { padding: 24px 20px 48px; }
