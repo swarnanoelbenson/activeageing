@@ -352,12 +352,6 @@ onMounted(() => {
 .footer-copy { font-size: 12px; color: #888; }
 
 /* RESPONSIVE */
-@media (max-width: 900px) {
-  .card { flex-direction: column; }
-  .card-left { width: 100%; padding: 32px 24px; }
-  .card-right { padding: 32px 24px; }
-}
-
 @media (max-width: 768px) {
   .navbar { padding: 16px 20px; }
   .logo { font-size: 18px; }
