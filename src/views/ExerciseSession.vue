@@ -175,6 +175,9 @@ onMounted(() => {
   color: #1a2e2b;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* NAV — matches Results */
@@ -354,6 +357,8 @@ onMounted(() => {
 /* RESPONSIVE */
 @media (max-width: 768px) {
   .navbar {
+    max-width: 100%;
+    margin: 0;
     padding: 16px 20px;
     box-sizing: border-box;
     width: 100%;
@@ -362,12 +367,16 @@ onMounted(() => {
   .nav-links { gap: 16px; font-size: 14px; }
 
   .progress-wrap {
+    max-width: 100%;
+    margin: 0;
     padding: 0 20px 16px;
     box-sizing: border-box;
     width: 100%;
   }
 
   .main {
+    max-width: 100%;
+    margin: 0;
     padding: 24px 20px 48px;
     box-sizing: border-box;
     width: 100%;
