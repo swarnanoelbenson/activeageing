@@ -30,10 +30,7 @@ const hasSurvey = ref(!!localStorage.getItem('surveyAnswers'))
         </h1>
 
         <p class="desc">
-          Research tells us loneliness is as harmful to health as smoking 15 cigarettes a day. 
-          It raises the risk of heart disease, stroke, depression, and early death. 
-          And yet the answer is simpler than any medication: move more, connect more.
-          Across Melbourne, thousands of older adults are already doing it. This is where you start.
+Staying connected and staying active can bring a wonderful boost to our wellbeing — more energy, brighter moods, and a stronger sense of belonging. Across Melbourne, thousands of older adults are discovering new friendships, new routines, and new confidence through simple everyday movement and community activities. You can begin your own journey too, gently and in your own time, in a place that’s warm, welcoming, and ready for you.
         </p>
 
         <button class="cta" @click="router.push('/survey')">
