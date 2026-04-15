@@ -14,9 +14,9 @@ function getStarted() {
 </script>
 
 <template>
-  <div class="homepage-container">
-    
+  <div>
     <AppNavbar active="home" />
+    <div class="homepage-container">
 
     <!-- Hero Section -->
     <section class="hero">
@@ -52,6 +52,7 @@ Staying connected and staying active can bring a wonderful boost to our wellbein
       <p>© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</p>
     </footer>
 
+    </div>
   </div>
 </template>
 

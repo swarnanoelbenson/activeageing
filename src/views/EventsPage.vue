@@ -81,9 +81,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container">
-
+  <div>
     <AppNavbar active="events" />
+    <div class="container">
 
     <!-- HERO -->
     <section class="hero">
@@ -164,6 +164,7 @@ onMounted(async () => {
       <p>© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</p>
     </footer>
 
+    </div>
   </div>
 </template>
 

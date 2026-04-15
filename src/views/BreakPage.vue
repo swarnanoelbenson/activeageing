@@ -1,12 +1,6 @@
 <template>
   <div class="page">
-    <nav class="navbar">
-      <div class="logo" @click="router.push('/')">ActiveAgeing</div>
-      <div class="nav-links">
-        <a class="nav-link" @click="router.push('/')">Home</a>
-        <a class="nav-link" @click="router.push('/events')">Events</a>
-      </div>
-    </nav>
+    <AppNavbar />
 
     <main class="main">
       <h1 class="title">It's okay to take a break.</h1>
@@ -49,6 +43,7 @@
 
 <script setup>
 import { useRouter, useRoute } from 'vue-router'
+import AppNavbar from '../components/AppNavbar.vue'
 
 const router = useRouter()
 const route = useRoute()
