@@ -1,24 +1,22 @@
 <script setup>
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import myImg from '../assets/myphoto.png'
+import AppNavbar from '../components/AppNavbar.vue'
 
 const router = useRouter()
-const hasSurvey = ref(!!localStorage.getItem('surveyAnswers'))
+
+function getStarted() {
+  localStorage.removeItem('surveyAnswers')
+  localStorage.removeItem('surveyResult')
+  localStorage.removeItem('sessionCompleted')
+  router.push('/survey')
+}
 </script>
 
 <template>
   <div class="homepage-container">
     
-    <!-- Navbar -->
-    <nav class="nav">
-      <span class="logo" style="cursor:pointer" @click="router.push('/')">ActiveAgeing</span>
-      <div class="nav-links">
-        <a class="nav-link active">Home</a>
-        <a class="nav-link" style="cursor:pointer" @click="router.push('/results')">Assessment</a>
-        <!-- <a class="nav-link" style="cursor:pointer" @click="router.push('/help')">Help</a> -->
-      </div>
-    </nav>
+    <AppNavbar active="home" />
 
     <!-- Hero Section -->
     <section class="hero">
@@ -33,7 +31,7 @@ const hasSurvey = ref(!!localStorage.getItem('surveyAnswers'))
 Staying connected and staying active can bring a wonderful boost to our wellbeing — more energy, brighter moods, and a stronger sense of belonging. Across Melbourne, thousands of older adults are discovering new friendships, new routines, and new confidence through simple everyday movement and community activities. You can begin your own journey too, gently and in your own time, in a place that’s warm, welcoming, and ready for you.
         </p>
 
-        <button class="cta" @click="router.push('/survey')">
+        <button class="cta" @click="getStarted">
           Get Started →
         </button>
       </div>
@@ -41,14 +39,6 @@ Staying connected and staying active can bring a wonderful boost to our wellbein
       <div class="hero-img">
         <img :src="myImg" alt="My Image" />
       </div>
-    </section>
-
-    <!-- Red Card -->
-    <section class="card">
-      <h2>Your wellness journey,<br> clarified.</h2>
-      <p>
-        Don't let another day pass in isolation. Join thousands of Melbourne seniors who are reclaiming their health through connection.
-      </p>
     </section>
 
     <!-- Footer -->
@@ -80,6 +70,10 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 40px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 /* Navbar */
@@ -125,6 +119,7 @@ body {
   justify-content: flex-start;
   margin-top: 60px;
   gap: 40px;
+  flex: 1;
 }
 
 .hero-text {

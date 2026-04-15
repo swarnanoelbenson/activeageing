@@ -1,13 +1,6 @@
 <template>
   <div class="page">
-    <nav class="navbar">
-      <div class="logo" @click="router.push('/')">ActiveAgeing</div>
-      <div class="nav-links">
-        <a class="nav-link" @click="router.push('/')">Home</a>
-        <a class="nav-link active">Assessment</a>
-        <!-- <a class="nav-link" @click="router.push('/help')">Help</a> -->
-      </div>
-    </nav>
+    <AppNavbar />
 
     <div class="progress-wrap">
       <div class="progress-label">
@@ -20,12 +13,26 @@
       </div>
     </div>
 
-    <main class="main">
+    <!-- Exercise session -->
+    <main v-if="!sessionDone" class="main">
       <div class="card" :class="{ visible }">
 
-        <div class="card-left">
-          <div class="illustration">
-            <svg viewBox="0 0 220 240" fill="none" xmlns="http://www.w3.org/2000/svg" class="figure-svg">
+        <!-- Row 1: Title -->
+        <div class="card-header">
+          <h1 class="exercise-title">{{ currentExercise.exercise_name }}</h1>
+          <div class="tags">
+            <span class="tag">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              {{ currentExercise.duration_minutes }} min
+            </span>
+          </div>
+        </div>
+
+        <!-- Row 2: GIF + Instructions -->
+        <div class="card-body">
+          <div class="card-gif">
+            <img v-if="currentExercise.gif_url" :src="currentExercise.gif_url" :alt="currentExercise.exercise_name" class="exercise-gif" />
+            <svg v-else viewBox="0 0 220 240" fill="none" xmlns="http://www.w3.org/2000/svg" class="figure-svg">
               <line x1="75" y1="170" x2="65" y2="220" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
               <line x1="145" y1="170" x2="155" y2="220" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
               <line x1="75" y1="140" x2="65" y2="190" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
@@ -42,48 +49,104 @@
               <line x1="90" y1="162" x2="80" y2="192" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
               <line x1="130" y1="162" x2="140" y2="192" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
             </svg>
+            <div class="encouragement">You're doing great!</div>
           </div>
-          <div class="encouragement">You're doing great!</div>
+
+          <div class="card-instructions">
+            <div class="instructions-label">
+              <span class="label-bar"></span>
+              Instructions
+            </div>
+            <p class="instructions-text">{{ currentExercise.instructions }}</p>
+          </div>
         </div>
 
-        <div class="card-right">
-          <h1 class="exercise-title">{{ currentExercise.title }}</h1>
-
-          <div class="tags">
-            <span class="tag">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              {{ currentExercise.duration }}
-            </span>
-            <span class="tag">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
-              {{ currentExercise.reps }}
-            </span>
-          </div>
-
-          <div class="instructions-label">
-            <span class="label-bar"></span>
-            Step-by-Step Instructions
-          </div>
-
-          <ol class="steps">
-            <li v-for="(step, i) in currentExercise.steps" :key="i" class="step-item">
-              <span class="step-num">{{ i + 1 }}</span>
-              <span class="step-text">{{ step }}</span>
-            </li>
-          </ol>
-
-          <div class="actions">
-            <button class="btn-primary" @click="nextExercise">
-              Next Exercise →
-            </button>
-            <button class="btn-secondary" @click="finishSession">
-              Finish Session
-            </button>
-          </div>
+        <!-- Row 3: Actions -->
+        <div class="card-footer">
+          <button class="btn-secondary" :disabled="currentIndex === 0" @click="prevExercise">
+            ← Previous Exercise
+          </button>
+          <button class="btn-primary" @click="nextExercise">
+            {{ isLastExercise ? 'Finish Session →' : 'Next Exercise →' }}
+          </button>
+          <button class="btn-pause" @click="showPauseModal = true">⏸ Pause</button>
         </div>
 
       </div>
     </main>
+
+    <!-- Celebration screen -->
+    <main v-else class="main">
+      <div class="celebration" :class="{ visible }">
+
+        <!-- 1 exercise completed -->
+        <template v-if="exercisesCompleted === 1">
+          <div class="cel-emoji">💪</div>
+          <h1 class="cel-title">Back to your 40's!</h1>
+          <p class="cel-subtitle">1 of 3 exercises done — every rep counts!</p>
+          <div class="cel-quote">
+            "Even one step forward is still forward. You showed up today —
+            that alone puts you ahead of most people half your age.
+            Come back tomorrow and claim the rest. We'll be waiting. 💪"
+          </div>
+        </template>
+
+        <!-- 2 exercises completed -->
+        <template v-else-if="exercisesCompleted === 2">
+          <div class="cel-emoji">🔥</div>
+          <h1 class="cel-title">Back to your 30's!</h1>
+          <p class="cel-subtitle">2 of 3 exercises done — every rep counts!</p>
+          <div class="cel-quote">
+            "Even one step forward is still forward. You showed up today —
+            that alone puts you ahead of most people half your age.
+            Come back tomorrow and claim the rest. We'll be waiting. 💪"
+          </div>
+        </template>
+
+        <!-- All 3 exercises completed -->
+        <template v-else>
+          <div class="cel-emoji">🎉</div>
+          <h1 class="cel-title">You Actually Did It!</h1>
+          <div class="cel-age-banner">Back to 21 years old!</div>
+          <p class="cel-subtitle">Full session complete — your body is officially younger than when you started.</p>
+        </template>
+
+        <div class="cel-stats">
+          <div class="cel-stat">
+            <span class="cel-stat-num">+{{ pointsEarned }}</span>
+            <span class="cel-stat-label">points earned</span>
+          </div>
+          <div class="cel-stat">
+            <span class="cel-stat-num">+{{ pctBoost }}%</span>
+            <span class="cel-stat-label">activity boost</span>
+          </div>
+          <div class="cel-stat">
+            <span class="cel-stat-num">+{{ categoryScoreBoost }}</span>
+            <span class="cel-stat-label">category score</span>
+          </div>
+        </div>
+
+        <button class="btn-celebrate" @click="goToResults">
+          ← Back to Wellness Snapshot
+        </button>
+      </div>
+    </main>
+
+    <!-- Pause modal -->
+    <div v-if="showPauseModal" class="modal-overlay" @click.self="showPauseModal = false">
+      <div class="modal">
+        <div class="modal-emoji">😌</div>
+        <h2 class="modal-title">Take a breather!</h2>
+        <p class="modal-text">
+          Rest is part of every good plan — even champions pause.
+          Ready to jump back in, or are you calling today a win?
+        </p>
+        <div class="modal-actions">
+          <button class="modal-btn-secondary" @click="showPauseModal = false">Back</button>
+          <button class="modal-btn-primary" @click="finishSession">Finish Session</button>
+        </div>
+      </div>
+    </div>
 
     <footer class="footer">
       <div class="footer-logo">ActiveAgeing</div>
@@ -98,70 +161,88 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import AppNavbar from '../components/AppNavbar.vue'
 
 const router = useRouter()
 const visible = ref(false)
 const currentIndex = ref(0)
+const exercises = ref([])
+const exercisesCompleted = ref(0)
+const sessionDone = ref(false)
+const showPauseModal = ref(false)
 
-const exercises = [
-  {
-    title: 'Gentle Chair Yoga',
-    duration: '10 minutes',
-    reps: '15 reps',
-    steps: [
-      'Sit tall at the edge of your chair with feet flat on the floor, hip-width apart.',
-      'Inhale deeply and slowly raise your arms toward the ceiling, keeping shoulders relaxed.',
-      'Exhale as you gently lean to your right, keeping both sit-bones grounded on the chair.',
-    ]
-  },
-  {
-    title: 'Seated Leg Raises',
-    duration: '8 minutes',
-    reps: '12 reps',
-    steps: [
-      'Sit upright in your chair with your back straight and feet flat on the floor.',
-      'Slowly raise your right leg until it is parallel to the floor, hold for 2 seconds.',
-      'Lower your leg back down and repeat on the left side for one complete rep.',
-    ]
-  },
-  {
-    title: 'Shoulder Rolls',
-    duration: '5 minutes',
-    reps: '10 reps',
-    steps: [
-      'Sit comfortably with your arms relaxed at your sides.',
-      'Slowly roll both shoulders forward in a circular motion, completing 5 rotations.',
-      'Reverse direction and roll shoulders backward 5 times to complete the set.',
-    ]
-  },
-]
+const currentExercise = computed(() => exercises.value[currentIndex.value] ?? {})
+const isLastExercise  = computed(() => currentIndex.value === exercises.value.length - 1)
+const progressPercent = computed(() =>
+  exercises.value.length === 0 ? 0
+  : Math.round(((currentIndex.value + 1) / exercises.value.length) * 100)
+)
 
-const currentExercise = ref(exercises[0])
-const progressPercent = ref(0)
+// Per-exercise scoring: +40 pts, +2%, +0.4 category score each
+const pointsEarned       = computed(() => exercisesCompleted.value * 40)
+const pctBoost           = computed(() => exercisesCompleted.value * 2)
+const categoryScoreBoost = computed(() => (exercisesCompleted.value * 0.4).toFixed(1))
 
-function updateProgress() {
-  progressPercent.value = Math.round(((currentIndex.value) / exercises.length) * 100) + 20
+
+function prevExercise() {
+  if (currentIndex.value > 0) {
+    exercisesCompleted.value = Math.max(0, exercisesCompleted.value - 1)
+    currentIndex.value--
+  }
 }
 
 function nextExercise() {
-  if (currentIndex.value < exercises.length - 1) {
+  // Count this exercise as completed before advancing
+  exercisesCompleted.value++
+  if (!isLastExercise.value) {
     currentIndex.value++
-    currentExercise.value = exercises[currentIndex.value]
-    updateProgress()
   } else {
-    router.push('/celebration')
+    finishSession()
   }
 }
 
 function finishSession() {
-  router.push({ path: '/break', query: { progress: progressPercent.value } })
+  showPauseModal.value = false
+  const n = exercisesCompleted.value
+  // Write boosts back to localStorage
+  const stored = localStorage.getItem('surveyResult')
+  if (stored) {
+    const result = JSON.parse(stored)
+    result.chartPercent  = Math.min(100, (result.chartPercent  ?? 75) + n * 2)
+    result.categoryScore = Math.round(((result.categoryScore ?? 0) + n * 0.4) * 10) / 10
+    result.points        = (result.points ?? 0) + n * 40
+    localStorage.setItem('surveyResult', JSON.stringify(result))
+  }
+  localStorage.setItem('sessionCompleted', String(n * 40))   // store actual points for Results badge
+  sessionDone.value = true
+  visible.value = false
+  setTimeout(() => { visible.value = true }, 80)
+}
+
+function goToResults() {
+  router.push('/results')
 }
 
 onMounted(() => {
   setTimeout(() => { visible.value = true }, 80)
-  updateProgress()
+
+  const stored = localStorage.getItem('surveyResult')
+  if (stored) {
+    const result = JSON.parse(stored)
+    if (result.exercises && result.exercises.length > 0) {
+      exercises.value = result.exercises.slice(0, 3)
+      return
+    }
+  }
+
+  // Fallback if no survey result in localStorage
+  exercises.value = [
+    { exercise_name: 'Seated Marching', duration_minutes: 5, instructions: 'Sit upright and gently lift one knee at a time, alternating sides at a comfortable pace.', notes: 'Good for low-intensity movement', gif_url: null },
+    { exercise_name: 'Gentle Standing Stretch', duration_minutes: 8, instructions: 'Perform light full-body stretches while standing, using a wall or chair for support if needed.', notes: 'Moderate but manageable', gif_url: null },
+    { exercise_name: 'Light Walking Routine', duration_minutes: 10, instructions: 'Walk at a comfortable pace for 10 minutes on a flat surface.', notes: 'Build consistency', gif_url: null },
+  ]
 })
 </script>
 
@@ -223,11 +304,12 @@ onMounted(() => {
   flex: 1;
 }
 
-/* CARD — outer uses ede9e1 like Results card-light */
+/* CARD — vertical stack of 3 rows */
 .card {
   background: #ede9e1;
   border-radius: 20px;
   display: flex;
+  flex-direction: column;
   overflow: hidden;
   opacity: 0;
   transform: translateY(18px);
@@ -235,47 +317,26 @@ onMounted(() => {
 }
 .card.visible { opacity: 1; transform: translateY(0); }
 
-/* LEFT panel — white like Results card-white */
-.card-left {
-  background: #ffffff;
-  width: 38%;
+/* Row 1: Title + tag */
+.card-header {
+  background: #ede9e1;
+  padding: 32px 40px 24px;
+  border-bottom: 1px solid #e0dbd2;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 48px 32px;
-  gap: 28px;
-}
-.figure-svg { width: 200px; height: 220px; }
-.encouragement {
-  background: #0b5d57;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 10px 24px;
-  border-radius: 10px;
+  align-items: baseline;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
-/* RIGHT panel — matches Results card-light */
-.card-right {
-  flex: 1;
-  padding: 44px;
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-/* Exercise title — matches Results .momentum-title style */
 .exercise-title {
   font-size: 32px;
   font-weight: 700;
   color: #0f3d35;
-  margin: 0 0 20px;
+  margin: 0;
   line-height: 1.2;
 }
 
-/* Tags */
-.tags { display: flex; gap: 10px; margin-bottom: 28px; }
+.tags { display: flex; gap: 10px; }
 .tag {
   display: flex;
   align-items: center;
@@ -287,6 +348,52 @@ onMounted(() => {
   color: #5a6b67;
 }
 
+/* Row 2: GIF left, instructions right */
+.card-body {
+  display: flex;
+  gap: 0;
+  flex: 1;
+}
+
+.card-gif {
+  width: 42%;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 24px;
+  gap: 16px;
+  border-right: 1px solid #e0dbd2;
+}
+
+.figure-svg { width: 200px; height: 220px; }
+
+.exercise-gif {
+  width: 100%;
+  max-height: 340px;
+  border-radius: 12px;
+  object-fit: cover;
+  object-position: top;
+  display: block;
+}
+
+.encouragement {
+  background: #0b5d57;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 10px;
+}
+
+.card-instructions {
+  flex: 1;
+  padding: 32px 36px;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Instructions */
 .instructions-label {
   display: flex;
@@ -295,27 +402,37 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 600;
   color: #0f3d35;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 .label-bar { width: 4px; height: 16px; background: #0b5d57; border-radius: 2px; }
 
-/* Steps — matches Results step desc style */
-.steps { list-style: none; padding: 0; margin: 0 0 32px; display: flex; flex-direction: column; gap: 16px; }
-.step-item { display: flex; align-items: flex-start; gap: 14px; }
-.step-num {
-  min-width: 28px; height: 28px;
-  border-radius: 50%;
-  background: #0b5d57;
-  color: #ffffff;
-  font-size: 13px; font-weight: 600;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+.instructions-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #5a6b67;
+  margin: 0 0 16px;
 }
-.step-text { font-size: 14px; line-height: 1.65; color: #5a6b67; }
+.notes-text {
+  font-size: 13px;
+  color: #0b5d57;
+  background: #e8f4f3;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0;
+  line-height: 1.5;
+}
 
-/* Buttons — match Results step cards */
-.actions { display: flex; flex-direction: column; gap: 12px; margin-top: auto; }
+/* Row 3: Actions */
+.card-footer {
+  padding: 24px 40px;
+  border-top: 1px solid #e0dbd2;
+  display: flex;
+  gap: 16px;
+  background: #ede9e1;
+}
+
 .btn-primary {
+  flex: 1;
   background: #1a5c52;
   color: #ffffff;
   border: none;
@@ -333,7 +450,7 @@ onMounted(() => {
   color: #1a2e2b;
   border: none;
   border-radius: 12px;
-  padding: 16px;
+  padding: 16px 24px;
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
   font-weight: 600;
@@ -341,6 +458,164 @@ onMounted(() => {
   transition: background 0.2s;
 }
 .btn-secondary:hover { background: #f0ede6; }
+.btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-secondary:disabled:hover { background: #ffffff; }
+
+/* Pause button */
+.btn-pause {
+  background: #f4f1eb;
+  color: #1a2e2b;
+  border: 1.5px solid #c8c2b8;
+  border-radius: 12px;
+  padding: 16px 20px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.btn-pause:hover { background: #e8e2d8; }
+
+/* CELEBRATION SCREEN */
+.celebration {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 64px 48px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.celebration.visible { opacity: 1; transform: translateY(0); }
+.cel-emoji { font-size: 56px; line-height: 1; }
+.cel-title {
+  font-size: 40px;
+  font-weight: 700;
+  color: #0f3d35;
+  margin: 0;
+}
+.cel-subtitle {
+  font-size: 18px;
+  color: #5a6b67;
+  margin: 0;
+}
+.cel-quote {
+  max-width: 580px;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #4a4a4a;
+  background: #f4f1eb;
+  border-radius: 16px;
+  padding: 24px 32px;
+  font-style: italic;
+}
+.cel-stats {
+  display: flex;
+  gap: 32px;
+}
+.cel-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.cel-stat-num {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a8a40;
+}
+.cel-stat-label {
+  font-size: 13px;
+  color: #5a6b67;
+  font-weight: 500;
+}
+.btn-celebrate {
+  background: #0b5d57;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 18px 40px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 8px;
+}
+.btn-celebrate:hover { background: #0f3d35; }
+
+/* PAUSE MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+.modal {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 48px 40px;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.modal-emoji { font-size: 40px; }
+.modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f3d35;
+  margin: 0;
+}
+.modal-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #5a6b67;
+  margin: 0;
+}
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+.modal-btn-primary {
+  flex: 1;
+  background: #1a5c52;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.modal-btn-primary:hover { background: #0f3d35; }
+.modal-btn-secondary {
+  flex: 1;
+  background: #f4f1eb;
+  color: #1a2e2b;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.modal-btn-secondary:hover { background: #e8e2d8; }
 
 /* FOOTER — matches Results */
 .footer {
@@ -382,18 +657,15 @@ onMounted(() => {
     width: 100%;
   }
 
-  .card {
-    flex-direction: column;
-    width: 100%;
-    box-sizing: border-box;
-  }
-  .card-left { width: 100%; padding: 24px 20px; }
-  .card-right { padding: 24px 20px; box-sizing: border-box; }
-
-  .step-text { word-break: break-word; }
-
+  .card-header { padding: 24px 20px 16px; }
   .exercise-title { font-size: 24px; }
+
+  .card-body { flex-direction: column; }
+  .card-gif { width: 100%; border-right: none; border-bottom: 1px solid #e0dbd2; padding: 20px; }
   .figure-svg { width: 140px; height: 160px; }
+  .card-instructions { padding: 20px; }
+
+  .card-footer { flex-direction: column; padding: 20px; gap: 10px; }
   .btn-primary, .btn-secondary { padding: 14px; }
 
   .footer { padding: 24px 20px; }

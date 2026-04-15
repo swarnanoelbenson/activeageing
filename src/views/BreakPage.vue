@@ -4,7 +4,7 @@
       <div class="logo" @click="router.push('/')">ActiveAgeing</div>
       <div class="nav-links">
         <a class="nav-link" @click="router.push('/')">Home</a>
-        <!-- <a class="nav-link" @click="router.push('/help')">Help</a> -->
+        <a class="nav-link" @click="router.push('/events')">Events</a>
       </div>
     </nav>
 

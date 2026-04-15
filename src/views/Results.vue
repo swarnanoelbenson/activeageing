@@ -1,14 +1,7 @@
 <template>
   <div class="page">
     <!-- NAV -->
-    <nav class="nav">
-      <span class="logo" style="cursor:pointer" @click="router.push('/')">ActiveAgeing</span>
-      <div class="nav-links">
-        <a class="nav-link" style="cursor:pointer" @click="router.push('/')">Home</a>
-        <a class="nav-link active">Assessment</a>
-        <!-- <a class="nav-link" style="cursor:pointer" @click="router.push('/help')">Help</a> -->
-      </div>
-    </nav>
+    <AppNavbar active="wellness" />
 
     <!-- MAIN -->
     <main class="main">
@@ -25,18 +18,45 @@
       </div>
 
       <!-- RANDOM FACT -->
-      <div v-if="randomFact" class="fact-box" :class="{ visible }" style="transition-delay: 80ms;">
+      <!-- <div v-if="randomFact" class="fact-box" :class="{ visible }" style="transition-delay: 80ms;">
         <span class="fact-icon">💡</span>
         <p class="fact-text">{{ randomFact }}</p>
+      </div> -->
+
+      <!-- EMPTY STATE — no survey result -->
+      <div v-if="!surveyResult" class="grid" :class="{ visible }" style="transition-delay: 150ms;">
+        <div class="card card-light empty-card">
+          <div class="empty-icon">📊</div>
+          <p class="empty-label">Activity Comparison</p>
+          <p class="empty-hint">Complete the survey to see your results here.</p>
+        </div>
+        <div class="right-col">
+          <div class="card card-light empty-card">
+            <div class="empty-icon">🚀</div>
+            <p class="empty-label">Current Status</p>
+            <p class="empty-hint">Your wellness category will appear after the survey.</p>
+          </div>
+          <div class="card card-light empty-card">
+            <div class="empty-icon">✦</div>
+            <p class="empty-label">Your Actions</p>
+            <p class="empty-hint">Personalised exercise and event recommendations await.</p>
+          </div>
+        </div>
+      </div>
+      <div v-if="!surveyResult" class="empty-cta" :class="{ visible }" style="transition-delay: 250ms;">
+        <button class="btn-home" @click="router.push('/survey')">Get Started →</button>
       </div>
 
-      <!-- TWO COLUMN GRID -->
-      <div class="grid" :class="{ visible }" style="transition-delay: 150ms;">
+      <!-- TWO COLUMN GRID — has survey result -->
+      <div v-else class="grid" :class="{ visible }" style="transition-delay: 150ms;">
 
         <!-- LEFT: Activity Comparison -->
         <div class="card card-light">
           <h3 class="card-title">Activity Comparison</h3>
           <p class="card-desc">Your current movement relative to the Australian 65+ benchmark.</p>
+
+          <!-- Session completed badge -->
+          <div v-if="sessionJustCompleted" class="points-badge">+{{ sessionPointsEarned }} points</div>
 
           <!-- Circle Chart -->
           <div class="chart-wrap">
@@ -101,15 +121,13 @@
         </div>
       </div>
 
-
-
       <!-- YOUR ASSESSMENT ANSWERS -->
-      <div v-if="surveyAnswers" class="next-steps" :class="{ visible }" style="transition-delay: 450ms; margin-top: 40px;">
+      <div v-if="surveyResult && answeredSummary.length > 0" class="next-steps" :class="{ visible }" style="transition-delay: 450ms; margin-top: 40px;">
         <h2 class="section-title">Your Assessment Answers</h2>
-        <div class="answers-grid">
-          <div v-for="(answer, i) in surveyAnswers" :key="i" class="answer-card">
-            <div class="answer-label">Q{{ i + 1 }}</div>
-            <div class="answer-value">{{ answer }}</div>
+        <div class="answers-summary">
+          <div v-for="item in answeredSummary" :key="item.q" class="summary-item">
+            <div class="summary-top"><span class="summary-q">{{ item.q }}</span> <span class="summary-label">{{ item.label }}</span></div>
+            <span class="summary-answer">{{ item.answer }}</span>
           </div>
         </div>
       </div>
@@ -133,6 +151,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import AppNavbar from '../components/AppNavbar.vue'
 
 const router = useRouter()
 
@@ -141,14 +160,26 @@ const facts = [
   '"You\'re not alone!" — Understanding your activity helps us recommend exercises that are safe and right for you.',
   '"Progress, not perfection!" — Knowing your stamina ensures we set goals that challenge without overwhelming.',
   '"You\'re doing great!" — This helps us curate exercises that honour your body\'s current needs.',
-  '"Keep going!" — Your energy profile helps us schedule activity at the right intensity for you.',
+  '"Keep going!" - Your energy profile helps us schedule activity at the right intensity for you.',
 ]
+
+const questionLabels = ['Physical Activity', 'Active Sessions', 'Inactive During Day', 'Sleep', 'How You Feel on Waking']
 
 const visible = ref(false)
 const chartReady = ref(false)
 const surveyAnswers = ref(null)
 const surveyResult = ref(null)
 const randomFact = ref('')
+const sessionJustCompleted = ref(false)
+const sessionPointsEarned = ref(0)
+
+const answeredSummary = computed(() =>
+  (surveyAnswers.value ?? []).map((ans, i) => ({
+    q: `Q${i + 1}.`,
+    label: questionLabels[i],
+    answer: ans,
+  }))
+)
 
 const radius = 80
 const stroke = 12
@@ -190,6 +221,13 @@ onMounted(() => {
 
   const result = localStorage.getItem('surveyResult')
   if (result) surveyResult.value = JSON.parse(result)
+
+  const pts = localStorage.getItem('sessionCompleted')
+  if (pts) {
+    sessionJustCompleted.value = true
+    sessionPointsEarned.value = parseInt(pts) || 0
+    localStorage.removeItem('sessionCompleted')
+  }
 
   randomFact.value = facts[Math.floor(Math.random() * facts.length)]
 })
@@ -306,11 +344,12 @@ onMounted(() => {
   border-radius: 20px;
   padding: 28px 24px;
 }
-.card-light { background: #ede9e1; }
+.card-light { background: #ede9e1; cursor: default; }
+.card-light:hover, .card-dark:hover { transform: none; box-shadow: none; }
 .card-dark {
   background: #1a5c52;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   text-align: left;
   flex: 1;
   padding: 24px;
@@ -320,7 +359,6 @@ onMounted(() => {
   position: absolute;
   left: 0; top: 0; bottom: 0;
   width: 5px;
-  background: #e8824a;
   border-radius: 20px 0 0 20px;
 }
 .card-white {
@@ -338,6 +376,65 @@ onMounted(() => {
   color: #5a6b67;
   margin-bottom: 28px;
   line-height: 1.5;
+}
+
+/* EMPTY STATE */
+.empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+  gap: 10px;
+  min-height: 180px;
+  border: 2px dashed #d5cfc4;
+  background: #f9f7f3;
+}
+.empty-icon { font-size: 32px; opacity: 0.4; }
+.empty-label { font-size: 15px; font-weight: 600; color: #a0998e; margin: 0; }
+.empty-hint  { font-size: 13px; color: #b8b0a5; margin: 0; line-height: 1.5; }
+
+.empty-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.empty-cta.visible { opacity: 1; transform: translateY(0); }
+
+.btn-home {
+  background: #0b5d57;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 32px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-home:hover { background: #0f3d35; }
+
+/* Session points badge */
+.points-badge {
+  display: inline-block;
+  background: #e6f9ec;
+  color: #1a8a40;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1.5px solid #a8dbb8;
+  margin-bottom: 16px;
+  animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes pop-in {
+  from { transform: scale(0.6); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
 }
 
 /* CHART */
@@ -413,7 +510,7 @@ onMounted(() => {
 }
 .status-icon { font-size: 14px; }
 .status-label {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -427,7 +524,7 @@ onMounted(() => {
   line-height: 1.15;
 }
 .momentum-desc {
-  font-size: 12px;
+  font-size: 15px;
   color: rgba(255,255,255,0.75);
   line-height: 1.6;
 }
@@ -471,10 +568,12 @@ onMounted(() => {
 }
 .action-btn-label-dark { color: #0f3d35; }
 .action-btn-arrow {
-  font-size: 20px;
-  color: rgba(255,255,255,0.7);
+  font-size: 28px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+  flex-shrink: 0;
 }
-.action-btn-arrow-dark { color: #5a6b67; }
+.action-btn-arrow-dark { color: #1a5c52; font-weight: 700; }
 
 /* NEXT STEPS */
 .next-steps {
@@ -576,12 +675,25 @@ onMounted(() => {
   color: #888;
 }
 
-/* ANSWERS GRID */
-.answers-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+/* ANSWERS SUMMARY */
+.answers-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #e8f4f3;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-size: 15px;
+}
+.summary-top { display: flex; align-items: center; gap: 4px; }
+.summary-q { font-weight: 700; color: #0b5d57; }
+.summary-label { color: #5a6b67; }
+.summary-answer { font-weight: 600; color: #0f3d35; }
 
 /* MOBILE */
 @media (max-width: 768px) {
@@ -618,27 +730,7 @@ onMounted(() => {
     box-sizing: border-box;
   }
 
-  .answers-grid { grid-template-columns: 1fr 1fr; }
-
   .footer { padding: 24px 20px; }
   .footer-links { flex-wrap: wrap; gap: 12px; justify-content: center; }
-}
-.answer-card {
-  background: #ede9e1;
-  border-radius: 14px;
-  padding: 16px 20px;
-}
-.answer-label {
-  font-size: 15px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: #0b5d57;
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-.answer-value {
-  font-size: 15px;
-  font-weight: 500;
-  color: #1a2e2b;
 }
 </style>

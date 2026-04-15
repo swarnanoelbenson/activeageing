@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import AppNavbar from '../components/AppNavbar.vue'
 
 const router = useRouter()
 
@@ -21,10 +22,12 @@ const questions = [
     text: 'How long are you usually active in one session?',
     subtitle: 'We want to ensure your journey is safe and comfortable.',
     options: [
-      { label: 'Less than 15 minutes', desc: 'Short bursts work best for me.',          icon: '⏱️' },
-      { label: '15 to 30 minutes',     desc: 'I can manage a brief session.',           icon: '🕒' },
+      { label: 'More than 60 minutes', desc: 'I love longer activity sessions.',        icon: '🏅' },
       { label: '30 to 60 minutes',     desc: 'I enjoy a moderate workout length.',      icon: '🕑' },
-      { label: 'More than 60 minutes', desc: 'I love longer activity sessions.',        icon: '🏅' }
+      { label: '15 to 30 minutes',     desc: 'I can manage a brief session.',           icon: '🕒' },
+      { label: 'Less than 15 minutes', desc: 'Short bursts work best for me.',          icon: '⏱️' }
+      
+      
     ]
   },
   {
@@ -41,10 +44,10 @@ const questions = [
     text: 'On most nights, how many hours do you sleep?',
     subtitle: 'We want to ensure your journey is safe and comfortable.',
     options: [
-      { label: 'Less than 6 hours',       desc: 'I often get very little sleep.',              icon: '😫' },
-      { label: '6 to less than 7 hours',  desc: 'I get a bit under the recommended amount.',   icon: '😴' },
+      { label: 'More than 8 hours',       desc: 'I tend to sleep longer than most.',           icon: '💤' },
       { label: '7 to 8 hours',            desc: 'I get a healthy amount of sleep.',            icon: '🌙' },
-      { label: 'More than 8 hours',       desc: 'I tend to sleep longer than most.',           icon: '💤' }
+      { label: '6 to less than 7 hours',  desc: 'I get a bit under the recommended amount.',   icon: '😴' },
+      { label: 'Less than 6 hours',       desc: 'I often get very little sleep.',              icon: '😫' }
     ]
   },
   {
@@ -114,14 +117,7 @@ async function submitSurvey() {
 
 <template>
   <div class="page-wrapper">
-    <!-- Navbar -->
-    <header class="navbar">
-      <div class="logo" @click="router.push('/')">ActiveAgeing</div>
-      <nav>
-        <a @click="router.push('/')">Home</a>
-        <a @click="router.push('/help')">Help</a>
-      </nav>
-    </header>
+    <AppNavbar />
 
     <!-- Main content -->
     <main class="survey-container">
