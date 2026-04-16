@@ -103,7 +103,7 @@
         </div>
 
         <button class="btn-celebrate" @click="goToResults">
-          ← Back to Wellness Snapshot
+          ← Back to Check-In
         </button>
       </div>
     </main>

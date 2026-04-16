@@ -12,8 +12,9 @@
           Your Wellness<br />Snapshot Results
         </h1>
         <p class="subtitle">
-          You're establishing a wonderful foundation. With a few intentional shifts,
-          you're perfectly positioned to reach your peak vitality.
+          You can feel back like you were 21 years old with a
+          few uplifting shifts that will make you stronger, steadier, 
+          and wonderfully capable in your everyday life.
         </p>
       </div>
 
@@ -53,7 +54,10 @@
         <!-- LEFT: Activity Comparison -->
         <div class="card card-light">
           <h3 class="card-title">Activity Comparison</h3>
-          <p class="card-desc">Your current movement relative to the Australian 65+ benchmark.</p>
+          <p class="card-desc">
+            Your current movement compared to the uplifting activity levels enjoyed by many Australians aged 65 and over.
+
+          </p>
 
           <!-- Session completed badge -->
           <div v-if="sessionJustCompleted" class="points-badge">+{{ sessionPointsEarned }} points</div>

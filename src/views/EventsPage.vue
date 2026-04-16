@@ -96,8 +96,7 @@ onMounted(async () => {
         </h1>
 
         <p class="desc">
-          Discover a selection of gatherings specifically matched to your current pace.
-          No pressure, just progress.
+          Discover friendly gatherings that match your pace and bring joyful, steady progress.
         </p>
       </div>
     </section>
@@ -147,7 +146,7 @@ onMounted(async () => {
     <!-- CTA -->
     <section class="cta-box">
       <button class="cta-btn big" @click="router.push('/results')">
-        ← Back to Wellness Snapshot
+        ← Back to Check-In
       </button>
     </section>
 

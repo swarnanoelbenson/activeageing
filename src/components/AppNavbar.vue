@@ -3,8 +3,8 @@
     <span class="appnav-logo" @click="router.push('/')">ActiveAgeing</span>
     <div class="appnav-links">
       <a :class="{ active: active === 'home' }"     @click="router.push('/')">Home</a>
+      <a :class="{ active: active === 'wellness' }" @click="router.push('/results')">Check-In</a>
       <a :class="{ active: active === 'events' }"   @click="router.push('/events')">Events</a>
-      <a :class="{ active: active === 'wellness' }" @click="router.push('/results')">Wellness Snapshot</a>
     </div>
   </nav>
 </template>

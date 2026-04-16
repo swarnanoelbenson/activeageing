@@ -28,7 +28,9 @@ function getStarted() {
         </h1>
 
         <p class="desc">
-Staying connected and staying active can bring a wonderful boost to our wellbeing — more energy, brighter moods, and a stronger sense of belonging. Across Melbourne, thousands of older adults are discovering new friendships, new routines, and new confidence through simple everyday movement and community activities. You can begin your own journey too, gently and in your own time, in a place that’s warm, welcoming, and ready for you.
+          Staying connected and staying active can bring a wonderful boost to our wellbeing — more energy, 
+          brighter moods, and a stronger sense of belonging. Discovering new friendships, new routines, and 
+          new confidence through simple everyday movement and community activities.
         </p>
 
         <button class="cta" @click="getStarted">
