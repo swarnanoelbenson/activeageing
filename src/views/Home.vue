@@ -21,13 +21,13 @@ function getStarted() {
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-text">
-
+        
         <h1>
-          Right now, 1 in 6 Australians aged 65 and above feel lonely.
+          Active Ageing, Rediscovering Memories
         </h1>
 
         <p class="desc">
-          Staying connected and staying active can bring a wonderful boost to our wellbeing — more energy, 
+          Staying connected and staying active can bring a wonderful boost to our wellbeing&#8208;more energy,
           brighter moods, and a stronger sense of belonging. Discovering new friendships, new routines, and 
           new confidence through simple everyday movement and community activities.
         </p>
@@ -48,9 +48,7 @@ function getStarted() {
       <div class="links">
         <a @click="router.push('/privacy')" style="cursor:pointer">Privacy Policy</a>
         <a @click="router.push('/terms')" style="cursor:pointer">Terms of Service</a>
-        <a @click="router.push('/contact')" style="cursor:pointer">Contact Support</a>
       </div>
-      <p>© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</p>
     </footer>
 
     </div>

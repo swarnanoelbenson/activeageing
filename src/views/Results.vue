@@ -144,9 +144,7 @@
       <div class="footer-links">
         <a style="cursor:pointer" @click="router.push('/privacy')">Privacy Policy</a>
         <a style="cursor:pointer" @click="router.push('/terms')">Terms of Service</a>
-        <a style="cursor:pointer" @click="router.push('/contact')">Contact Support</a>
       </div>
-      <p class="footer-copy">© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</p>
     </footer>
 
   </div>
@@ -160,10 +158,10 @@ import AppNavbar from '../components/AppNavbar.vue'
 const router = useRouter()
 
 const facts = [
-  '"Every step counts!" — Telling us your routine helps us build a plan that fits your life, not someone else\'s.',
-  '"You\'re not alone!" — Understanding your activity helps us recommend exercises that are safe and right for you.',
-  '"Progress, not perfection!" — Knowing your stamina ensures we set goals that challenge without overwhelming.',
-  '"You\'re doing great!" — This helps us curate exercises that honour your body\'s current needs.',
+  '"Every step counts!" - Telling us your routine helps us build a plan that fits your life, not someone else\'s.',
+  '"You\'re not alone!" - Understanding your activity helps us recommend exercises that are safe and right for you.',
+  '"Progress, not perfection!" - Knowing your stamina ensures we set goals that challenge without overwhelming.',
+  '"You\'re doing great!" - This helps us curate exercises that honour your body\'s current needs.',
   '"Keep going!" - Your energy profile helps us schedule activity at the right intensity for you.',
 ]
 

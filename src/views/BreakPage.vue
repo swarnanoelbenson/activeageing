@@ -5,7 +5,7 @@
     <main class="main">
       <h1 class="title">It's okay to take a break.</h1>
       <p class="subtitle">
-        You've already completed {{ progressPercent }}% of your session—<br />
+        You've already completed {{ progressPercent }}% of your session&#8208;<br />
         that's a fantastic effort!
       </p>
 
@@ -36,7 +36,6 @@
         <a href="#">Privacy Policy</a>
         <a href="#">Terms of Service</a>
       </div>
-      <p>© 2024 ActiveAgeing Australia. All rights reserved.</p>
     </footer>
   </div>
 </template>

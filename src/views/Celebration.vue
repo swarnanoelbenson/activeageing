@@ -69,9 +69,7 @@
       <nav class="footer-nav">
         <a href="#">Privacy Policy</a>
         <a href="#">Terms of Service</a>
-        <a href="#">Contact Support</a>
       </nav>
-      <p class="footer-copy">© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</p>
     </footer>
   </div>
 </template>

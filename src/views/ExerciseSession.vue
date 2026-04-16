@@ -55,28 +55,29 @@
     <main v-else class="main">
       <div class="celebration" :class="{ visible }">
 
-        <!-- 1 exercise completed -->
-        <template v-if="exercisesCompleted === 1">
-          <div class="cel-emoji">💪</div>
-          <h1 class="cel-title">Back to your 40's!</h1>
-          <p class="cel-subtitle">1 of 3 exercises done — every rep counts!</p>
-          <div class="cel-quote">
-            "Even one step forward is still forward. You showed up today —
-            that alone puts you ahead of most people half your age.
-            Come back tomorrow and claim the rest. We'll be waiting. 💪"
+        <!-- 0 exercises completed -->
+        <template v-if="exercisesCompleted === 0">
+          <div class="cel-emoji">🌱</div>
+          <h1 class="cel-title">Ready when you are!</h1>
+          <p class="cel-subtitle">You haven't completed any exercises yet &#8208; give it a go!</p>
+          <div class="cel-actions-try">
+            <button class="btn-try-again" @click="tryAgain">Try Again →</button>
+            <button class="btn-celebrate" @click="goToResults">← Back to Check-In</button>
           </div>
         </template>
 
+        <!-- 1 exercise completed -->
+        <template v-else-if="exercisesCompleted === 1">
+          <div class="cel-emoji">💪</div>
+          <h1 class="cel-title">Back to your 40's!</h1>
+          <p class="cel-subtitle">1 of 3 exercises done &#8208; every rep counts!</p>
+        </template>
+
         <!-- 2 exercises completed -->
-        <template v-else-if="exercisesCompleted === 2">
+        <template v-else-if="exercisesCompleted === 2" >
           <div class="cel-emoji">🔥</div>
           <h1 class="cel-title">Back to your 30's!</h1>
-          <p class="cel-subtitle">2 of 3 exercises done — every rep counts!</p>
-          <div class="cel-quote">
-            "Even one step forward is still forward. You showed up today —
-            that alone puts you ahead of most people half your age.
-            Come back tomorrow and claim the rest. We'll be waiting. 💪"
-          </div>
+          <p class="cel-subtitle">2 of 3 exercises done &#8208; every rep counts!</p>
         </template>
 
         <!-- All 3 exercises completed -->
@@ -84,27 +85,28 @@
           <div class="cel-emoji">🎉</div>
           <h1 class="cel-title">You Actually Did It!</h1>
           <div class="cel-age-banner">Back to 21 years old!</div>
-          <p class="cel-subtitle">Full session complete — your body is officially younger than when you started.</p>
+          <p class="cel-subtitle">Full session complete &#8208; your body is officially younger than when you started.</p>
         </template>
 
-        <div class="cel-stats">
-          <div class="cel-stat">
-            <span class="cel-stat-num">+{{ pointsEarned }}</span>
-            <span class="cel-stat-label">points earned</span>
+        <template v-if="exercisesCompleted > 0">
+          <div class="cel-stats">
+            <div class="cel-stat">
+              <span class="cel-stat-num">+{{ pointsEarned }}</span>
+              <span class="cel-stat-label">points earned</span>
+            </div>
+            <div class="cel-stat">
+              <span class="cel-stat-num">+{{ pctBoost }}%</span>
+              <span class="cel-stat-label">activity boost</span>
+            </div>
+            <div class="cel-stat">
+              <span class="cel-stat-num">+{{ categoryScoreBoost }}</span>
+              <span class="cel-stat-label">category score</span>
+            </div>
           </div>
-          <div class="cel-stat">
-            <span class="cel-stat-num">+{{ pctBoost }}%</span>
-            <span class="cel-stat-label">activity boost</span>
-          </div>
-          <div class="cel-stat">
-            <span class="cel-stat-num">+{{ categoryScoreBoost }}</span>
-            <span class="cel-stat-label">category score</span>
-          </div>
-        </div>
-
-        <button class="btn-celebrate" @click="goToResults">
-          ← Back to Check-In
-        </button>
+          <button class="btn-celebrate" @click="goToResults">
+            ← Back to Check-In
+          </button>
+        </template>
       </div>
     </main>
 
@@ -114,7 +116,7 @@
         <div class="modal-emoji">😌</div>
         <h2 class="modal-title">Take a breather!</h2>
         <p class="modal-text">
-          Rest is part of every good plan — even champions pause.
+          Rest is part of every good plan &#8208; even champions pause.
           Ready to jump back in, or are you calling today a win?
         </p>
         <div class="modal-actions">
@@ -129,9 +131,7 @@
       <div class="footer-links">
         <a @click="router.push('/privacy')">Privacy Policy</a>
         <a @click="router.push('/terms')">Terms of Service</a>
-        <a @click="router.push('/contact')">Contact Support</a>
       </div>
-      <p class="footer-copy">© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</p>
     </footer>
   </div>
 </template>
@@ -212,7 +212,7 @@ const currentSteps = computed(() => {
 const isLastExercise  = computed(() => currentIndex.value === exercises.value.length - 1)
 const progressPercent = computed(() =>
   exercises.value.length === 0 ? 0
-  : Math.round(((currentIndex.value + 1) / exercises.value.length) * 100)
+  : Math.round((currentIndex.value / exercises.value.length) * 100)
 )
 
 // Per-exercise scoring: +40 pts, +2%, +0.4 category score each
@@ -252,6 +252,14 @@ function finishSession() {
   }
   localStorage.setItem('sessionCompleted', String(n * 40))   // store actual points for Results badge
   sessionDone.value = true
+  visible.value = false
+  setTimeout(() => { visible.value = true }, 80)
+}
+
+function tryAgain() {
+  currentIndex.value = 0
+  exercisesCompleted.value = 0
+  sessionDone.value = false
   visible.value = false
   setTimeout(() => { visible.value = true }, 80)
 }
@@ -371,16 +379,16 @@ onMounted(() => {
   line-height: 1.2;
 }
 
-.tags { display: flex; gap: 10px; }
+.tags { display: flex; gap: 20px; }
 .tag {
   display: flex;
   align-items: center;
   gap: 6px;
-  border: 1.5px solid #c8c2b8;
+  border: 1.5px solid #000000;
   border-radius: 8px;
-  padding: 6px 14px;
-  font-size: 13px;
-  color: #5a6b67;
+  padding: 10px 20px;
+  font-size: 20px;
+  color: #000000;
 }
 
 /* Row 2: GIF left, instructions right */
@@ -611,6 +619,28 @@ onMounted(() => {
   color: #5a6b67;
   font-weight: 500;
 }
+.cel-actions-try {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-try-again {
+  background: #b45309;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 18px 40px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 8px;
+}
+.btn-try-again:hover { background: #92400e; }
+
 .btn-celebrate {
   background: #0b5d57;
   color: #ffffff;

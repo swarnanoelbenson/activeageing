@@ -18,7 +18,7 @@ const displayedEvents = computed(() =>
 
 const fallbackEvents = [
   {
-    title: 'Gentle Morning Walk — Carlton Gardens',
+    title: 'Gentle Morning Walk - Carlton Gardens',
     desc: 'A free, low-paced group walk through Carlton Gardens. Perfect for those looking to get moving in a welcoming, social setting.',
     time: 'Every Tuesday, 9:00 AM',
     location: 'Carlton Gardens, Melbourne VIC 3000',
@@ -26,14 +26,14 @@ const fallbackEvents = [
   },
   {
     title: 'Mindful Tai Chi for Seniors',
-    desc: 'Gentle Tai Chi sessions in Fitzroy Park led by a certified instructor. Improves balance, flexibility and inner calm — all levels welcome.',
+    desc: 'Gentle Tai Chi sessions in Fitzroy Park led by a certified instructor. Improves balance, flexibility and inner calm - all levels welcome.',
     time: 'Every Wednesday, 8:30 AM',
     location: 'Fitzroy Park, Melbourne VIC 3065',
     img: fallbackImg, url: 'https://www.eventbrite.com.au', is_free: true,
   },
   {
     title: 'Chair Yoga & Relaxation',
-    desc: 'A seated yoga class specifically designed for older adults. No experience needed — just bring comfortable clothing and a willingness to move.',
+    desc: 'A seated yoga class specifically designed for older adults. No experience needed - just bring comfortable clothing and a willingness to move.',
     time: 'Every Thursday, 10:00 AM',
     location: 'Richmond Community Hub, Richmond VIC 3121',
     img: fallbackImg, url: 'https://www.eventbrite.com.au', is_free: true,
@@ -157,10 +157,8 @@ onMounted(async () => {
       <div class="links">
         <a>Privacy Policy</a>
         <a>Terms of Service</a>
-        <a>Contact Support</a>
       </div>
 
-      <p>© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</p>
     </footer>
 
     </div>

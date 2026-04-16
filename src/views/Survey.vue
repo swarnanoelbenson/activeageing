@@ -66,7 +66,7 @@ const step    = ref(1)
 const answers = ref(Array(total).fill(null))
 
 const isFinalStep    = computed(() => step.value === total)
-const progressPercent = computed(() => (step.value / total) * 100)
+const progressPercent = computed(() => Math.round((answers.value.filter(a => a !== null).length / total) * 100))
 const currentQuestion = computed(() => questions[step.value - 1])
 const showBack        = computed(() => step.value > 1)
 const showNext        = computed(() => answers.value[step.value - 1] !== null && step.value < total)
@@ -76,8 +76,6 @@ function selectOption(option) {
   answers.value[step.value - 1] = option.label
   if (step.value < total) {
     setTimeout(() => { step.value++ })
-  } else {
-    setTimeout(() => { submitSurvey() })
   }
 }
 
@@ -129,7 +127,7 @@ async function submitSurvey() {
             <span v-else class="step-label">STEP {{ step }} OF {{ total }}</span>
             <div v-if="isFinalStep" class="step-sub">Step {{ step }} of {{ total }}</div>
           </div>
-          <span class="progress-right">{{ isFinalStep ? '100% Complete' : 'Vitality Assessment' }}</span>
+          <span class="progress-right"></span>
         </div>
         <div class="progress-bar">
           <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
@@ -161,7 +159,7 @@ async function submitSurvey() {
       <div class="btn-row">
         <button v-if="showBack" class="btn-back" @click="goBack">← BACK</button>
         <div v-else></div>
-        <button v-if="showSubmit" class="btn-submit" @click="submitSurvey">Submit My Assessment →</button>
+        <button v-if="showSubmit" class="btn-submit" @click="submitSurvey">Submit</button>
         <button v-else-if="showNext" class="btn-next" @click="goNext">NEXT →</button>
       </div>
     </main>
@@ -172,9 +170,7 @@ async function submitSurvey() {
       <div class="footer-links">
         <a @click="router.push('/privacy')">Privacy Policy</a>
         <a @click="router.push('/terms')">Terms of Service</a>
-        <a @click="router.push('/contact')">Contact Support</a>
       </div>
-      <p class="footer-copy">© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</p>
     </footer>
   </div>
 </template>

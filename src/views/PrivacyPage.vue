@@ -4,7 +4,7 @@
 
     <main class="main">
       <h1 class="title">Privacy Policy</h1>
-      <p class="todo">To do — content coming soon.</p>
+      <p class="todo">To do &#8208; content coming soon.</p>
     </main>
 
     <footer class="footer">
@@ -12,9 +12,7 @@
       <div class="footer-links">
         <a @click="router.push('/terms')">Terms of Service</a>
         <a @click="router.push('/privacy')">Privacy Policy</a>
-        <a @click="router.push('/contact')">Contact Support</a>
       </div>
-      <p class="footer-copy">© 2024 ActiveAgeing Australia.</p>
     </footer>
   </div>
 </template>
