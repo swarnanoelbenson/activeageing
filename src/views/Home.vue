@@ -21,7 +21,6 @@ function getStarted() {
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-text">
-        <p class="badge">NATIONAL HEALTH ALERT</p>
 
         <h1>
           Right now, 1 in 6 Australians aged 65 and above feel lonely.
@@ -138,15 +137,7 @@ body {
   margin: 20px 0;
 }
 
-.badge {
-  background: #fcd7c5;
-  display: inline-block; 
-  padding: 6px 14px; 
-  border-radius: 20px; 
-  font-size: 12px; 
-  font-weight: 600; 
-  letter-spacing: 0.5px;
-}
+
 
 .desc {
   margin: 20px 0;
