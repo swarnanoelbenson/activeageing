@@ -61,8 +61,8 @@
           <h1 class="cel-title">Ready when you are!</h1>
           <p class="cel-subtitle">You haven't completed any exercises yet &#8208; give it a go!</p>
           <div class="cel-actions-try">
-            <button class="btn-try-again" @click="tryAgain">Try Again →</button>
             <button class="btn-celebrate" @click="goToResults">← Back to Check-In</button>
+            <button class="btn-try-again" @click="tryAgain">Try Again →</button>
           </div>
         </template>
 
@@ -210,10 +210,11 @@ const currentSteps = computed(() => {
   return EXERCISE_CONTENT[name] ?? DEFAULT_STEPS
 })
 const isLastExercise  = computed(() => currentIndex.value === exercises.value.length - 1)
-const progressPercent = computed(() =>
-  exercises.value.length === 0 ? 0
-  : Math.round((currentIndex.value / exercises.value.length) * 100)
-)
+const progressPercent = computed(() => {
+  if (sessionDone.value && exercisesCompleted.value === exercises.value.length) return 100
+  if (exercises.value.length === 0) return 0
+  return Math.round((currentIndex.value / exercises.value.length) * 100)
+})
 
 // Per-exercise scoring: +40 pts, +2%, +0.4 category score each
 const pointsEarned       = computed(() => exercisesCompleted.value * 40)
