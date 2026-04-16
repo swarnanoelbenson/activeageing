@@ -1,0 +1,43 @@
+-- Run this in DBeaver against the ta15 database
+USE ta15;
+
+DELETE FROM exercise_recommendations;
+
+-- Just Getting Started
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Just Getting Started', 'standard', 'Neck Rotations', 5, 'Sit upright on a chair with your back straight and shoulders relaxed. Slowly turn your head to the right, then to the left.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Just Getting Started', 'standard', 'Seated Chest Stretch', 8, 'Sit upright on a chair. Slowly move your arms out to the sides, opening your chest. Hold and breathe deeply.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Just Getting Started', 'standard', 'Ankle Rotations', 5, 'Sit upright and gently lift one foot off the ground. Rotate your ankle clockwise then anti-clockwise. Switch feet.', NULL);
+
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Just Getting Started', 'lighter', 'Neck Rotations', 5, 'Sit upright on a chair with your back straight and shoulders relaxed. Slowly turn your head to the right, then to the left.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Just Getting Started', 'lighter', 'Seated Chest Stretch', 8, 'Sit upright on a chair. Slowly move your arms out to the sides, opening your chest. Hold and breathe deeply.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Just Getting Started', 'lighter', 'Ankle Rotations', 5, 'Sit upright and gently lift one foot off the ground. Rotate your ankle clockwise then anti-clockwise. Switch feet.', NULL);
+
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Just Getting Started', 'gentle_short', 'Neck Rotations', 5, 'Sit upright on a chair with your back straight and shoulders relaxed. Slowly turn your head to the right, then to the left.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Just Getting Started', 'gentle_short', 'Seated Chest Stretch', 8, 'Sit upright on a chair. Slowly move your arms out to the sides, opening your chest. Hold and breathe deeply.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Just Getting Started', 'gentle_short', 'Ankle Rotations', 5, 'Sit upright and gently lift one foot off the ground. Rotate your ankle clockwise then anti-clockwise. Switch feet.', NULL);
+
+-- Building Momentum
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Building Momentum', 'standard', 'Brisk Walking', 10, 'Begin at a comfortable pace then gradually increase speed. Swing your arms naturally and maintain a steady rhythm.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Building Momentum', 'standard', 'Sit-to-Stand', 8, 'Sit upright on a chair with feet flat on the ground. Lean slightly forward and push through your feet to stand, then lower back with control.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Building Momentum', 'standard', 'Calf Raises', 6, 'Stand straight behind a chair, holding it lightly. Slowly lift your heels off the ground, rise onto your toes, then lower back down.', NULL);
+
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Building Momentum', 'lighter', 'Brisk Walking', 10, 'Begin at a comfortable pace then gradually increase speed. Swing your arms naturally and maintain a steady rhythm.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Building Momentum', 'lighter', 'Sit-to-Stand', 8, 'Sit upright on a chair with feet flat on the ground. Lean slightly forward and push through your feet to stand, then lower back with control.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Building Momentum', 'lighter', 'Calf Raises', 6, 'Stand straight behind a chair, holding it lightly. Slowly lift your heels off the ground, rise onto your toes, then lower back down.', NULL);
+
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Building Momentum', 'gentle_short', 'Brisk Walking', 10, 'Begin at a comfortable pace then gradually increase speed. Swing your arms naturally and maintain a steady rhythm.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Building Momentum', 'gentle_short', 'Sit-to-Stand', 8, 'Sit upright on a chair with feet flat on the ground. Lean slightly forward and push through your feet to stand, then lower back with control.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Building Momentum', 'gentle_short', 'Calf Raises', 6, 'Stand straight behind a chair, holding it lightly. Slowly lift your heels off the ground, rise onto your toes, then lower back down.', NULL);
+
+-- Thriving
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Thriving', 'standard', 'Brisk Walking', 10, 'Begin at a comfortable pace then gradually increase speed. Swing your arms naturally and maintain a steady rhythm.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Thriving', 'standard', 'Mini Squats', 10, 'Stand with feet shoulder-width apart, arms forward. Slowly bend your knees and lower slightly, then push through your feet to return.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Thriving', 'standard', 'Standing Balance Hold', 8, 'Stand next to a chair for support. Lift one leg slightly in front and hold, then lower and switch legs.', NULL);
+
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Thriving', 'lighter', 'Brisk Walking', 10, 'Begin at a comfortable pace then gradually increase speed. Swing your arms naturally and maintain a steady rhythm.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Thriving', 'lighter', 'Mini Squats', 10, 'Stand with feet shoulder-width apart, arms forward. Slowly bend your knees and lower slightly, then push through your feet to return.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Thriving', 'lighter', 'Standing Balance Hold', 8, 'Stand next to a chair for support. Lift one leg slightly in front and hold, then lower and switch legs.', NULL);
+
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Thriving', 'gentle_short', 'Brisk Walking', 10, 'Begin at a comfortable pace then gradually increase speed. Swing your arms naturally and maintain a steady rhythm.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Thriving', 'gentle_short', 'Mini Squats', 10, 'Stand with feet shoulder-width apart, arms forward. Slowly bend your knees and lower slightly, then push through your feet to return.', NULL);
+INSERT INTO exercise_recommendations (category_name, modifier_name, exercise_name, duration_minutes, instructions, notes) VALUES ('Thriving', 'gentle_short', 'Standing Balance Hold', 8, 'Stand next to a chair for support. Lift one leg slightly in front and hold, then lower and switch legs.', NULL);

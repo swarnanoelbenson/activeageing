@@ -28,36 +28,12 @@
           </div>
         </div>
 
-        <!-- Row 2: GIF + Instructions -->
-        <div class="card-body">
-          <div class="card-gif">
-            <img v-if="currentExercise.gif_url" :src="currentExercise.gif_url" :alt="currentExercise.exercise_name" class="exercise-gif" />
-            <svg v-else viewBox="0 0 220 240" fill="none" xmlns="http://www.w3.org/2000/svg" class="figure-svg">
-              <line x1="75" y1="170" x2="65" y2="220" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
-              <line x1="145" y1="170" x2="155" y2="220" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
-              <line x1="75" y1="140" x2="65" y2="190" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
-              <line x1="145" y1="140" x2="155" y2="190" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
-              <rect x="62" y="162" width="96" height="10" rx="4" fill="#1a5c52"/>
-              <rect x="62" y="115" width="10" height="55" rx="4" fill="#1a5c52"/>
-              <rect x="148" y="115" width="10" height="55" rx="4" fill="#1a5c52"/>
-              <rect x="62" y="115" width="96" height="10" rx="4" fill="#1a5c52"/>
-              <line x1="110" y1="115" x2="110" y2="162" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
-              <circle cx="110" cy="100" r="16" fill="#2a7a6e" opacity="0.25"/>
-              <circle cx="110" cy="100" r="11" fill="#1a5c52"/>
-              <line x1="110" y1="128" x2="60" y2="88" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
-              <line x1="110" y1="128" x2="160" y2="88" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
-              <line x1="90" y1="162" x2="80" y2="192" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
-              <line x1="130" y1="162" x2="140" y2="192" stroke="#1a5c52" stroke-width="7" stroke-linecap="round"/>
-            </svg>
-            <div class="encouragement">You're doing great!</div>
-          </div>
-
-          <div class="card-instructions">
-            <div class="instructions-label">
-              <span class="label-bar"></span>
-              Instructions
-            </div>
-            <p class="instructions-text">{{ currentExercise.instructions }}</p>
+        <!-- Row 2: 3-step image grid -->
+        <div class="steps-grid">
+          <div class="step-card" v-for="(step, i) in currentSteps" :key="i">
+            <div class="step-subtitle">{{ step.subtitle }}</div>
+            <img :src="step.image" :alt="step.subtitle" class="step-image" />
+            <p class="step-desc">{{ step.description }}</p>
           </div>
         </div>
 
@@ -173,7 +149,66 @@ const exercisesCompleted = ref(0)
 const sessionDone = ref(false)
 const showPauseModal = ref(false)
 
+const EXERCISE_CONTENT = {
+  'neck rotations': [
+    { subtitle: 'Start Position', image: '/Images/neck_rotation_1.jpeg', description: 'Sit upright on a chair with your back straight and shoulders relaxed.' },
+    { subtitle: 'Turn Right',     image: '/Images/neck_rotation_2.jpeg', description: 'Slowly turn your head to the right as far as comfortable, keeping your shoulders still.' },
+    { subtitle: 'Turn Left',      image: '/Images/neck_rotation_3.jpeg', description: 'Gently turn your head to the left side, moving slowly and staying relaxed.' },
+  ],
+  'ankle rotations': [
+    { subtitle: 'Start Position',       image: '/Images/ankle_rotation_1.jpeg', description: 'Sit upright on a chair and gently lift one foot slightly off the ground.' },
+    { subtitle: 'Rotate Clockwise',     image: '/Images/ankle_rotation_2.jpeg', description: 'Slowly rotate your ankle in a circular motion in one direction.' },
+    { subtitle: 'Rotate Anti-Clockwise',image: '/Images/ankle_rotation_3.jpeg', description: 'Change direction and rotate your ankle the other way, keeping movements smooth.' },
+  ],
+  'seated chest stretch': [
+    { subtitle: 'Start Position', image: '/Images/seated_chest_stretch_1.jpeg', description: 'Sit upright on a chair with your back straight and shoulders relaxed.' },
+    { subtitle: 'Open Chest',     image: '/Images/seated_chest_stretch_2.jpeg', description: 'Slowly move your arms out to the sides, opening your chest and keeping your shoulders down.' },
+    { subtitle: 'Hold & Breathe', image: '/Images/seated_chest_stretch_3.jpeg', description: 'Hold the position and take slow, deep breaths while keeping your chest open and repeat.' },
+  ],
+  'brisk walking': [
+    { subtitle: 'Start Slow',       image: '/Images/brisk_walking_1.jpeg', description: 'Begin with a comfortable walking pace, keeping your posture upright and relaxed.' },
+    { subtitle: 'Increase Pace',    image: '/Images/brisk_walking_2.jpeg', description: 'Gradually walk a little faster, swinging your arms naturally and taking steady steps.' },
+    { subtitle: 'Extend Duration',  image: '/Images/brisk_walking_3.jpeg', description: 'Continue walking for a longer time at a comfortable pace, maintaining a steady rhythm.' },
+  ],
+  'calf raises': [
+    { subtitle: 'Start Position', image: '/Images/calf_raises_1.jpeg', description: 'Stand straight behind a chair, holding it lightly for support.' },
+    { subtitle: 'Raise Heels',    image: '/Images/calf_raises_2.jpeg', description: 'Slowly lift your heels off the ground, rising onto your toes.' },
+    { subtitle: 'Lower Down',     image: '/Images/calf_raises_3.jpeg', description: 'Gently lower your heels back to the ground in a controlled movement.' },
+  ],
+  'sit-to-stand': [
+    { subtitle: 'Start Position', image: '/Images/sit_to_stand_1.jpeg', description: 'Sit upright on a chair with your feet flat on the ground.' },
+    { subtitle: 'Stand Up',       image: '/Images/sit_to_stand_2.jpeg', description: 'Lean slightly forward and push through your feet to stand up without using your hands.' },
+    { subtitle: 'Sit Down',       image: '/Images/sit_to_stand_3.jpeg', description: 'Slowly lower yourself back onto the chair with control.' },
+  ],
+  'mini squats': [
+    { subtitle: 'Start Position', image: '/Images/mini_squats_1.jpeg', description: 'Stand straight with your feet shoulder-width apart and arms stretched forward for balance.' },
+    { subtitle: 'Lower Down',     image: '/Images/mini_squats_2.jpeg', description: 'Slowly bend your knees and lower your body slightly, as if sitting on a chair. Keep your back straight.' },
+    { subtitle: 'Stand Up',       image: '/Images/mini_squats_3.jpeg', description: 'Push through your feet and gently return to the starting position.' },
+  ],
+  'hold and balance': [
+    { subtitle: 'Start Position',  image: '/Images/hold_and_balance_1.jpeg', description: 'Stand straight next to a chair for support, keeping your body relaxed.' },
+    { subtitle: 'Lift and Hold',   image: '/Images/hold_and_balance_2.jpeg', description: 'Lift one leg slightly in front and hold the position, keeping your balance steady.' },
+    { subtitle: 'Lower and Switch',image: '/Images/hold_and_balance_3.jpeg', description: 'Gently lower your leg and repeat the same with the other leg.' },
+  ],
+  'standing balance hold': [
+    { subtitle: 'Start Position',  image: '/Images/hold_and_balance_1.jpeg', description: 'Stand straight next to a chair for support, keeping your body relaxed.' },
+    { subtitle: 'Lift and Hold',   image: '/Images/hold_and_balance_2.jpeg', description: 'Lift one leg slightly in front and hold the position, keeping your balance steady.' },
+    { subtitle: 'Lower and Switch',image: '/Images/hold_and_balance_3.jpeg', description: 'Gently lower your leg and repeat the same with the other leg.' },
+  ],
+}
+
+const DEFAULT_STEPS = [
+  { subtitle: 'Step 1', image: '', description: 'Follow the exercise as demonstrated.' },
+  { subtitle: 'Step 2', image: '', description: 'Maintain good posture throughout.' },
+  { subtitle: 'Step 3', image: '', description: 'Repeat at a comfortable pace.' },
+]
+
 const currentExercise = computed(() => exercises.value[currentIndex.value] ?? {})
+
+const currentSteps = computed(() => {
+  const name = (currentExercise.value.exercise_name ?? '').toLowerCase().trim()
+  return EXERCISE_CONTENT[name] ?? DEFAULT_STEPS
+})
 const isLastExercise  = computed(() => currentIndex.value === exercises.value.length - 1)
 const progressPercent = computed(() =>
   exercises.value.length === 0 ? 0
@@ -239,9 +274,9 @@ onMounted(() => {
 
   // Fallback if no survey result in localStorage
   exercises.value = [
-    { exercise_name: 'Seated Marching', duration_minutes: 5, instructions: 'Sit upright and gently lift one knee at a time, alternating sides at a comfortable pace.', notes: 'Good for low-intensity movement', gif_url: null },
-    { exercise_name: 'Gentle Standing Stretch', duration_minutes: 8, instructions: 'Perform light full-body stretches while standing, using a wall or chair for support if needed.', notes: 'Moderate but manageable', gif_url: null },
-    { exercise_name: 'Light Walking Routine', duration_minutes: 10, instructions: 'Walk at a comfortable pace for 10 minutes on a flat surface.', notes: 'Build consistency', gif_url: null },
+    { exercise_name: 'Neck Rotations',       duration_minutes: 5 },
+    { exercise_name: 'Seated Chest Stretch', duration_minutes: 8 },
+    { exercise_name: 'Ankle Rotations',      duration_minutes: 5 },
   ]
 })
 </script>
@@ -420,6 +455,48 @@ onMounted(() => {
   padding: 10px 14px;
   margin: 0;
   line-height: 1.5;
+}
+
+/* Row 2: 3-step image grid */
+.steps-grid {
+  display: flex;
+  gap: 20px;
+  padding: 28px 40px;
+}
+
+.step-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.step-subtitle {
+  background: #1a5c52;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 16px;
+  text-align: center;
+  padding: 14px 12px;
+}
+
+.step-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+.step-desc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: #4a4a4a;
+  text-align: left;
+  padding: 14px 16px;
+  margin: 0;
 }
 
 /* Row 3: Actions */
@@ -660,6 +737,8 @@ onMounted(() => {
   .card-header { padding: 24px 20px 16px; }
   .exercise-title { font-size: 24px; }
 
+  .steps-grid { flex-direction: column; padding: 20px; gap: 16px; }
+  .step-subtitle { font-size: 14px; }
   .card-body { flex-direction: column; }
   .card-gif { width: 100%; border-right: none; border-bottom: 1px solid #e0dbd2; padding: 20px; }
   .figure-svg { width: 140px; height: 160px; }

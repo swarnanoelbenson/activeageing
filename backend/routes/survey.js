@@ -12,19 +12,19 @@ const {
 // Fallback exercises used when the DB is unavailable
 const fallbackExercises = {
   "Just Getting Started": [
-    { exercise_name: "Seated Marching",        duration_minutes: 5,  instructions: "Sit upright and gently lift one knee at a time, alternating sides at a comfortable pace.", notes: null, gif_url: null },
-    { exercise_name: "Chair Yoga Stretch",     duration_minutes: 7,  instructions: "While seated, slowly reach both arms overhead, hold for 5 seconds, then gently lower. Repeat 5 times.", notes: null, gif_url: null },
-    { exercise_name: "Seated Leg Extensions",  duration_minutes: 5,  instructions: "Sit upright and slowly extend one leg until straight, hold for 3 seconds, then lower. Alternate legs.", notes: null, gif_url: null },
+    { exercise_name: "Neck Rotations",       duration_minutes: 5 },
+    { exercise_name: "Seated Chest Stretch", duration_minutes: 8 },
+    { exercise_name: "Ankle Rotations",      duration_minutes: 5 },
   ],
   "Building Momentum": [
-    { exercise_name: "Gentle Standing Stretch", duration_minutes: 8,  instructions: "Perform light full-body stretches while standing, using a wall or chair for support if needed.", notes: null, gif_url: null },
-    { exercise_name: "Wall Push-Ups",           duration_minutes: 6,  instructions: "Stand arm's length from a wall, place hands flat on it, and slowly bend elbows to bring your chest toward the wall, then push back.", notes: null, gif_url: null },
-    { exercise_name: "Light Walking Routine",   duration_minutes: 10, instructions: "Walk at a comfortable pace for 10 minutes on a flat surface.", notes: null, gif_url: null },
+    { exercise_name: "Brisk Walking", duration_minutes: 10 },
+    { exercise_name: "Sit-to-Stand",  duration_minutes: 8  },
+    { exercise_name: "Calf Raises",   duration_minutes: 6  },
   ],
   "Thriving": [
-    { exercise_name: "Brisk Walk Intervals",    duration_minutes: 12, instructions: "Alternate 1 minute of brisk walking with 1 minute of normal pace. Repeat 5 times.", notes: null, gif_url: null },
-    { exercise_name: "Standing Balance Hold",   duration_minutes: 6,  instructions: "Stand on one foot near a wall for support, hold 10 seconds, then switch. Repeat 5 times each side.", notes: null, gif_url: null },
-    { exercise_name: "Step Tap Cardio",         duration_minutes: 8,  instructions: "Step side to side, tapping your foot with each step. Maintain a steady rhythm for the full duration.", notes: null, gif_url: null },
+    { exercise_name: "Brisk Walking",        duration_minutes: 10 },
+    { exercise_name: "Mini Squats",          duration_minutes: 10 },
+    { exercise_name: "Standing Balance Hold",duration_minutes: 8  },
   ],
 };
 
@@ -63,7 +63,7 @@ router.post("/", async (req, res) => {
 
     // Fetch exercises for this category + modifier combination (max 3)
     const [exercises] = await pool.query(
-      `SELECT exercise_name, duration_minutes, instructions, notes, gif_url
+      `SELECT exercise_name, duration_minutes, instructions, notes
        FROM exercise_recommendations
        WHERE category_name = ? AND modifier_name = ?
        LIMIT 3`,
