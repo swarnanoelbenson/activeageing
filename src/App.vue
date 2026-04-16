@@ -1,10 +1,13 @@
 <!-- src/App.vue -->
 <template>
-  <router-view></router-view>
+  <PasswordGate>
+    <router-view></router-view>
+  </PasswordGate>
 </template>
 
 <script setup>
 import { onMounted } from 'vue'
+import PasswordGate from './components/PasswordGate.vue'
 
 onMounted(() => {
   if (!sessionStorage.getItem('appLoaded')) {
