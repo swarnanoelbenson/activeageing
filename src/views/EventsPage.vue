@@ -241,7 +241,7 @@ body {
 }
 
 .desc {
-  font-size: 15px;
+  font-size: 20px;
   line-height: 1.6;
   color: #4a4a4a;
 }
@@ -328,12 +328,13 @@ body {
 }
 
 .card h3 {
+  font-size: 30px;
   margin-bottom: 8px;
   color: #0b5d57;
 }
 
 .info {
-  font-size: 13px;
+  font-size: 22px;
   margin: 10px 0;
   color: #555;
 }
