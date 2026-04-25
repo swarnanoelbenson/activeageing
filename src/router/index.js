@@ -10,6 +10,10 @@ import HelpPage from '../views/HelpPage.vue'
 import TermsPage from '../views/TermsPage.vue'
 import PrivacyPage from '../views/PrivacyPage.vue'
 import ContactPage from '../views/ContactPage.vue'
+import RoutePlan from '../views/RoutePlan.vue'
+import SnapshotView from '../views/SnapshotView.vue'
+import RouteSurvey from '../views/RouteSurvey.vue'
+import Planner from '../views/Planner.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -22,7 +26,11 @@ const routes = [
   { path: '/help', name: 'Help', component: HelpPage },
   { path: '/terms', name: 'Terms', component: TermsPage },
   { path: '/privacy', name: 'Privacy', component: PrivacyPage },
-  { path: '/contact', name: 'Contact', component: ContactPage }
+  { path: '/contact', name: 'Contact', component: ContactPage },
+  { path: '/routeplan', name: 'routeplan', component: RoutePlan},
+  { path: '/snapshot', name: 'Snapshot', component: SnapshotView},
+  { path: '/routesurvey', name: 'RouteSurvey', component: RouteSurvey},
+  { path: '/planner', name: 'Planner', component: Planner}
 ]
 
 const router = createRouter({
