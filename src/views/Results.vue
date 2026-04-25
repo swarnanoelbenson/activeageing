@@ -12,9 +12,8 @@
           Your Wellness<br />Snapshot Results
         </h1>
         <p class="subtitle">
-          You can feel back like you were 21 years old with a
-          few uplifting shifts that will make you stronger, steadier, 
-          and wonderfully capable in your everyday life.
+          Small, consistent steps can help you feel more energetic, 
+          stronger, and more like your best self each day.
         </p>
       </div>
 
