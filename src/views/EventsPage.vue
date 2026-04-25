@@ -353,8 +353,8 @@ body {
   text-decoration: none;
   box-sizing: border-box;
 
-  font-size: 20px;
-  font-weight: 100;
+  font-size: 22px;
+  font-weight: 500;
   letter-spacing: 0.8px;
   line-height: 1.5
 }
