@@ -1,66 +1,87 @@
+<script setup>
+import { useRouter } from 'vue-router'
+
+const props = defineProps({
+  active: {
+    type: String,
+    default: ''
+  }
+})
+
+const router = useRouter()
+</script>
+
 <template>
-  <nav class="appnav">
-    <span class="appnav-logo" @click="router.push('/')">ActiveAgeing</span>
-    <div class="appnav-links">
-      <a :class="{ active: active === 'home' }"     @click="router.push('/')">Home</a>
-      <a :class="{ active: active === 'wellness' }" @click="router.push('/results')">Check-In</a>
-      <a :class="{ active: active === 'events' }"   @click="router.push('/events')">Events</a>
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="logo" @click="router.push('/')">ActiveAgeing</div>
+      <div class="nav-links">
+        <span class="nav-link" :class="{ active: active === 'home' }" @click="router.push('/')">Home</span>
+        <span class="nav-link" :class="{ active: active === 'checkin' }" @click="router.push('/survey')">Check-In</span>
+        <span class="nav-link" :class="{ active: active === 'events' }" @click="router.push('/events')">Events</span>
+        <span class="nav-link" :class="{ active: active === 'routeplan' }" @click="router.push('/routeplan')">Plan Route</span>
+      </div>
     </div>
   </nav>
 </template>
 
-<script setup>
-import { useRouter } from 'vue-router'
-
-defineProps({ active: { type: String, default: '' } })
-const router = useRouter()
-</script>
-
 <style scoped>
-.appnav {
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap');
+
+/* Fixed at top, always visible */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #FAF9F8;
+  border-bottom: 1px solid rgba(11,93,87,0.08);
+}
+
+.nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 18px 48px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
-  width: 100%;
-  padding: 20px 40px;
-  box-sizing: border-box;
 }
 
-.appnav-logo {
-  font-weight: 700;
-  font-size: 20px;
+.logo {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 800;
+  font-size: 22px;
   color: #0b5d57;
   cursor: pointer;
+  letter-spacing: -0.3px;
 }
 
-.appnav-links {
+.nav-links {
   display: flex;
-  gap: 32px;
+  gap: 36px;
+  font-family: 'Poppins', sans-serif;
   font-size: 16px;
   font-weight: 500;
 }
 
-.appnav-links a {
+.nav-link {
   color: #0b5d57;
-  text-decoration: none;
   cursor: pointer;
+  transition: color 0.2s;
+  padding-bottom: 2px;
 }
-
-.appnav-links a:hover { color: #084a45; }
-
-.appnav-links a.active {
+.nav-link:hover { color: #084a45; }
+.nav-link.active {
+  font-weight: 600;
   text-decoration: underline;
-  text-underline-offset: 4px;
+  text-underline-offset: 5px;
+  text-decoration-thickness: 2px;
 }
 
 @media (max-width: 768px) {
-  .appnav {
-    max-width: 100%;
-    padding: 16px 20px;
-  }
-  .appnav-logo { font-size: 18px; }
-  .appnav-links { gap: 20px; font-size: 14px; }
+  .nav-inner { padding: 14px 20px; }
+  .logo { font-size: 18px; }
+  .nav-links { gap: 16px; font-size: 14px; }
 }
 </style>
