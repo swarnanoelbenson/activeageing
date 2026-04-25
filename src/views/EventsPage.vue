@@ -343,7 +343,7 @@ body {
 .btn {
   display: block;
   width: 100%;
-  padding: 10px;
+  padding: 30px;
   background: #0b5d57;
   color: white;
   border-radius: 8px;
@@ -352,6 +352,11 @@ body {
   text-align: center;
   text-decoration: none;
   box-sizing: border-box;
+
+  font-size: 20px;
+  font-weight: 100;
+  letter-spacing: 0.8px;
+  line-height: 1.5
 }
 
 .btn:hover {
