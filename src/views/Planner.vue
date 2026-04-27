@@ -1,4 +1,133 @@
 <script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
+
+const router  = useRouter()
+const API     = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const COLOURS = ['#c2185b', '#c2185b', '#c2185b']
+
+const loading = ref(true)
+const error   = ref(null)
+const routes  = ref([])
+const survey  = ref(null)
+
+const maps = []
+
+const activityLabel = { walking: 'Walking', jogging: 'Light Jogging', cycling: 'Cycling' }
+
+// Modal
+const modalIndex = ref(null)   // 1 or 2 (routes array index), null = closed
+let   modalMap   = null
+
+async function openModal(index) {
+  modalIndex.value = index
+  await new Promise(r => setTimeout(r, 80))
+  const route = routes.value[index]
+  if (!route) return
+  const container = document.getElementById('map-modal')
+  if (!container) return
+  modalMap = L.map(container, { zoomControl: true, attributionControl: false })
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(modalMap)
+  const latlngs = route.geometry.coordinates.map(([lng, lat]) => [lat, lng])
+  const line = L.polyline(latlngs, { color: COLOURS[index], weight: 4 }).addTo(modalMap)
+  const [sLng, sLat] = route.geometry.coordinates[0]
+  L.circleMarker([sLat, sLng], { radius: 7, fillColor: '#e8720c', color: 'white', weight: 2, fillOpacity: 1 }).addTo(modalMap)
+  modalMap.fitBounds(line.getBounds(), { padding: [20, 20] })
+}
+
+function closeModal() {
+  if (modalMap) { modalMap.remove(); modalMap = null }
+  modalIndex.value = null
+}
+
+function routeDescription(index) {
+  const activity = activityLabel[survey.value?.activity_type]?.toLowerCase() ?? 'walking'
+  const pace     = survey.value?.preferred_pace ?? 'moderate'
+  const r        = routes.value[index]
+  return `A ${pace}-pace ${activity} route covering ${r?.distance_label} in approximately ${r?.duration_label}, starting from your chosen location.`
+}
+
+onMounted(async () => {
+  const raw = sessionStorage.getItem('routeSurvey')
+  if (!raw) {
+    error.value = 'No survey data found. Please complete the route survey first.'
+    loading.value = false
+    return
+  }
+
+  survey.value = JSON.parse(raw)
+
+  if (!survey.value.start_lat || !survey.value.start_lng) {
+    error.value = 'No starting location was set. Please go back and enter a starting suburb.'
+    loading.value = false
+    return
+  }
+
+  try {
+    const res  = await fetch(`${API}/api/routes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(survey.value),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error ?? 'Failed to load routes')
+    routes.value = data.routes
+  } catch (e) {
+    error.value = e.message
+    loading.value = false
+    return
+  }
+
+  loading.value = false
+
+  await new Promise(r => setTimeout(r, 80))
+  initMaps()
+})
+
+function initMaps() {
+  const configs = [
+    { id: 'map-main', routeIndex: 0 },
+    { id: 'map-s1',   routeIndex: 1 },
+    { id: 'map-s2',   routeIndex: 2 },
+  ]
+
+  configs.forEach(({ id, routeIndex }) => {
+    const route = routes.value[routeIndex]
+    if (!route) return
+    const container = document.getElementById(id)
+    if (!container) return
+
+    const isMain = routeIndex === 0
+    const m = L.map(container, {
+      zoomControl: isMain,
+      attributionControl: false,
+      dragging: isMain,
+      scrollWheelZoom: isMain,
+      doubleClickZoom: isMain,
+      touchZoom: isMain,
+    })
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(m)
+
+    const latlngs = route.geometry.coordinates.map(([lng, lat]) => [lat, lng])
+    const line = L.polyline(latlngs, { color: COLOURS[routeIndex] ?? '#e8720c', weight: isMain ? 5 : 3 }).addTo(m)
+
+    // Start marker on main map
+    if (isMain) {
+      const [sLng, sLat] = route.geometry.coordinates[0]
+      L.circleMarker([sLat, sLng], { radius: 7, fillColor: '#e8720c', color: 'white', weight: 2, fillOpacity: 1 }).addTo(m)
+    }
+
+    m.fitBounds(line.getBounds(), { padding: routeIndex === 0 ? [16, 16] : [4, 4] })
+    maps.push(m)
+  })
+}
+
+onBeforeUnmount(() => {
+  maps.forEach(m => m.remove())
+  maps.length = 0
+})
 </script>
 
 <template>
@@ -7,7 +136,7 @@
     <!-- Top bar -->
     <div class="topbar">
       <h3>ActiveAgeing</h3>
-      <span class="support">Support</span>
+      <span class="support" @click="router.push('/routesurvey')" style="cursor:pointer">← Back</span>
     </div>
 
     <div class="container">
@@ -18,73 +147,96 @@
         AI-optimized routes designed for accessibility, comfort, and scenic beauty.
       </p>
 
+      <!-- Loading -->
+      <div v-if="loading" class="status-box">
+        <div class="spinner"></div>
+        <p>Finding your routes…</p>
+      </div>
+
+      <!-- Error -->
+      <div v-else-if="error" class="status-box error-box">
+        <p>{{ error }}</p>
+        <button class="btn" style="width:auto;padding:10px 24px;margin-top:12px" @click="router.push('/routesurvey')">Go back to survey</button>
+      </div>
+
       <!-- Main layout -->
-      <div class="main">
+      <template v-else>
+        <div class="main">
 
-        <!-- LEFT MAP -->
-        <div class="map-card">
-          <div class="badge">● AI ROUTE ACTIVE</div>
-          <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee" />
-        </div>
-
-        <!-- RIGHT PANEL -->
-        <div class="side-card">
-          <div class="tag">RECOMMENDED</div>
-
-          <h2>Lakeside Serenity Walk</h2>
-          <p class="meta">📍 1.2km &nbsp; ⏱ 25 mins</p>
-
-          <div class="info">
-            <div>
-              <strong>High Accessibility</strong>
-              <p>Many benches available every 200m for resting.</p>
-            </div>
-
-            <div>
-              <strong>Near Cafe Bloom</strong>
-              <p>Convenient stop for refreshments and restrooms.</p>
-            </div>
+          <!-- LEFT MAP — Route 1 -->
+          <div class="map-card">
+            <!-- <div class="badge">● AI ROUTE ACTIVE</div> -->
+            <div id="map-main"></div>
           </div>
 
-          <button class="btn">Select This Route →</button>
-        </div>
+          <!-- RIGHT PANEL -->
+          <div class="side-card">
+            <div class="tag">RECOMMENDED</div>
 
-      </div>
+            <h2>Route 1</h2>
+            <p class="meta">📍 {{ routes[0]?.distance_label }} &nbsp; ⏱ {{ routes[0]?.duration_label }}</p>
 
-      <!-- Highlight -->
-      <div class="highlight">
-        This route is perfectly suited for you with frequent rest benches every 200m and a paved level surface
-      </div>
-
-      <!-- Suggestions -->
-      <div class="suggestions">
-        <div class="header">
-          <h3>Other Suggestions</h3>
-          <span>View all</span>
-        </div>
-
-        <div class="cards">
-
-          <div class="suggest-card">
-            <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470" />
-            <div>
-              <h4>Oak Ridge Trail</h4>
-              <p>Shady, level gravel path through the heritage oak grove.</p>
+            <div class="info">
+              <div>
+                <strong>Activity</strong>
+                <p>{{ activityLabel[survey?.activity_type] ?? 'Walking' }}</p>
+              </div>
+              <div>
+                <strong>Pace</strong>
+                <p style="text-transform:capitalize">{{ survey?.preferred_pace }}</p>
+              </div>
+              <div>
+                <strong>Description</strong>
+                <p>{{ routeDescription(0) }}</p>
+              </div>
             </div>
-            <span class="distance">0.8km</span>
-          </div>
 
-          <div class="suggest-card">
-            <img src="https://images.unsplash.com/photo-1493244040629-496f6d136cc3" />
-            <div>
-              <h4>Botanical Loop</h4>
-              <p>Fully paved circular route through seasonal gardens.</p>
-            </div>
-            <span class="distance">1.5km</span>
+            <button class="btn">Select This Route →</button>
           </div>
 
         </div>
-      </div>
+
+        <!-- Highlight -->
+        <div class="highlight">
+          Your personalized {{ activityLabel[survey?.activity_type]?.toLowerCase() }} route — {{ routes[0]?.distance_label }} at a {{ survey?.preferred_pace }} pace, designed for your comfort.
+        </div>
+
+        <!-- Suggestions -->
+        <div class="suggestions">
+          <div class="header">
+            <h3>Other Suggestions</h3>
+            <span>View all</span>
+          </div>
+x
+          <div class="cards">
+
+            <div class="suggest-card" v-if="routes[1]" @click="openModal(1)">
+              <div id="map-s1" class="suggest-map"></div>
+              <div class="suggest-info">
+                <h4>Route 2</h4>
+                <p>{{ routes[1]?.distance_label }} · {{ routes[1]?.duration_label }}</p>
+              </div>
+              <div class="suggest-actions">
+                <span class="distance">{{ routes[1]?.distance_label }}</span>
+                <button class="view-btn" @click.stop="openModal(1)">View</button>
+              </div>
+            </div>
+
+            <div class="suggest-card" v-if="routes[2]" @click="openModal(2)">
+              <div id="map-s2" class="suggest-map"></div>
+              <div class="suggest-info">
+                <h4>Route 3</h4>
+                <p>{{ routes[2]?.distance_label }} · {{ routes[2]?.duration_label }}</p>
+              </div>
+              <div class="suggest-actions">
+                <span class="distance">{{ routes[2]?.distance_label }}</span>
+                <button class="view-btn" @click.stop="openModal(2)">View</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </template>
 
     </div>
 
@@ -93,6 +245,38 @@
       <h4>ActiveAgeing</h4>
       <p>Privacy Policy · Terms of Service · Accessibility</p>
     </footer>
+
+    <!-- Route detail modal -->
+    <div v-if="modalIndex !== null" class="modal-overlay" @click.self="closeModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Route {{ modalIndex + 1 }}</h3>
+          <button class="modal-close" @click="closeModal">✕</button>
+        </div>
+        <div id="map-modal"></div>
+        <div class="modal-body">
+          <p class="meta">📍 {{ routes[modalIndex]?.distance_label }} &nbsp; ⏱ {{ routes[modalIndex]?.duration_label }}</p>
+          <div class="info">
+            <div>
+              <strong>Activity</strong>
+              <p>{{ activityLabel[survey?.activity_type] ?? 'Walking' }}</p>
+            </div>
+            <div>
+              <strong>Pace</strong>
+              <p style="text-transform:capitalize">{{ survey?.preferred_pace }}</p>
+            </div>
+            <div>
+              <strong>Description</strong>
+              <p>{{ routeDescription(modalIndex) }}</p>
+            </div>
+          </div>
+          <div class="modal-btn-row">
+            <button class="btn" style="margin-top:0">Select This Route →</button>
+            <button class="btn btn-outline" @click="closeModal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>
@@ -128,6 +312,25 @@ h1 {
   margin-bottom: 30px;
 }
 
+/* Loading / error */
+.status-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 60px 20px;
+  color: #555;
+}
+.error-box { color: #c0392b; }
+.spinner {
+  width: 40px; height: 40px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #0b5d57;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* Main layout */
 .main {
   display: flex;
@@ -141,12 +344,13 @@ h1 {
   border-radius: 20px;
   overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
-.map-card img {
-  width: 100%;
-  height: 350px;
-  object-fit: cover;
+#map-main {
+  flex: 1;
+  min-height: 350px;
 }
 
 .badge {
@@ -157,6 +361,7 @@ h1 {
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 12px;
+  z-index: 1000;
 }
 
 /* Side */
@@ -194,6 +399,9 @@ h1 {
   color: white;
   border-radius: 10px;
   border: none;
+  cursor: pointer;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
 }
 
 /* Highlight */
@@ -223,26 +431,135 @@ h1 {
 
 .suggest-card {
   background: white;
-  padding: 15px;
+  padding: 20px;
   border-radius: 15px;
   display: flex;
-  gap: 15px;
+  gap: 18px;
   flex: 1;
   align-items: center;
+  min-height: 130px;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.suggest-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
+
+.suggest-map {
+  width: 110px;
+  height: 110px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
-.suggest-card img {
-  width: 70px;
-  height: 70px;
-  border-radius: 12px;
-  object-fit: cover;
+.suggest-info { flex: 1; }
+.suggest-info h4 { margin: 0 0 6px; font-size: 16px; }
+.suggest-info p  { margin: 0; font-size: 14px; color: #888; }
+
+.suggest-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 .distance {
-  margin-left: auto;
   color: #0b5d57;
-  font-weight: 600;
+  font-weight: 1000;
 }
+
+.view-btn {
+  padding: 20px 50px;
+  background: #0b5d57;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.view-btn:hover { background: #084a45; }
+
+.select-btn {
+  padding: 6px 14px;
+  background: white;
+  color: #0b5d57;
+  border: 1.5px solid #0b5d57;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+.select-btn:hover { background: #0b5d57; color: white; }
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 620px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+}
+.modal-header h3 { margin: 0; color: #0b5d57; }
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #888;
+  line-height: 1;
+}
+.modal-close:hover { color: #333; }
+
+#map-modal {
+  width: 100%;
+  min-height: 280px;
+  flex: 1;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-btn-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.modal-btn-row .btn { flex: 1; margin-top: 0; }
+
+.btn-outline {
+  background: white;
+  color: #0b5d57;
+  border: 1.5px solid #0b5d57;
+}
+.btn-outline:hover { background: #f0f8f7; }
 
 /* Footer */
 .footer {

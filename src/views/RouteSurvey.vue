@@ -12,6 +12,16 @@ const answers = ref({
   q5: null,
 })
 
+const startAddress   = ref('')
+const startLat       = ref(null)
+const startLng       = ref(null)
+const locationStatus = ref('')   // '', 'locating', 'found', 'error'
+const submitted      = ref(false)
+const suggestions    = ref([])
+const showDropdown   = ref(false)
+
+let debounceTimer = null
+
 function select(q, value) {
   answers.value[q] = value
 }
@@ -20,7 +30,129 @@ function isSelected(q, value) {
   return answers.value[q] === value
 }
 
-function findMyRoute() {
+function onAddressInput() {
+  // Reset coords whenever the user edits the field
+  startLat.value = null
+  startLng.value = null
+  locationStatus.value = ''
+
+  clearTimeout(debounceTimer)
+  const query = startAddress.value.trim()
+  if (query.length < 2) {
+    suggestions.value = []
+    showDropdown.value = false
+    return
+  }
+
+  debounceTimer = setTimeout(async () => {
+    try {
+      const url =
+        `https://nominatim.openstreetmap.org/search` +
+        `?q=${encodeURIComponent(query + ', Victoria, Australia')}` +
+        `&format=json&addressdetails=1&limit=8&countrycodes=au`
+      const r    = await fetch(url, { headers: { 'Accept-Language': 'en' } })
+      const data = await r.json()
+
+      // Keep only results that are actually in Victoria
+      suggestions.value = data
+        .filter(d => d.address?.state === 'Victoria')
+        .map(d => {
+          const a    = d.address
+          const name = a.suburb ?? a.town ?? a.village ?? a.city ?? a.county ?? query
+          const postcode = a.postcode ? ` ${a.postcode}` : ''
+          return {
+            label: `${name}${postcode}, Victoria`,
+            lat:   parseFloat(d.lat),
+            lng:   parseFloat(d.lon),
+          }
+        })
+        // deduplicate by label
+        .filter((v, i, arr) => arr.findIndex(x => x.label === v.label) === i)
+
+      showDropdown.value = suggestions.value.length > 0
+    } catch {
+      suggestions.value = []
+      showDropdown.value = false
+    }
+  }, 300)
+}
+
+function pickSuggestion(s) {
+  startAddress.value   = s.label
+  startLat.value       = s.lat
+  startLng.value       = s.lng
+  locationStatus.value = 'found'
+  suggestions.value    = []
+  showDropdown.value   = false
+}
+
+function closeDropdown() {
+  // Small delay so a click on an option fires before blur hides it
+  setTimeout(() => { showDropdown.value = false }, 150)
+}
+
+function useMyLocation() {
+  if (!navigator.geolocation) {
+    locationStatus.value = 'error'
+    return
+  }
+  locationStatus.value = 'locating'
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      startLat.value = pos.coords.latitude
+      startLng.value = pos.coords.longitude
+      try {
+        const r = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${startLat.value}&lon=${startLng.value}&format=json&addressdetails=1`,
+          { headers: { 'Accept-Language': 'en' } }
+        )
+        const data = await r.json()
+        const a    = data.address ?? {}
+        const name = a.suburb ?? a.town ?? a.village ?? a.city ?? ''
+        const postcode = a.postcode ? ` ${a.postcode}` : ''
+        startAddress.value = name
+          ? `${name}${postcode}, Victoria`
+          : (data.display_name ?? `${startLat.value.toFixed(5)}, ${startLng.value.toFixed(5)}`)
+      } catch {
+        startAddress.value = `${startLat.value.toFixed(5)}, ${startLng.value.toFixed(5)}`
+      }
+      locationStatus.value = 'found'
+    },
+    () => { locationStatus.value = 'error' },
+    { timeout: 8000 }
+  )
+}
+
+async function findMyRoute() {
+  submitted.value = true
+  const { q1, q2, q3, q4, q5 } = answers.value
+  const locationMissing = !startLat.value && !startAddress.value.trim()
+  if (!q1 || !q2 || !q3 || !q4 || !q5 || locationMissing) return
+
+  const payload = {
+    activity_type:    q1,
+    duration_minutes: Number(q2),
+    preferred_pace:   q3,
+    environment_pref: q4,
+    rest_stops:       q5,
+    start_address:    startAddress.value.trim() || null,
+    start_lat:        startLat.value,
+    start_lng:        startLng.value,
+  }
+
+  // Persist for Planner.vue to read
+  sessionStorage.setItem('routeSurvey', JSON.stringify(payload))
+
+  try {
+    await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/routesurvey`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+  } catch (err) {
+    console.error('Could not save route survey:', err)
+  }
+
   router.push('/planner')
 }
 </script>
@@ -43,7 +175,7 @@ function findMyRoute() {
         </p>
 
         <!-- Q1 -->
-        <div class="question-block">
+        <div class="question-block" :class="{ 'q-error': submitted && !answers.q1 }">
           <div class="q-label">
             <span class="q-num">1</span>
             <span class="q-text">What type of activity are you planning?</span>
@@ -65,7 +197,7 @@ function findMyRoute() {
         </div>
 
         <!-- Q2 -->
-        <div class="question-block">
+        <div class="question-block" :class="{ 'q-error': submitted && !answers.q2 }">
           <div class="q-label">
             <span class="q-num">2</span>
             <span class="q-text">How long do you want to be active?</span>
@@ -91,7 +223,7 @@ function findMyRoute() {
         </div>
 
         <!-- Q3 -->
-        <div class="question-block">
+        <div class="question-block" :class="{ 'q-error': submitted && !answers.q3 }">
           <div class="q-label">
             <span class="q-num">3</span>
             <span class="q-text">How would you describe your preferred pace?</span>
@@ -113,7 +245,7 @@ function findMyRoute() {
         </div>
 
         <!-- Q4 -->
-        <div class="question-block">
+        <div class="question-block" :class="{ 'q-error': submitted && !answers.q4 }">
           <div class="q-label">
             <span class="q-num">4</span>
             <span class="q-text">What kind of environment do you prefer?</span>
@@ -135,7 +267,7 @@ function findMyRoute() {
         </div>
 
         <!-- Q5 -->
-        <div class="question-block">
+        <div class="question-block" :class="{ 'q-error': submitted && !answers.q5 }">
           <div class="q-label">
             <span class="q-num">5</span>
             <span class="q-text">Do you need rest stops along the way?</span>
@@ -154,6 +286,42 @@ function findMyRoute() {
               <div class="opt-label">No preference</div>
             </div>
           </div>
+        </div>
+
+        <!-- Q6: Starting Location -->
+        <div class="question-block" :class="{ 'q-error': submitted && !startLat && !startAddress.trim() }">
+          <div class="q-label">
+            <span class="q-num">6</span>
+            <span class="q-text">Where would you like to start?</span>
+          </div>
+          <div class="location-row">
+            <div class="autocomplete-wrap">
+              <input
+                class="location-input"
+                type="text"
+                placeholder="Enter a suburb or address…"
+                v-model="startAddress"
+                @input="onAddressInput"
+                @blur="closeDropdown"
+                autocomplete="off"
+              />
+              <ul v-if="showDropdown" class="suggestions-list">
+                <li
+                  v-for="s in suggestions"
+                  :key="s.label"
+                  class="suggestion-item"
+                  @mousedown.prevent="pickSuggestion(s)"
+                >
+                  📍 {{ s.label }}
+                </li>
+              </ul>
+            </div>
+            <button class="locate-btn" @click="useMyLocation" :disabled="locationStatus === 'locating'">
+              {{ locationStatus === 'locating' ? 'Locating…' : '📍 Use my location' }}
+            </button>
+          </div>
+          <p v-if="locationStatus === 'found'" class="loc-status loc-ok">✓ Location set</p>
+          <p v-if="locationStatus === 'error'" class="loc-status loc-err">Could not detect location — please type an address above.</p>
         </div>
 
         <!-- Submit -->
@@ -244,6 +412,8 @@ function findMyRoute() {
 }
 
 .question-block { margin-bottom: 32px; }
+.q-error { padding: 12px; border-radius: 12px; background: #fff5f5; outline: 1.5px solid #e53935; }
+.q-error .q-num { background: #e53935; }
 
 .q-label {
   display: flex;
@@ -346,6 +516,79 @@ function findMyRoute() {
   color: #999;
   font-weight: 500;
 }
+
+/* ── Location ── */
+.location-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.autocomplete-wrap {
+  flex: 1;
+  position: relative;
+}
+
+.location-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #e2e2e2;
+  border-radius: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: #1a1a1a;
+  background: white;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+.location-input:focus { border-color: #0b5d57; }
+
+.suggestions-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1.5px solid #d0e8e5;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.10);
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  z-index: 100;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.suggestion-item:hover { background: #f0f8f7; }
+
+.locate-btn {
+  white-space: nowrap;
+  padding: 12px 16px;
+  background: #0b5d57;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.locate-btn:hover:not(:disabled) { background: #084a45; }
+.locate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.loc-status { font-size: 12px; margin-top: 6px; }
+.loc-ok  { color: #0b5d57; }
+.loc-err { color: #c0392b; }
 
 /* ── Submit ── */
 .submit-row {

@@ -16,6 +16,8 @@ app.use("/api/example", require("./routes/example"));
 app.use("/api/survey", require("./routes/survey"));
 app.use("/api/results", require("./routes/results"));
 app.use("/api/events", require("./routes/events"));
+app.use("/api/routesurvey", require("./routes/routesurvey"));
+app.use("/api/routes",      require("./routes/routes"));
 
 // Health check
 app.get("/", (req, res) => {
