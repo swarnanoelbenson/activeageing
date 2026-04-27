@@ -1,6 +1,26 @@
 -- Run this in DBeaver against the ta15 database
 USE ta15;
 
+-- Route survey responses table
+CREATE TABLE IF NOT EXISTS route_survey_responses (
+  id                   INT PRIMARY KEY AUTO_INCREMENT,
+  activity_type        VARCHAR(20)   NOT NULL,
+  duration_minutes     INT           NOT NULL,
+  preferred_pace       VARCHAR(20)   NOT NULL,
+  environment_pref     VARCHAR(20)   NOT NULL,
+  rest_stops           VARCHAR(20)   NOT NULL,
+  start_address        VARCHAR(255)  NULL,
+  start_lat            DECIMAL(10,7) NULL,
+  start_lng            DECIMAL(10,7) NULL,
+  created_at           TIMESTAMP     DEFAULT CURRENT_TIMESTAMP
+);
+
+-- If the table already exists, add the new columns:
+ALTER TABLE route_survey_responses
+  ADD COLUMN IF NOT EXISTS start_address VARCHAR(255)  NULL AFTER rest_stops,
+  ADD COLUMN IF NOT EXISTS start_lat     DECIMAL(10,7) NULL AFTER start_address,
+  ADD COLUMN IF NOT EXISTS start_lng     DECIMAL(10,7) NULL AFTER start_lat;
+
 -- 1. New tables
 
 CREATE TABLE IF NOT EXISTS category_thresholds (
