@@ -14,6 +14,10 @@ import RoutePlan from '../views/RoutePlan.vue'
 import SnapshotView from '../views/SnapshotView.vue'
 import RouteSurvey from '../views/RouteSurvey.vue'
 import Planner from '../views/Planner.vue'
+import Ready from '../views/Ready.vue'
+import Journey1 from '../views/Journey1.vue'
+import Invite from '../views/Invite.vue'
+
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -30,7 +34,11 @@ const routes = [
   { path: '/routeplan', name: 'routeplan', component: RoutePlan},
   { path: '/snapshot', name: 'Snapshot', component: SnapshotView},
   { path: '/routesurvey', name: 'RouteSurvey', component: RouteSurvey},
-  { path: '/planner', name: 'Planner', component: Planner}
+  { path: '/planner', name: 'Planner', component: Planner},
+  { path: '/ready', name: 'Ready', component: Ready},
+  { path: '/journey1',name: 'Journey1', component: Journey1},
+  { path: '/invite',name: 'Invite', component: Invite}
+
 ]
 
 const router = createRouter({
