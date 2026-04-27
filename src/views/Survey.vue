@@ -346,7 +346,7 @@ nav a.active {
   margin-bottom: 4px;
 }
 
-.option-text p { font-size: 12px; color: #555; line-height: 1.4; }
+.option-text p { font-size: 16px; color: #555; line-height: 1.4; }
 
 /* ── Buttons ── */
 .btn-row {
