@@ -500,7 +500,7 @@ onMounted(() => {
 }
 
 .step-desc {
-  font-size: 20px;
+  font-size: 21px;
   line-height: 1.6;
   color: #4a4a4a;
   text-align: center;
