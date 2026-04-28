@@ -443,7 +443,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   color: #0f3d35;
   margin-bottom: 16px;
@@ -451,10 +451,10 @@ onMounted(() => {
 .label-bar { width: 4px; height: 16px; background: #0b5d57; border-radius: 2px; }
 
 .instructions-text {
-  font-size: 15px;
+  font-size: 10px;
   line-height: 1.7;
   color: #5a6b67;
-  margin: 0 0 16px;
+  margin: 0 0 20px;
 }
 .notes-text {
   font-size: 13px;
@@ -486,24 +486,24 @@ onMounted(() => {
 .step-subtitle {
   background: #1a5c52;
   color: #ffffff;
-  font-weight: 700;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 25px;
   text-align: center;
   padding: 14px 12px;
 }
 
 .step-image {
-  width: 100%;
+  width: 110%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
   display: block;
 }
 
 .step-desc {
-  font-size: 14px;
+  font-size: 20px;
   line-height: 1.6;
   color: #4a4a4a;
-  text-align: left;
+  text-align: center;
   padding: 14px 16px;
   margin: 0;
 }
@@ -525,7 +525,7 @@ onMounted(() => {
   border-radius: 12px;
   padding: 16px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -538,7 +538,7 @@ onMounted(() => {
   border-radius: 12px;
   padding: 16px 24px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -555,7 +555,7 @@ onMounted(() => {
   border-radius: 12px;
   padding: 16px 20px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
