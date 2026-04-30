@@ -388,24 +388,24 @@ async function findMyRoute() {
   flex: 1;
   display: flex;
   justify-content: center;
-  padding: 8px 20px 48px;
+  padding: 8px 8px 48px;
 }
 
 .survey-container {
   width: 100%;
-  max-width: 500px;
+  max-width: 1000px;
 }
 
 .page-title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 30px;
+  font-size: 36px;
   font-weight: 800;
   color: #1a1a1a;
   margin-bottom: 8px;
 }
 
 .page-sub {
-  font-size: 13px;
+  font-size: 15px;
   color: #888;
   line-height: 1.6;
   margin-bottom: 32px;
@@ -433,7 +433,7 @@ async function findMyRoute() {
 }
 
 .q-text {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   color: #1a1a1a;
 }

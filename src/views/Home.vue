@@ -1,14 +1,13 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
+import heroImg from '../assets/myphoto.png'
 
 const router = useRouter()
 
 function getStarted() {
-  localStorage.removeItem('surveyAnswers')
-  localStorage.removeItem('surveyResult')
-  localStorage.removeItem('sessionCompleted')
-  router.push('/snapshot')
+  const el = document.getElementById('wellness-snapshot')
+  if (el) el.scrollIntoView({ behavior: 'smooth' })
 }
 
 function exploreFeatures() {
@@ -54,7 +53,7 @@ function goToExercises() {
 
           <div class="hero-right">
             <div class="hero-image-box">
-              <span class="hero-image-placeholder">[ Hero image: elderly couple laughing ]</span>
+              <img :src="heroImg" alt="Happy elderly couple" class="hero-img" />
             </div>
           </div>
         </div>
@@ -108,39 +107,22 @@ function goToExercises() {
                     <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.12"/>
                   </filter>
                 </defs>
-
-                <!-- Background -->
                 <rect width="260" height="220" fill="#f2f6f4" rx="14"/>
-
-                <!-- Decorative soft circles (like the screenshot) -->
                 <circle cx="48" cy="52" r="30" fill="#ddeee8" opacity="0.7"/>
                 <circle cx="192" cy="168" r="24" fill="#ddeee8" opacity="0.6"/>
-
-                <!-- Curved dashed path from bottom-left to top-right -->
                 <path d="M 36 178 C 60 155, 80 148, 100 130 C 120 112, 128 98, 152 80 C 168 68, 188 54, 210 36"
                   fill="none" stroke="#0b5d57" stroke-width="2.5"
                   stroke-dasharray="6 4" stroke-linecap="round" stroke-linejoin="round"/>
-
-                <!-- START: filled dark circle + label -->
                 <circle cx="36" cy="178" r="9" fill="#0b5d57"/>
                 <text x="52" y="182" font-size="11" fill="#0b5d57" font-weight="700" font-family="Poppins,sans-serif">Start</text>
-
-                <!-- Waypoint 1: Bench stop — hollow circle -->
                 <circle cx="100" cy="130" r="5.5" fill="white" stroke="#0b5d57" stroke-width="2"/>
                 <text x="110" y="134" font-size="9" fill="#888" font-family="Poppins,sans-serif">Bench stop</text>
-
-                <!-- Waypoint 2: Park view — hollow circle -->
                 <circle cx="152" cy="80" r="5.5" fill="white" stroke="#0b5d57" stroke-width="2"/>
                 <text x="162" y="84" font-size="9" fill="#888" font-family="Poppins,sans-serif">Park view</text>
-
-                <!-- END: orange rounded square with star -->
                 <rect x="198" y="24" width="24" height="24" rx="6" fill="#c9541a"/>
                 <text x="210" y="40" text-anchor="middle" font-size="13" fill="white" font-weight="700" font-family="Poppins,sans-serif">★</text>
-
-                <!-- Route badge card -->
                 <rect x="142" y="150" width="96" height="44" rx="10" fill="white" filter="url(#mshadow)"/>
                 <text x="160" y="165" font-size="7.5" fill="#aaa" font-family="Poppins,sans-serif">YOUR ROUTE</text>
-                <!-- small tick -->
                 <circle cx="155" cy="179" r="6" fill="#e8f4f0"/>
                 <text x="155" y="182" text-anchor="middle" font-size="7" fill="#0b5d57" font-weight="700" font-family="Poppins,sans-serif">✓</text>
                 <text x="166" y="183" font-size="11" fill="#0b5d57" font-weight="700" font-family="Poppins,sans-serif">25 min · Easy</text>
@@ -151,7 +133,7 @@ function goToExercises() {
       </section>
 
       <!-- ── WELLNESS SNAPSHOT ── -->
-      <section class="snap-section">
+      <section class="snap-section" id="wellness-snapshot">
         <div class="snap-header">
           <div class="start-pill">Start here</div>
           <h2 class="snap-title">Wellness snapshot</h2>
@@ -226,7 +208,6 @@ function goToExercises() {
             </div>
             <div class="explore-icon-circle green-circle">
               <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Calendar icon -->
                 <rect x="6" y="9" width="32" height="28" rx="4" stroke="#0b5d57" stroke-width="2.2" fill="none"/>
                 <line x1="6" y1="17" x2="38" y2="17" stroke="#0b5d57" stroke-width="2"/>
                 <line x1="14" y1="6" x2="14" y2="13" stroke="#0b5d57" stroke-width="2.2" stroke-linecap="round"/>
@@ -247,7 +228,6 @@ function goToExercises() {
             </div>
             <div class="explore-icon-circle peach-circle">
               <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Dumbbell icon -->
                 <rect x="3" y="18" width="8" height="8" rx="2.5" stroke="#0b5d57" stroke-width="2" fill="none"/>
                 <rect x="33" y="18" width="8" height="8" rx="2.5" stroke="#0b5d57" stroke-width="2" fill="none"/>
                 <rect x="6" y="20" width="5" height="4" rx="1" fill="#0b5d57"/>
@@ -285,7 +265,7 @@ function goToExercises() {
 }
 
 .main-content {
-  padding-top: 64px; /* navbar height */
+  padding-top: 64px;
 }
 
 /* ── Shared Buttons ── */
@@ -304,22 +284,6 @@ function goToExercises() {
   margin-top: 4px;
 }
 .btn-primary:hover { background: #084a45; transform: translateY(-1px); }
-
-.btn-outline-dark {
-  background: transparent;
-  color: #0b5d57;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 10px 22px;
-  border-radius: 8px;
-  border: 2px solid #0b5d57;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.15s;
-  margin-top: 16px;
-  display: inline-block;
-}
-.btn-outline-dark:hover { background: #e0ede9; transform: translateY(-1px); }
 
 .btn-white {
   background: white;
@@ -340,15 +304,15 @@ function goToExercises() {
 /* ── HERO ── */
 .hero-section {
   background: #faf8f3;
-  padding: 48px 5vw 40px;
+  padding: 48px 8vw 70px;
 }
 
 .hero-inner {
-  max-width: 1000px;
+  max-width: 1280px;
   margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: 48px;
+  gap: 64px;
 }
 
 .hero-left { flex: 1; }
@@ -384,9 +348,9 @@ function goToExercises() {
 .hero-right { flex-shrink: 0; }
 
 .hero-image-box {
-  width: clamp(200px, 30vw, 340px);
-  height: clamp(160px, 22vw, 240px);
-  background: #0b5d57;
+  width: 600px;
+  height: 500px;
+  background: transparent;
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -394,8 +358,16 @@ function goToExercises() {
   padding: 20px;
 }
 
+.hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+
 .hero-image-placeholder {
-  color: rgba(255,255,255,0.7);
+  color: rgba(200,255,255,0.7);
   font-size: 13px;
   text-align: center;
   line-height: 1.5;
@@ -406,16 +378,16 @@ function goToExercises() {
   background: #ece9e2;
   padding: 24px 5vw;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
+  align-items: stretch;
+  justify-content: space-between;
 }
 
 .stat-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 40px;
+  padding: 0;
 }
 
 .stat-num {
@@ -444,18 +416,18 @@ function goToExercises() {
 
 /* ── PLAN MY PATH ── */
 .plan-section {
-  padding: 48px 5vw;
+  padding: 70px 5vw 100px;
   background: #faf8f3;
 }
 
 .plan-card {
-  max-width: 900px;
+  max-width: 1280px;
   margin: 0 auto;
   background: #f0f4f2;
   border-radius: 20px;
-  padding: 40px 48px;
+  padding: 70px 56px;
   display: flex;
-  gap: 48px;
+  gap: 64px;
   align-items: center;
 }
 
@@ -522,8 +494,8 @@ function goToExercises() {
 .plan-right { flex-shrink: 0; }
 
 .map-preview {
-  width: 260px;
-  height: 220px;
+  width: 340px;
+  height: 280px;
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -533,8 +505,9 @@ function goToExercises() {
 
 /* ── WELLNESS SNAPSHOT ── */
 .snap-section {
-  padding: 56px 5vw;
+  padding: 56px 8vw;
   background: #ffffff;
+  scroll-margin-top: 64px;
 }
 
 .snap-header {
@@ -568,13 +541,13 @@ function goToExercises() {
 }
 
 .snap-body {
-  max-width: 860px;
+  max-width: 1280px;
   margin: 0 auto;
   display: flex;
-  gap: 40px;
+  gap: 48px;
   background: #f7faf9;
   border-radius: 20px;
-  padding: 36px 40px;
+  padding: 40px 56px;
   box-shadow: 0 2px 20px rgba(0,0,0,0.05);
 }
 
@@ -651,7 +624,7 @@ function goToExercises() {
 
 /* ── EXPLORE SECTION ── */
 .explore-section {
-  padding: 56px 5vw;
+  padding: 56px 8vw;
   background: #ffffff;
   text-align: center;
 }
@@ -677,7 +650,7 @@ function goToExercises() {
 }
 
 .explore-cards {
-  max-width: 860px;
+  max-width: 1280px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -731,7 +704,7 @@ function goToExercises() {
   background: #0b5d57;
   color: white;
   text-align: center;
-  padding: 60px 5vw;
+  padding: 60px 8vw;
 }
 
 .cta-banner h2 {
