@@ -1,9 +1,11 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
+import mapboxgl from 'mapbox-gl'
+import 'mapbox-gl/dist/mapbox-gl.css'
 import AppNavbar from '../components/AppNavbar.vue'
+
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
 const router = useRouter()
 const API    = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
@@ -27,22 +29,149 @@ const STOP_POINTS = [
 ]
 
 // ── Main map ──
-let mainMap      = null
-let mainPolyline = null
-let mainMarker   = null
+let mainMap    = null
+let mainMarker = null
 
 // ── Thumbnail maps (one per route) ──
 const thumbMaps = []
+
+// ── Helpers ──
+function routeBounds(coords) {
+  return coords.reduce(
+    (b, c) => b.extend(c),
+    new mapboxgl.LngLatBounds(coords[0], coords[0])
+  )
+}
 
 // ── Ready modal ──
 const showReady = ref(false)
 function openReady()    { showReady.value = true }
 function closeReady()   { showReady.value = false }
-function beginJourney() { router.push('/journey1') }
 function inviteOthers() { router.push('/invite') }
+function goReady()      { openReady() }
 
-function goReady() {
-  openReady()
+// ── Navigation mode ──
+const navMode           = ref(false)
+const distanceRemaining = ref('')
+const navSpeed          = ref('')
+let navMap    = null
+let navMarker = null
+let watchId   = null
+
+function haversine(a, b) {
+  const R    = 6371000
+  const dLat = (b[1] - a[1]) * Math.PI / 180
+  const dLon = (b[0] - a[0]) * Math.PI / 180
+  const lat1 = a[1] * Math.PI / 180
+  const lat2 = b[1] * Math.PI / 180
+  const sin2 = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(sin2), Math.sqrt(1 - sin2))
+}
+
+function updateDistanceRemaining(userPos) {
+  const coords = routes.value[activeRoute.value]?.geometry?.coordinates
+  if (!coords) return
+  let minDist = Infinity, nearestIdx = 0
+  coords.forEach((c, i) => {
+    const d = haversine(userPos, c)
+    if (d < minDist) { minDist = d; nearestIdx = i }
+  })
+  let remaining = 0
+  for (let i = nearestIdx; i < coords.length - 1; i++) {
+    remaining += haversine(coords[i], coords[i + 1])
+  }
+  distanceRemaining.value = remaining >= 1000
+    ? `${(remaining / 1000).toFixed(1)} km`
+    : `${Math.round(remaining)} m`
+}
+
+async function beginJourney() {
+  closeReady()
+  navMode.value = true
+  await nextTick()
+  await new Promise(r => setTimeout(r, 100)) // let container paint before Mapbox measures it
+
+  const route  = routes.value[activeRoute.value]
+  const coords = route.geometry.coordinates
+
+  navMap = new mapboxgl.Map({
+    container: 'map-nav',
+    style:     'mapbox://styles/mapbox/streets-v12',
+    bounds:    routeBounds(coords),
+    fitBoundsOptions: { padding: 60 },
+    attributionControl: false,
+  })
+
+  navMap.addControl(new mapboxgl.NavigationControl(), 'top-right')
+
+  navMap.on('load', () => {
+    // ── Route line ──
+    navMap.addSource('nav-route', {
+      type: 'geojson',
+      data: { type: 'Feature', geometry: route.geometry },
+    })
+    navMap.addLayer({
+      id:     'nav-route-casing',
+      type:   'line',
+      source: 'nav-route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint:  { 'line-color': '#ffffff', 'line-width': 10 },
+    })
+    navMap.addLayer({
+      id:     'nav-route-line',
+      type:   'line',
+      source: 'nav-route',
+      layout: { 'line-join': 'round', 'line-cap': 'round' },
+      paint:  { 'line-color': COLOUR, 'line-width': 6 },
+    })
+
+    distanceRemaining.value = routes.value[activeRoute.value]?.distance_label ?? ''
+
+    // ── Arrow marker: placed at route start immediately so it's always visible ──
+    const arrowEl = document.createElement('div')
+    arrowEl.className = 'nav-arrow-marker'
+    navMarker = new mapboxgl.Marker({
+      element:           arrowEl,
+      rotationAlignment: 'map',
+      anchor:            'center',
+    })
+      .setLngLat(coords[0])
+      .addTo(navMap)
+
+    // ── GPS tracking (moves the marker when device position is available) ──
+    if (!navigator.geolocation) return
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude: lat, longitude: lng, heading, speed } = pos.coords
+        const userPos = [lng, lat]
+
+        navMarker.setLngLat(userPos)
+        if (heading !== null) navMarker.setRotation(heading)
+
+        navMap.easeTo({
+          center:   userPos,
+          bearing:  heading ?? navMap.getBearing(),
+          zoom:     17,
+          pitch:    45,
+          duration: 800,
+        })
+
+        updateDistanceRemaining(userPos)
+        navSpeed.value = speed !== null ? `${Math.round(speed * 3.6)} km/h` : ''
+      },
+      (err) => console.warn('GPS error:', err.message),
+      { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 }
+    )
+  })
+}
+
+function endJourney() {
+  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null }
+  if (navMarker)        { navMarker.remove(); navMarker = null }
+  if (navMap)           { navMap.remove();    navMap    = null }
+  navMode.value           = false
+  distanceRemaining.value = ''
+  navSpeed.value          = ''
 }
 
 // ── Route selection ──
@@ -56,18 +185,21 @@ function drawMainRoute(index) {
   const route = routes.value[index]
   if (!route) return
 
-  if (mainPolyline) { mainMap.removeLayer(mainPolyline); mainPolyline = null }
-  if (mainMarker)   { mainMap.removeLayer(mainMarker);   mainMarker   = null }
+  const coords = route.geometry.coordinates  // already [lng, lat] from ORS
 
-  const latlngs = route.geometry.coordinates.map(([lng, lat]) => [lat, lng])
-  mainPolyline  = L.polyline(latlngs, { color: COLOUR, weight: 5 }).addTo(mainMap)
+  // Update route line source
+  mainMap.getSource('main-route').setData({
+    type: 'Feature',
+    geometry: route.geometry,
+  })
 
-  const [sLng, sLat] = route.geometry.coordinates[0]
-  mainMarker = L.circleMarker([sLat, sLng], {
-    radius: 7, fillColor: COLOUR, color: 'white', weight: 2, fillOpacity: 1,
-  }).addTo(mainMap)
+  // Move start marker
+  if (mainMarker) mainMarker.remove()
+  mainMarker = new mapboxgl.Marker({ color: COLOUR })
+    .setLngLat(coords[0])
+    .addTo(mainMap)
 
-  mainMap.fitBounds(mainPolyline.getBounds(), { padding: [16, 16] })
+  mainMap.fitBounds(routeBounds(coords), { padding: 40, duration: 600 })
 }
 
 function routeDescription(index) {
@@ -114,35 +246,76 @@ onMounted(async () => {
 })
 
 function initMaps() {
-  // Main interactive map
+  // ── Main interactive map ──
   const mainContainer = document.getElementById('map-main')
   if (mainContainer && routes.value[0]) {
-    mainMap = L.map(mainContainer, {
-      zoomControl: true, attributionControl: false,
-      dragging: true, scrollWheelZoom: true, doubleClickZoom: true, touchZoom: true,
+    const firstCoords = routes.value[0].geometry.coordinates
+    mainMap = new mapboxgl.Map({
+      container:  mainContainer,
+      style:      'mapbox://styles/mapbox/streets-v12',
+      bounds:     routeBounds(firstCoords),
+      fitBoundsOptions: { padding: 40 },
+      attributionControl: false,
     })
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mainMap)
-    drawMainRoute(0)
+    mainMap.addControl(new mapboxgl.NavigationControl(), 'top-right')
+
+    mainMap.on('load', () => {
+      // Add empty source + styled line layer
+      mainMap.addSource('main-route', {
+        type: 'geojson',
+        data: { type: 'Feature', geometry: routes.value[0].geometry },
+      })
+      mainMap.addLayer({
+        id:     'main-route-line',
+        type:   'line',
+        source: 'main-route',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint:  { 'line-color': COLOUR, 'line-width': 5 },
+      })
+
+      // Start marker
+      mainMarker = new mapboxgl.Marker({ color: COLOUR })
+        .setLngLat(firstCoords[0])
+        .addTo(mainMap)
+    })
   }
 
-  // Thumbnails for all 3 routes
+  // ── Thumbnail maps ──
   routes.value.forEach((route, i) => {
     const container = document.getElementById(`map-t${i}`)
     if (!container) return
-    const m = L.map(container, {
-      zoomControl: false, attributionControl: false,
-      dragging: false, scrollWheelZoom: false, doubleClickZoom: false, touchZoom: false,
+    const coords = route.geometry.coordinates
+    const m = new mapboxgl.Map({
+      container,
+      style:      'mapbox://styles/mapbox/streets-v12',
+      bounds:     routeBounds(coords),
+      fitBoundsOptions: { padding: 8 },
+      interactive:       false,
+      attributionControl: false,
     })
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(m)
-    const latlngs = route.geometry.coordinates.map(([lng, lat]) => [lat, lng])
-    const line    = L.polyline(latlngs, { color: COLOUR, weight: 3 }).addTo(m)
-    m.fitBounds(line.getBounds(), { padding: [4, 4] })
+    m.on('load', () => {
+      m.addSource(`thumb-route-${i}`, {
+        type: 'geojson',
+        data: { type: 'Feature', geometry: route.geometry },
+      })
+      m.addLayer({
+        id:     `thumb-route-line-${i}`,
+        type:   'line',
+        source: `thumb-route-${i}`,
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint:  { 'line-color': COLOUR, 'line-width': 3 },
+      })
+    })
     thumbMaps.push(m)
   })
 }
 
 onBeforeUnmount(() => {
-  if (mainMap) { mainMap.remove(); mainMap = null }
+  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null }
+  if (navMarker)  { navMarker.remove();  navMarker  = null }
+  if (navMap)     { navMap.remove();     navMap     = null }
+  if (mainMarker) { mainMarker.remove(); mainMarker = null }
+  if (mainMap)    { mainMap.remove();    mainMap    = null }
   thumbMaps.forEach(m => m.remove())
   thumbMaps.length = 0
 })
@@ -283,6 +456,39 @@ onBeforeUnmount(() => {
       </div>
       <div class="footer-copy">© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</div>
     </footer>
+
+    <!-- Navigation mode overlay -->
+    <Transition name="fade">
+      <div v-if="navMode" class="nav-mode">
+
+        <!-- Map fills the screen -->
+        <div id="map-nav" class="nav-map"></div>
+
+        <!-- Top bar -->
+        <div class="nav-top-bar">
+          <div class="nav-top-left">
+            <div class="nav-dist">{{ distanceRemaining || routes[activeRoute]?.distance_label }}</div>
+            <div class="nav-label">remaining</div>
+          </div>
+          <div class="nav-top-center">
+            <div class="nav-route-pill">Route {{ activeRoute + 1 }}</div>
+          </div>
+          <div class="nav-top-right">
+            <div v-if="navSpeed" class="nav-speed">{{ navSpeed }}</div>
+          </div>
+        </div>
+
+        <!-- Bottom bar -->
+        <div class="nav-bottom-bar">
+          <div class="nav-info">
+            <span class="nav-info-icon">📍</span>
+            <span>Following your route — stay on the highlighted path</span>
+          </div>
+          <button class="nav-end-btn" @click="endJourney">End Journey</button>
+        </div>
+
+      </div>
+    </Transition>
 
     <!-- Ready to Go modal -->
     <Transition name="fade">
@@ -501,4 +707,88 @@ h1 { font-size: 42px; color: #0b5d57; }
 .slide-up-leave-active { transition: transform 0.2s ease, opacity 0.2s ease; }
 .slide-up-enter-from   { transform: translateY(32px); opacity: 0; }
 .slide-up-leave-to     { transform: translateY(16px); opacity: 0; }
+
+/* ── Navigation Mode ── */
+.nav-mode {
+  position: fixed; inset: 0;
+  z-index: 4000;
+  display: flex; flex-direction: column;
+}
+
+.nav-map {
+  flex: 1;
+  width: 100%;
+}
+
+/* Top bar */
+.nav-top-bar {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 80px;
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+  z-index: 10;
+}
+
+.nav-top-left  { display: flex; flex-direction: column; align-items: flex-start; }
+.nav-top-center{ position: absolute; left: 50%; transform: translateX(-50%); }
+.nav-top-right { display: flex; flex-direction: column; align-items: flex-end; min-width: 80px; }
+
+.nav-dist {
+  font-size: 28px; font-weight: 800;
+  color: #0b5d57; line-height: 1;
+}
+.nav-label {
+  font-size: 12px; font-weight: 500;
+  color: #888; margin-top: 2px;
+}
+.nav-route-pill {
+  background: #0b5d57; color: white;
+  font-size: 13px; font-weight: 600;
+  padding: 6px 18px; border-radius: 999px;
+}
+.nav-speed {
+  font-size: 20px; font-weight: 700; color: #c2185b;
+  line-height: 1;
+}
+
+/* Bottom bar */
+.nav-bottom-bar {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(10px);
+  padding: 16px 24px 28px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  box-shadow: 0 -2px 16px rgba(0,0,0,0.10);
+  z-index: 10;
+}
+
+.nav-info {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 14px; color: #555; flex: 1;
+}
+.nav-info-icon { font-size: 18px; flex-shrink: 0; }
+
+.nav-end-btn {
+  background: #c2185b; color: white;
+  border: none; border-radius: 12px;
+  padding: 14px 28px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(194,24,91,0.35);
+  transition: opacity 0.2s, transform 0.15s;
+}
+.nav-end-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* GPS arrow marker — must have real dimensions for Mapbox to anchor it */
+.nav-arrow-marker {
+  width: 28px;
+  height: 36px;
+  background: #c2185b;
+  clip-path: polygon(50% 0%, 0% 100%, 50% 78%, 100% 100%);
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
+}
 </style>

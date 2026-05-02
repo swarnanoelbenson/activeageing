@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <!-- NAV -->
-    <AppNavbar active="wellness" />
+    <AppNavbar active="checkin" />
 
     <!-- MAIN -->
     <main class="main">
@@ -244,42 +244,11 @@ onMounted(() => {
   color: #1a2e2b;
 }
 
-/* NAV */
-.nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px 40px;
-}
-.logo {
-  font-weight: 700;
-  font-size: 20px;
-  color: #0b5d57;
-}
-.nav-links {
-  display: flex;
-  gap: 32px;
-  font-size: 16px;
-  font-weight: 500;
-}
-.nav-link {
-  color: #0b5d57;
-  text-decoration: none;
-  cursor: pointer;
-}
-.nav-link.active {
-  color: #0b5d57;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
 /* MAIN */
 .main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 40px 80px;
+  padding: 80px 40px 80px;
 }
 
 /* FACT BOX */
