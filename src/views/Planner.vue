@@ -17,9 +17,35 @@ const maps = []
 
 const activityLabel = { walking: 'Walking', jogging: 'Light Jogging', cycling: 'Cycling' }
 
-// Modal
-const modalIndex = ref(null)   // 1 or 2 (routes array index), null = closed
+// ── Route detail modal ──
+const modalIndex = ref(null)
 let   modalMap   = null
+
+// ── Ready modal ──
+const showReady = ref(false)
+
+function openReady() {
+  showReady.value = true
+}
+
+function closeReady() {
+  showReady.value = false
+}
+
+function beginJourney() {
+  router.push('/journey1')
+}
+
+function inviteOthers() {
+  router.push('/invite')
+}
+
+// ── Select route (was goReady) ──
+function goReady(index = 0) {
+  // close detail modal if open, then show ready overlay
+  if (modalIndex.value !== null) closeModal()
+  openReady()
+}
 
 async function openModal(index) {
   modalIndex.value = index
@@ -113,7 +139,6 @@ function initMaps() {
     const latlngs = route.geometry.coordinates.map(([lng, lat]) => [lat, lng])
     const line = L.polyline(latlngs, { color: COLOURS[routeIndex] ?? '#e8720c', weight: isMain ? 5 : 3 }).addTo(m)
 
-    // Start marker on main map
     if (isMain) {
       const [sLng, sLat] = route.geometry.coordinates[0]
       L.circleMarker([sLat, sLng], { radius: 7, fillColor: '#e8720c', color: 'white', weight: 2, fillOpacity: 1 }).addTo(m)
@@ -165,7 +190,6 @@ onBeforeUnmount(() => {
 
           <!-- LEFT MAP — Route 1 -->
           <div class="map-card">
-            <!-- <div class="badge">● AI ROUTE ACTIVE</div> -->
             <div id="map-main"></div>
           </div>
 
@@ -191,7 +215,7 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <button class="btn">Select This Route →</button>
+            <button class="btn" @click="goReady(0)">Select This Route →</button>
           </div>
 
         </div>
@@ -207,7 +231,7 @@ onBeforeUnmount(() => {
             <h3>Other Suggestions</h3>
             <span>View all</span>
           </div>
-x
+
           <div class="cards">
 
             <div class="suggest-card" v-if="routes[1]" @click="openModal(1)">
@@ -246,7 +270,7 @@ x
       <p>Privacy Policy · Terms of Service · Accessibility</p>
     </footer>
 
-    <!-- Route detail modal -->
+    <!-- ── Route detail modal ── -->
     <div v-if="modalIndex !== null" class="modal-overlay" @click.self="closeModal">
       <div class="modal">
         <div class="modal-header">
@@ -271,12 +295,55 @@ x
             </div>
           </div>
           <div class="modal-btn-row">
-            <button class="btn" style="margin-top:0">Select This Route →</button>
+            <button class="btn" style="margin-top:0" @click="goReady(modalIndex)">Select This Route →</button>
             <button class="btn btn-outline" @click="closeModal">Close</button>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- ══════════════════════════════
+         READY TO GO MODAL (inlined)
+    ══════════════════════════════ -->
+    <Transition name="fade">
+      <div v-if="showReady" class="ready-overlay" @click.self="closeReady">
+        <Transition name="slide-up">
+          <div v-if="showReady" class="ready-modal">
+            <h2 class="ready-title">Ready to Go?</h2>
+            <p class="ready-sub">Choose how you'd like to experience this route</p>
+
+            <!-- Begin My Journey -->
+            <button class="btn-begin" @click="beginJourney">
+              <div class="rdy-btn-content">
+                <div class="rdy-btn-text">
+                  <div class="rdy-label">Begin My Journey</div>
+                  <div class="rdy-desc">Start your personalized route now</div>
+                </div>
+                <span class="rdy-arrow">→</span>
+              </div>
+            </button>
+
+            <!-- Invite Others -->
+            <button class="btn-invite" @click="inviteOthers">
+              <div class="rdy-btn-content">
+                <div class="rdy-btn-text">
+                  <div class="rdy-label rdy-label-dark">Invite Others</div>
+                  <div class="rdy-desc rdy-desc-dark">Create an event and walk together</div>
+                </div>
+                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                  <circle cx="10" cy="9" r="4" stroke="#0b5d57" stroke-width="1.8" fill="none"/>
+                  <path d="M2 22c0-4 3.6-7 8-7" stroke="#0b5d57" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+                  <circle cx="19" cy="9" r="3" stroke="#0b5d57" stroke-width="1.6" fill="none"/>
+                  <path d="M19 15c3.5 0 6 2.5 6 6" stroke="#0b5d57" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+                </svg>
+              </div>
+            </button>
+
+            <button class="rdy-cancel" @click="closeReady">Cancel</button>
+          </div>
+        </Transition>
+      </div>
+    </Transition>
 
   </div>
 </template>
@@ -337,7 +404,6 @@ h1 {
   gap: 24px;
 }
 
-/* Map */
 .map-card {
   flex: 2;
   background: white;
@@ -355,8 +421,7 @@ h1 {
 
 .badge {
   position: absolute;
-  top: 15px;
-  left: 15px;
+  top: 15px; left: 15px;
   background: white;
   padding: 6px 12px;
   border-radius: 20px;
@@ -364,7 +429,6 @@ h1 {
   z-index: 1000;
 }
 
-/* Side */
 .side-card {
   flex: 1;
   background: white;
@@ -391,20 +455,24 @@ h1 {
   color: #555;
 }
 
+/* Main select route btn — gradient */
 .btn {
   margin-top: 20px;
   width: 100%;
   padding: 14px;
-  background: #0b5d57;
+  background: linear-gradient(135deg, #0f7a72, #0b5d57);
   color: white;
   border-radius: 10px;
   border: none;
   cursor: pointer;
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(11,93,87,0.28);
+  transition: opacity 0.2s, transform 0.15s;
 }
+.btn:hover { opacity: 0.92; transform: translateY(-1px); }
 
-/* Highlight */
 .highlight {
   margin-top: 25px;
   background: #0b5d57;
@@ -413,10 +481,7 @@ h1 {
   border-radius: 12px;
 }
 
-/* Suggestions */
-.suggestions {
-  margin-top: 30px;
-}
+.suggestions { margin-top: 30px; }
 
 .header {
   display: flex;
@@ -444,8 +509,7 @@ h1 {
 .suggest-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
 
 .suggest-map {
-  width: 110px;
-  height: 110px;
+  width: 110px; height: 110px;
   border-radius: 12px;
   overflow: hidden;
   flex-shrink: 0;
@@ -462,10 +526,7 @@ h1 {
   gap: 8px;
 }
 
-.distance {
-  color: #0b5d57;
-  font-weight: 1000;
-}
+.distance { color: #0b5d57; font-weight: 1000; }
 
 .view-btn {
   padding: 20px 50px;
@@ -481,22 +542,7 @@ h1 {
 }
 .view-btn:hover { background: #084a45; }
 
-.select-btn {
-  padding: 6px 14px;
-  background: white;
-  color: #0b5d57;
-  border: 1.5px solid #0b5d57;
-  border-radius: 8px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  white-space: nowrap;
-}
-.select-btn:hover { background: #0b5d57; color: white; }
-
-/* Modal */
+/* Route detail modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -543,9 +589,7 @@ h1 {
   flex: 1;
 }
 
-.modal-body {
-  padding: 20px;
-}
+.modal-body { padding: 20px; }
 
 .modal-btn-row {
   display: flex;
@@ -558,6 +602,7 @@ h1 {
   background: white;
   color: #0b5d57;
   border: 1.5px solid #0b5d57;
+  box-shadow: none;
 }
 .btn-outline:hover { background: #f0f8f7; }
 
@@ -568,4 +613,131 @@ h1 {
   padding: 30px;
   color: #666;
 }
+
+/* ══════════════════════════════
+   READY TO GO MODAL
+══════════════════════════════ */
+.ready-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(160, 210, 205, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+  padding: 24px;
+}
+
+.ready-modal {
+  background: white;
+  border-radius: 24px;
+  padding: 40px 36px 32px;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+}
+
+.ready-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 28px;
+  font-weight: 800;
+  color: #0b3d38;
+  text-align: center;
+  margin: 0;
+}
+
+.ready-sub {
+  font-size: 14px;
+  color: #6a7a76;
+  text-align: center;
+  margin: -4px 0 6px;
+}
+
+/* Begin button */
+.btn-begin {
+  width: 100%;
+  background: linear-gradient(135deg, #12897f, #0b5d57);
+  border: none;
+  border-radius: 14px;
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  box-shadow: 0 6px 20px rgba(11,93,87,0.35);
+}
+.btn-begin:hover { opacity: 0.93; transform: translateY(-1px); }
+
+/* Invite button */
+.btn-invite {
+  width: 100%;
+  background: white;
+  border: 2px solid #0b5d57;
+  border-radius: 14px;
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+.btn-invite:hover { background: #e8f4f0; transform: translateY(-1px); }
+
+.rdy-btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rdy-btn-text { text-align: left; }
+
+.rdy-label {
+  font-size: 17px;
+  font-weight: 700;
+  color: white;
+  line-height: 1.3;
+}
+.rdy-label-dark { color: #0b3d38; }
+
+.rdy-desc {
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.85);
+  margin-top: 3px;
+}
+.rdy-desc-dark { color: #6a7a76; }
+
+.rdy-arrow {
+  font-size: 22px;
+  color: white;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.rdy-cancel {
+  background: none;
+  border: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6a7a76;
+  cursor: pointer;
+  padding: 4px 16px;
+  margin-top: 2px;
+  transition: color 0.2s;
+}
+.rdy-cancel:hover { color: #0b5d57; }
+
+/* Transitions */
+.fade-enter-active,
+.fade-leave-active { transition: opacity 0.25s ease; }
+.fade-enter-from,
+.fade-leave-to { opacity: 0; }
+
+.slide-up-enter-active { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease; }
+.slide-up-leave-active { transition: transform 0.2s ease, opacity 0.2s ease; }
+.slide-up-enter-from  { transform: translateY(32px); opacity: 0; }
+.slide-up-leave-to    { transform: translateY(16px); opacity: 0; }
 </style>
