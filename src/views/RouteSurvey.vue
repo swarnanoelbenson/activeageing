@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { ref } from 'vue'
+import AppNavbar from '../components/AppNavbar.vue'
 
 const router = useRouter()
 
@@ -160,12 +161,9 @@ async function findMyRoute() {
 <template>
   <div class="page-wrapper">
 
-    <div class="topbar">
-      <span class="brand">ACTIVEAGEING</span>
-      <span class="back-link" @click="router.push('/routeplan')">Back to Home</span>
-    </div>
+    <AppNavbar active="routeplan" />
 
-    <div class="survey-outer">
+    <div class="survey-outer" style="padding-top: 80px;">
       <div class="survey-container">
 
         <h1 class="page-title">Plan My Activity</h1>
@@ -361,28 +359,6 @@ async function findMyRoute() {
   flex-direction: column;
 }
 
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 40px;
-}
-
-.brand {
-  font-size: 14px;
-  font-weight: 700;
-  color: #0b5d57;
-  letter-spacing: 0.06em;
-}
-
-.back-link {
-  font-size: 14px;
-  font-weight: 500;
-  color: #0b5d57;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-.back-link:hover { color: #084a45; text-decoration: underline; }
 
 .survey-outer {
   flex: 1;
@@ -658,7 +634,6 @@ async function findMyRoute() {
 .footer-copy { font-size: 12px; color: rgba(255,255,255,0.45); }
 
 @media (max-width: 560px) {
-  .topbar { padding: 14px 16px; }
   .survey-outer { padding: 8px 12px 32px; }
   .cols-4 { grid-template-columns: repeat(2, 1fr); }
   .page-title { font-size: 24px; }

@@ -1,31 +1,88 @@
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
 
 const router = useRouter()
 
+const showExerciseGrid  = ref(false)
+const selectedExercise  = ref(null)
+
+const allExercises = [
+  { name: 'Neck Rotations',        emoji: '🔄', category: 'Flexibility', duration: '5 min',
+    description: 'Gentle neck rotations to improve mobility and reduce stiffness.',
+    steps: [
+      { title: 'Start Position',  image: '/Images/neck_rotation_1.jpeg',       desc: 'Sit upright on a chair with your back straight and shoulders relaxed.' },
+      { title: 'Turn Right',      image: '/Images/neck_rotation_2.jpeg',       desc: 'Slowly turn your head to the right as far as comfortable, keeping your shoulders still.' },
+      { title: 'Turn Left',       image: '/Images/neck_rotation_3.jpeg',       desc: 'Gently turn your head to the left side, moving slowly and staying relaxed.' },
+    ]},
+  { name: 'Ankle Rotations',       emoji: '🦵', category: 'Mobility',     duration: '5 min',
+    description: 'Seated ankle rotations to maintain joint flexibility and circulation.',
+    steps: [
+      { title: 'Start Position',         image: '/Images/ankle_rotation_1.jpeg',       desc: 'Sit upright on a chair and gently lift one foot slightly off the ground.' },
+      { title: 'Rotate Clockwise',       image: '/Images/ankle_rotation_2.jpeg',       desc: 'Slowly rotate your ankle in a circular motion in one direction.' },
+      { title: 'Rotate Anti-Clockwise',  image: '/Images/ankle_rotation_3.jpeg',       desc: 'Change direction and rotate your ankle the other way, keeping movements smooth.' },
+    ]},
+  { name: 'Seated Chest Stretch',  emoji: '🧘', category: 'Stretching',   duration: '8 min',
+    description: 'Open up your chest and improve posture with this gentle seated stretch.',
+    steps: [
+      { title: 'Start Position', image: '/Images/seated_chest_stretch_1.jpeg', desc: 'Sit upright on a chair with your back straight and shoulders relaxed.' },
+      { title: 'Open Chest',     image: '/Images/seated_chest_stretch_2.jpeg', desc: 'Slowly move your arms out to the sides, opening your chest and keeping your shoulders down.' },
+      { title: 'Hold & Breathe', image: '/Images/seated_chest_stretch_3.jpeg', desc: 'Hold the position and take slow, deep breaths while keeping your chest open and repeat.' },
+    ]},
+  { name: 'Brisk Walking',         emoji: '🚶', category: 'Cardio',       duration: '15 min',
+    description: 'A gentle increase in walking pace to build cardiovascular endurance.',
+    steps: [
+      { title: 'Start Slow',      image: '/Images/brisk_walking_1.jpeg',       desc: 'Begin with a comfortable walking pace, keeping your posture upright and relaxed.' },
+      { title: 'Increase Pace',   image: '/Images/brisk_walking_2.jpeg',       desc: 'Gradually walk a little faster, swinging your arms naturally and taking steady steps.' },
+      { title: 'Extend Duration', image: '/Images/brisk_walking_3.jpeg',       desc: 'Continue walking at a comfortable pace for a longer time, maintaining a steady rhythm.' },
+    ]},
+  { name: 'Calf Raises',           emoji: '🏋️', category: 'Strength',    duration: '8 min',
+    description: 'Strengthen your calf muscles and improve balance with standing calf raises.',
+    steps: [
+      { title: 'Start Position', image: '/Images/calf_raises_1.jpeg',          desc: 'Stand straight behind a chair, holding it lightly for support.' },
+      { title: 'Raise Heels',    image: '/Images/calf_raises_2.jpeg',          desc: 'Slowly lift your heels off the ground, rising onto your toes.' },
+      { title: 'Lower Down',     image: '/Images/calf_raises_3.jpeg',          desc: 'Gently lower your heels back to the ground in a controlled movement.' },
+    ]},
+  { name: 'Sit-to-Stand',          emoji: '🪑', category: 'Strength',     duration: '10 min',
+    description: 'Build leg strength and improve everyday functional movements.',
+    steps: [
+      { title: 'Start Position', image: '/Images/sit_to_stand_1.jpeg',         desc: 'Sit upright on a chair with your feet flat on the ground.' },
+      { title: 'Stand Up',       image: '/Images/sit_to_stand_2.jpeg',         desc: 'Lean slightly forward and push through your feet to stand up without using your hands.' },
+      { title: 'Sit Down',       image: '/Images/sit_to_stand_3.jpeg',         desc: 'Slowly lower yourself back onto the chair with control.' },
+    ]},
+  { name: 'Mini Squats',           emoji: '💪', category: 'Strength',     duration: '10 min',
+    description: 'Gentle squats to strengthen your legs and improve stability.',
+    steps: [
+      { title: 'Start Position', image: '/Images/mini_squats_1.jpeg',          desc: 'Stand straight with your feet shoulder-width apart and arms stretched forward for balance.' },
+      { title: 'Lower Down',     image: '/Images/mini_squats_2.jpeg',          desc: 'Slowly bend your knees and lower your body slightly, as if sitting on a chair.' },
+      { title: 'Stand Up',       image: '/Images/mini_squats_3.jpeg',          desc: 'Push through your feet and gently return to the starting position.' },
+    ]},
+  { name: 'Hold and Balance',      emoji: '⚖️', category: 'Balance',      duration: '8 min',
+    description: 'Improve your balance and coordination with single-leg holds.',
+    steps: [
+      { title: 'Start Position',   image: '/Images/hold_and_balance_1.jpeg',   desc: 'Stand straight next to a chair for support, keeping your body relaxed.' },
+      { title: 'Lift and Hold',    image: '/Images/hold_and_balance_2.jpeg',   desc: 'Lift one leg slightly in front and hold the position, keeping your balance steady.' },
+      { title: 'Lower and Switch', image: '/Images/hold_and_balance_3.jpeg',   desc: 'Gently lower your leg and repeat the same with the other leg.' },
+    ]},
+  { name: 'Standing Balance Hold', emoji: '🧍', category: 'Balance',      duration: '10 min',
+    description: 'Advanced balance practice to build confidence and stability.',
+    steps: [
+      { title: 'Start Position',   image: '/Images/hold_and_balance_1.jpeg',   desc: 'Stand straight next to a chair for support, keeping your body relaxed.' },
+      { title: 'Lift and Hold',    image: '/Images/hold_and_balance_2.jpeg',   desc: 'Lift one leg slightly in front and hold the position, keeping your balance steady.' },
+      { title: 'Lower and Switch', image: '/Images/hold_and_balance_3.jpeg',   desc: 'Gently lower your leg and repeat the same with the other leg.' },
+    ]},
+]
+
 function getStarted() {
   localStorage.removeItem('surveyAnswers')
   localStorage.removeItem('surveyResult')
-  localStorage.removeItem('sessionCompleted')
   router.push('/snapshot')
 }
 
-function exploreFeatures() {
-  router.push('/routesurvey')
-}
-
-function goToSurvey() {
-  router.push('/survey')
-}
-
-function goToEvents() {
-  router.push('/events')
-}
-
-function goToExercises() {
-  router.push('/exercise')
-}
+function exploreFeatures() { router.push('/routesurvey') }
+function goToSurvey()      { router.push('/survey') }
+function goToEvents()      { router.push('/events') }
 </script>
 
 <template>
@@ -54,7 +111,7 @@ function goToExercises() {
 
           <div class="hero-right">
             <div class="hero-image-box">
-              <span class="hero-image-placeholder">[ Hero image: elderly couple laughing ]</span>
+              <img src="/Images/happy_couple.jpeg" alt="Happy elderly couple" class="hero-img" />
             </div>
           </div>
         </div>
@@ -63,7 +120,7 @@ function goToExercises() {
       <!-- ── STATS BAR ── -->
       <section class="stats-bar">
         <div class="stat-item">
-          <span class="stat-num">150+</span>
+          <span class="stat-num">100+</span>
           <span class="stat-label">Walking routes</span>
         </div>
         <div class="stat-divider"></div>
@@ -73,13 +130,13 @@ function goToExercises() {
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <span class="stat-num">30+</span>
+          <span class="stat-num">10</span>
           <span class="stat-label">Guided exercises</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <span class="stat-num orange">100%</span>
-          <span class="stat-label">Private, no data stored</span>
+          <span class="stat-num orange">5 min</span>
+          <span class="stat-label">Wellness Check-In</span>
         </div>
       </section>
 
@@ -243,19 +300,10 @@ function goToExercises() {
             <div class="explore-text">
               <h3>Browse exercises</h3>
               <p>All exercises in one place, from gentle stretches to guided strength routines.</p>
-              <button class="btn-primary" @click="goToExercises">View all →</button>
+              <button class="btn-primary" @click="showExerciseGrid = true">View all →</button>
             </div>
             <div class="explore-icon-circle peach-circle">
-              <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Dumbbell icon -->
-                <rect x="3" y="18" width="8" height="8" rx="2.5" stroke="#0b5d57" stroke-width="2" fill="none"/>
-                <rect x="33" y="18" width="8" height="8" rx="2.5" stroke="#0b5d57" stroke-width="2" fill="none"/>
-                <rect x="6" y="20" width="5" height="4" rx="1" fill="#0b5d57"/>
-                <rect x="33" y="20" width="5" height="4" rx="1" fill="#0b5d57"/>
-                <line x1="11" y1="22" x2="33" y2="22" stroke="#0b5d57" stroke-width="2.5" stroke-linecap="round"/>
-                <rect x="14" y="17" width="5" height="10" rx="2" stroke="#0b5d57" stroke-width="2" fill="none"/>
-                <rect x="25" y="17" width="5" height="10" rx="2" stroke="#0b5d57" stroke-width="2" fill="none"/>
-              </svg>
+              <img src="/Images/dumbell.jpeg" alt="Dumbbell" class="explore-icon-img" />
             </div>
           </div>
         </div>
@@ -269,6 +317,71 @@ function goToExercises() {
       </section>
 
     </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <h3>ActiveAgeing</h3>
+
+      <div class="links">
+        <a>Privacy Policy</a>
+        <a>Terms of Service</a>
+      </div>
+
+    </footer>
+
+    <!-- Exercise grid overlay -->
+    <Transition name="fade">
+      <div v-if="showExerciseGrid" class="ex-overlay" @click.self="showExerciseGrid = false">
+        <div class="ex-panel">
+          <div class="ex-panel-header">
+            <h2>All Exercises</h2>
+            <button class="ex-close" @click="showExerciseGrid = false">✕</button>
+          </div>
+          <div class="ex-grid">
+            <div v-for="ex in allExercises" :key="ex.name" class="ex-card">
+              <div class="ex-card-icon">{{ ex.emoji }}</div>
+              <div class="ex-card-body">
+                <div class="ex-card-cat">{{ ex.category }}</div>
+                <h4 class="ex-card-name">{{ ex.name }}</h4>
+                <p class="ex-card-dur">{{ ex.duration }}</p>
+              </div>
+              <button class="ex-view-btn" @click="selectedExercise = ex">View</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Exercise preview popup -->
+    <Transition name="fade">
+      <div v-if="selectedExercise" class="ex-preview-overlay" @click.self="selectedExercise = null">
+        <div class="ex-preview">
+          <div class="ex-preview-header">
+            <span class="ex-preview-emoji">{{ selectedExercise.emoji }}</span>
+            <div class="ex-preview-title-group">
+              <div class="ex-preview-cat">{{ selectedExercise.category }} · {{ selectedExercise.duration }}</div>
+              <h3 class="ex-preview-name">{{ selectedExercise.name }}</h3>
+            </div>
+            <button class="ex-close" @click="selectedExercise = null">✕</button>
+          </div>
+          <p class="ex-preview-desc">{{ selectedExercise.description }}</p>
+          <div class="ex-preview-steps">
+            <div v-for="(step, i) in selectedExercise.steps" :key="i" class="ex-step">
+              <img :src="step.image" :alt="step.title" class="ex-step-img" />
+              <div class="ex-step-body">
+                <div class="ex-step-title">
+                  <div class="ex-step-num">{{ i + 1 }}</div>
+                  <span>{{ step.title }}</span>
+                </div>
+                <p class="ex-step-text">{{ step.desc }}</p>
+              </div>
+            </div>
+          </div>
+          <button class="ex-preview-close-btn" @click="selectedExercise = null">Close</button>
+        </div>
+      </div>
+    </Transition>
+
   </div>
 </template>
 
@@ -384,21 +497,18 @@ function goToExercises() {
 .hero-right { flex-shrink: 0; }
 
 .hero-image-box {
-  width: clamp(200px, 30vw, 340px);
-  height: clamp(160px, 22vw, 240px);
-  background: #0b5d57;
+  width: clamp(300px, 30vw, 440px);
+  height: clamp(460px, 22vw, 240px);
   border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
-.hero-image-placeholder {
-  color: rgba(255,255,255,0.7);
-  font-size: 13px;
-  text-align: center;
-  line-height: 1.5;
+.hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 /* ── STATS BAR ── */
@@ -726,6 +836,14 @@ function goToExercises() {
 .green-circle { background: #e0ede9; }
 .peach-circle { background: #fde8d8; }
 
+.explore-icon-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
 /* ── CTA BANNER ── */
 .cta-banner {
   background: #0b5d57;
@@ -747,6 +865,137 @@ function goToExercises() {
   line-height: 1.6;
 }
 
+/* ── FOOTER ── */
+.site-footer {
+  background: #0b5d57;
+  color: rgba(255,255,255,0.75);
+  padding: 32px 5vw;
+  text-align: center;
+}
+.footer-inner { max-width: 900px; margin: 0 auto; }
+.footer-brand { font-size: 17px; font-weight: 700; color: white; margin-bottom: 10px; }
+.footer-links {
+  display: flex; justify-content: center; gap: 24px;
+  margin-bottom: 12px; flex-wrap: wrap;
+}
+.footer-links span {
+  font-size: 13px; color: rgba(255,255,255,0.75);
+  cursor: pointer; transition: color 0.2s;
+}
+.footer-links span:hover { color: white; }
+.footer-copy { font-size: 12px; color: rgba(255,255,255,0.45); }
+
+/* ── EXERCISE GRID OVERLAY ── */
+.ex-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.ex-panel {
+  background: #faf8f3;
+  border-radius: 20px;
+  width: 100%; max-width: 900px;
+  max-height: 85vh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+.ex-panel-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 28px; border-bottom: 1px solid #e8ecea;
+  background: white; flex-shrink: 0;
+}
+.ex-panel-header h2 { margin: 0; font-size: 20px; color: #0b5d57; }
+.ex-close {
+  background: none; border: none; font-size: 18px;
+  cursor: pointer; color: #888; line-height: 1; padding: 4px 8px;
+  border-radius: 6px; transition: background 0.15s;
+}
+.ex-close:hover { background: #f0f0f0; color: #333; }
+.ex-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 24px 28px;
+  overflow-y: auto;
+}
+.ex-card {
+  background: white; border-radius: 14px; padding: 18px 16px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 8px;
+  border: 1px solid #e8ecea;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.ex-card-icon { font-size: 28px; }
+.ex-card-body { flex: 1; }
+.ex-card-cat  { font-size: 11px; font-weight: 600; color: #9aafaa; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px; }
+.ex-card-name { font-size: 15px; font-weight: 700; color: #0b5d57; margin: 0 0 4px; }
+.ex-card-dur  { font-size: 12px; color: #888; margin: 0; }
+.ex-view-btn {
+  margin-top: 6px; background: #0b5d57; color: white;
+  border: none; border-radius: 8px; padding: 8px 18px;
+  font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background 0.2s;
+}
+.ex-view-btn:hover { background: #084a45; }
+
+/* ── EXERCISE PREVIEW POPUP ── */
+.ex-preview-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 600;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.ex-preview {
+  background: white; border-radius: 20px;
+  width: 100%; max-width: 560px;
+  padding: 28px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.25);
+  max-height: 88vh; overflow-y: auto;
+}
+.ex-preview-header {
+  display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px;
+}
+.ex-preview-emoji { font-size: 36px; flex-shrink: 0; margin-top: 2px; }
+.ex-preview-title-group { flex: 1; }
+.ex-preview-cat  { font-size: 12px; font-weight: 600; color: #9aafaa; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+.ex-preview-name { font-size: 20px; font-weight: 700; color: #0b5d57; margin: 0; }
+.ex-preview-header .ex-close { margin-left: auto; flex-shrink: 0; }
+.ex-preview-desc { font-size: 14px; color: #5a6a66; line-height: 1.65; margin-bottom: 20px; }
+.ex-preview-steps { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+.ex-step { display: flex; gap: 14px; align-items: flex-start; }
+.ex-step-img {
+  width: 100px; height: 80px; object-fit: cover;
+  border-radius: 10px; flex-shrink: 0;
+  background: #e0ede9;
+}
+.ex-step-body { flex: 1; }
+.ex-step-title {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 5px;
+  font-size: 14px; font-weight: 700; color: #0b5d57;
+}
+.ex-step-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: #e0ede9; color: #0b5d57;
+  font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ex-step-text { font-size: 13px; color: #5a6a66; line-height: 1.6; margin: 0; }
+.ex-preview-close-btn {
+  width: 100%; background: #0b5d57; color: white;
+  border: none; border-radius: 10px; padding: 13px;
+  font-family: 'Poppins', sans-serif; font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: background 0.2s;
+}
+.ex-preview-close-btn:hover { background: #084a45; }
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+.fade-enter-from,  .fade-leave-to      { opacity: 0; }
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .hero-inner { flex-direction: column; }
@@ -757,5 +1006,9 @@ function goToExercises() {
   .explore-cards { grid-template-columns: 1fr; }
   .stats-bar { flex-wrap: wrap; gap: 16px; }
   .stat-divider { display: none; }
+  .ex-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .ex-grid { grid-template-columns: 1fr; }
 }
 </style>

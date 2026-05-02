@@ -89,20 +89,6 @@
         </template>
 
         <template v-if="exercisesCompleted > 0">
-          <div class="cel-stats">
-            <div class="cel-stat">
-              <span class="cel-stat-num">+{{ pointsEarned }}</span>
-              <span class="cel-stat-label">points earned</span>
-            </div>
-            <div class="cel-stat">
-              <span class="cel-stat-num">+{{ pctBoost }}%</span>
-              <span class="cel-stat-label">activity boost</span>
-            </div>
-            <div class="cel-stat">
-              <span class="cel-stat-num">+{{ categoryScoreBoost }}</span>
-              <span class="cel-stat-label">category score</span>
-            </div>
-          </div>
           <button class="btn-celebrate" @click="goToResults">
             ← Back to Check-In
           </button>
@@ -216,11 +202,6 @@ const progressPercent = computed(() => {
   return Math.round((currentIndex.value / exercises.value.length) * 100)
 })
 
-// Per-exercise scoring: +40 pts, +2%, +0.4 category score each
-const pointsEarned       = computed(() => exercisesCompleted.value * 40)
-const pctBoost           = computed(() => exercisesCompleted.value * 2)
-const categoryScoreBoost = computed(() => (exercisesCompleted.value * 0.4).toFixed(1))
-
 
 function prevExercise() {
   if (currentIndex.value > 0) {
@@ -242,16 +223,13 @@ function nextExercise() {
 function finishSession() {
   showPauseModal.value = false
   const n = exercisesCompleted.value
-  // Write boosts back to localStorage
+  // Write activity boost back to localStorage
   const stored = localStorage.getItem('surveyResult')
   if (stored) {
     const result = JSON.parse(stored)
-    result.chartPercent  = Math.min(100, (result.chartPercent  ?? 75) + n * 2)
-    result.categoryScore = Math.round(((result.categoryScore ?? 0) + n * 0.4) * 10) / 10
-    result.points        = (result.points ?? 0) + n * 40
+    result.chartPercent = Math.min(100, (result.chartPercent ?? 75) + n * 2)
     localStorage.setItem('surveyResult', JSON.stringify(result))
   }
-  localStorage.setItem('sessionCompleted', String(n * 40))   // store actual points for Results badge
   sessionDone.value = true
   visible.value = false
   setTimeout(() => { visible.value = true }, 80)

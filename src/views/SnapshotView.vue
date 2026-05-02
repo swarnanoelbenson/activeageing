@@ -104,7 +104,7 @@ function getSnapshot() {
 
 .page-wrapper {
   min-height: 100vh;
-  background: #ffffff;
+  background: #faf8f3;
   font-family: 'Poppins', sans-serif;
   display: flex;
   flex-direction: column;
@@ -116,7 +116,7 @@ function getSnapshot() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 120px 40px 60px; /* top offset for fixed navbar */
+  padding: 80px 40px 60px;
 }
 
 /* Header */
@@ -154,7 +154,7 @@ function getSnapshot() {
   display: flex;
   gap: 60px;
   align-items: flex-start;
-  background: #f7faf9;
+  background: #ffffff;
   border-radius: 24px;
   padding: 48px 52px;
   box-shadow: 0 2px 24px rgba(0,0,0,0.06);
