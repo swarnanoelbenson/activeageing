@@ -77,7 +77,8 @@ const allExercises = [
 function getStarted() {
   localStorage.removeItem('surveyAnswers')
   localStorage.removeItem('surveyResult')
-  router.push('/snapshot')
+  localStorage.removeItem('sessionCompleted')
+  router.push('/survey')
 }
 
 function exploreFeatures() { router.push('/routesurvey') }

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -21,18 +21,42 @@ const activityLabel   = { walking: 'Walking', jogging: 'Light Jogging', cycling:
 const difficultyLabel = { easy: 'Easy', moderate: 'Moderate', brisk: 'Challenging' }
 
 const STOP_POINTS = [
-  { label: 'Shaded',            color: '#1a5c54' },
-  { label: 'Seating',           color: '#8b3a2a' },
-  { label: 'Drinking fountain', color: '#2d7d78' },
-  { label: 'Landmark',          color: '#c9a96e' },
-  { label: 'Public restroom',   color: '#7a8c72' },
+  { label: 'Shaded',            color: '#1a5c54', cat: 'shaded'            },
+  { label: 'Seating',           color: '#8b3a2a', cat: 'seating'           },
+  { label: 'Drinking fountain', color: '#2d7d78', cat: 'drinking_fountain' },
+  { label: 'Landmark',          color: '#c9a96e', cat: 'landmark'          },
+  { label: 'Public restroom',   color: '#7a8c72', cat: 'restroom'          },
 ]
 
-// ── Main map ──
-let mainMap    = null
-let mainMarker = null
+const catLabel = {
+  shaded:            'Shaded / Park',
+  seating:           'Seating / Bench',
+  drinking_fountain: 'Drinking Fountain',
+  landmark:          'Landmark / Attraction',
+  restroom:          'Public Restroom',
+}
 
-// ── Thumbnail maps (one per route) ──
+// ── POI visibility state ──
+const activeCategories = ref(new Set(['shaded', 'seating', 'drinking_fountain', 'landmark', 'restroom']))
+const addedPOIIds      = ref(new Set())
+const removedPOIIds    = ref(new Set())
+const selectedPOI      = ref(null)
+const showPOIModal     = ref(false)
+
+// ── Waypoint rerouting ──
+const currentWaypoints = ref([])   // [[lng, lat], ...] accumulated across Add actions
+const routeLoading     = ref(false)
+
+// ── Shared event banner (shown when a code is loaded) ──
+const sharedEventBanner = ref(null)
+
+// ── Main map ──
+let mainMap         = null
+let mainStartMarker = null
+let mainEndMarker   = null
+let poisListenersAdded = false
+
+// ── Thumbnail maps ──
 const thumbMaps = []
 
 // ── Helpers ──
@@ -43,140 +67,518 @@ function routeBounds(coords) {
   )
 }
 
+function makeMarkerEl(label, bg) {
+  const el = document.createElement('div')
+  el.style.cssText = `
+    width:42px;height:42px;background:${bg};border:3px solid #fff;
+    border-radius:50%;display:flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:800;font-size:14px;font-family:'Poppins',sans-serif;
+    box-shadow:0 4px 12px rgba(0,0,0,0.35);cursor:default;
+  `
+  el.textContent = label
+  return el
+}
+
+// Returns true when start and end coords are within 100m (round trip)
+function isRoundTrip(coords) {
+  const [sx, sy] = coords[0]
+  const [ex, ey] = coords[coords.length - 1]
+  const dx = (ex - sx) * 111320 * Math.cos(sy * Math.PI / 180)
+  const dy = (ey - sy) * 111320
+  return Math.hypot(dx, dy) < 100
+}
+
+// Creates the right-pointing chevron image used for direction arrows
+function buildArrowImage() {
+  const size = 28
+  const c    = document.createElement('canvas')
+  c.width = c.height = size
+  const ctx = c.getContext('2d')
+  ctx.fillStyle = 'rgba(0,68,255, 0.92)'  // light blue
+  ctx.beginPath()
+  ctx.moveTo(6,  7)           // upper-left
+  ctx.lineTo(22, size / 2)    // right tip
+  ctx.lineTo(6,  21)          // lower-left
+  ctx.lineTo(10, size / 2)    // inner notch
+  ctx.closePath()
+  ctx.fill()
+  return ctx.getImageData(0, 0, size, size)
+}
+
+// ── POI path filtering (point-to-segment distance) ──
+function ptSegDist(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay
+  if (dx === 0 && dy === 0) return Math.hypot(px - ax, py - ay)
+  const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy))
+}
+
+function isNearRoute(lon, lat, coords, bufferM = 60) {
+  const latScale = 111320
+  const lngScale = 111320 * Math.cos((lat * Math.PI) / 180)
+  for (let i = 0; i < coords.length - 1; i++) {
+    const [ax, ay] = coords[i]
+    const [bx, by] = coords[i + 1]
+    const d = ptSegDist(
+      (lon - ax) * lngScale, (lat - ay) * latScale,
+      0, 0,
+      (bx - ax) * lngScale, (by - ay) * latScale
+    )
+    if (d <= bufferM) return true
+  }
+  return false
+}
+
+// ── POI filter update ──
+function applyPOIFilter() {
+  if (!mainMap || !mainMap.getLayer('pois-layer')) return
+
+  const activeCats = [...activeCategories.value]
+  const removedIds = [...removedPOIIds.value]
+  const addedIds   = [...addedPOIIds.value]
+
+  if (activeCats.length === 0) {
+    mainMap.setFilter('pois-layer',       ['==', ['get', 'cat'], '__none__'])
+    if (mainMap.getLayer('pois-added-layer'))
+      mainMap.setFilter('pois-added-layer', ['==', ['get', 'cat'], '__none__'])
+    return
+  }
+
+  const catF      = ['in', ['get', 'cat'], ['literal', activeCats]]
+  const notRm     = removedIds.length ? ['!', ['in', ['get', 'id'], ['literal', removedIds]]] : null
+  const notAdded  = addedIds.length   ? ['!', ['in', ['get', 'id'], ['literal', addedIds]]]   : null
+  const conds     = [catF, notRm, notAdded].filter(Boolean)
+  const normalF   = conds.length > 1 ? ['all', ...conds] : conds[0]
+
+  mainMap.setFilter('pois-layer', normalF)
+
+  if (mainMap.getLayer('pois-added-layer')) {
+    mainMap.setFilter(
+      'pois-added-layer',
+      addedIds.length ? ['in', ['get', 'id'], ['literal', addedIds]] : ['==', ['get', 'cat'], '__none__']
+    )
+  }
+}
+
+function toggleCategory(cat) {
+  const s = new Set(activeCategories.value)
+  s.has(cat) ? s.delete(cat) : s.add(cat)
+  activeCategories.value = s
+  applyPOIFilter()
+}
+
+// ── POI modal ──
+function openPOIModal(feature) {
+  selectedPOI.value = {
+    id:          feature.properties.id,
+    name:        feature.properties.name,
+    cat:         feature.properties.cat,
+    coordinates: feature.geometry.coordinates.slice(),
+  }
+  showPOIModal.value = true
+}
+
+async function addPOI() {
+  if (!selectedPOI.value) return
+
+  const s = new Set(addedPOIIds.value)
+  s.add(selectedPOI.value.id)
+  addedPOIIds.value = s
+  showPOIModal.value = false
+  applyPOIFilter()
+
+  // Reroute through the new waypoint
+  const newWaypoint = [selectedPOI.value.coordinates[0], selectedPOI.value.coordinates[1]]
+  const allWaypoints = [...currentWaypoints.value, newWaypoint]
+  await rerouteWithWaypoints(allWaypoints)
+  currentWaypoints.value = allWaypoints
+}
+
+async function removePOI() {
+  if (!selectedPOI.value) return
+
+  const added = new Set(addedPOIIds.value)
+  added.delete(selectedPOI.value.id)
+  addedPOIIds.value = added
+
+  const removed = new Set(removedPOIIds.value)
+  removed.add(selectedPOI.value.id)
+  removedPOIIds.value = removed
+
+  showPOIModal.value = false
+  applyPOIFilter()
+
+  // Re-fetch POIs so removed one disappears from click targets too
+  // Rebuild waypoints list excluding the removed POI's coordinates
+  const removedCoord = selectedPOI.value.coordinates
+  currentWaypoints.value = currentWaypoints.value.filter(
+    w => !(Math.abs(w[0] - removedCoord[0]) < 1e-7 && Math.abs(w[1] - removedCoord[1]) < 1e-7)
+  )
+  await rerouteWithWaypoints(currentWaypoints.value)
+}
+
+async function rerouteWithWaypoints(waypoints) {
+  if (!survey.value) return
+  routeLoading.value = true
+  try {
+    const body = {
+      activity_type: survey.value.activity_type,
+      start_lat:     survey.value.start_lat,
+      start_lng:     survey.value.start_lng,
+      waypoints:     waypoints.length ? waypoints : undefined,
+    }
+
+    let res, data
+    if (waypoints.length) {
+      res  = await fetch(`${API}/api/routes/waypoint`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+
+      routes.value[activeRoute.value] = {
+        ...routes.value[activeRoute.value],
+        geometry:       data.geometry,
+        distance_label: data.distance_label,
+        duration_label: data.duration_label,
+      }
+    } else {
+      // No waypoints left — restore original route from ORS round-trip
+      res  = await fetch(`${API}/api/routes`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(survey.value),
+      })
+      data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      if (data.routes?.[activeRoute.value]) {
+        routes.value[activeRoute.value] = data.routes[activeRoute.value]
+      }
+    }
+
+    // Redraw route line and markers (skip POI re-fetch to preserve selections)
+    if (mainMap && mainMap.getSource('main-route')) {
+      mainMap.getSource('main-route').setData({
+        type: 'Feature', geometry: routes.value[activeRoute.value].geometry,
+      })
+      if (mainStartMarker) mainStartMarker.remove()
+      if (mainEndMarker)   mainEndMarker.remove()
+      const coords = routes.value[activeRoute.value].geometry.coordinates
+      const rt = isRoundTrip(coords)
+      mainEndMarker = new mapboxgl.Marker({
+        element: makeMarkerEl('F', '#dc2626'), offset: rt ? [26, 0] : [0, 0],
+      }).setLngLat(coords[coords.length - 1]).addTo(mainMap)
+      mainStartMarker = new mapboxgl.Marker({
+        element: makeMarkerEl('S', '#16a34a'), offset: rt ? [-26, 0] : [0, 0],
+      }).setLngLat(coords[0]).addTo(mainMap)
+    }
+  } catch (e) {
+    console.warn('Waypoint reroute failed:', e.message)
+  } finally {
+    routeLoading.value = false
+  }
+}
+
+// ── POI fetch (Overpass API) ──
+async function fetchAndDrawPOIs(coords) {
+  if (!mainMap) return
+  const lngs  = coords.map(c => c[0])
+  const lats  = coords.map(c => c[1])
+  const south = (Math.min(...lats) - 0.002).toFixed(5)
+  const north = (Math.max(...lats) + 0.002).toFixed(5)
+  const west  = (Math.min(...lngs) - 0.002).toFixed(5)
+  const east  = (Math.max(...lngs) + 0.002).toFixed(5)
+
+  const q = `[out:json][timeout:20];(
+    node["amenity"="bench"](${south},${west},${north},${east});
+    node["amenity"="drinking_water"](${south},${west},${north},${east});
+    node["amenity"="toilets"](${south},${west},${north},${east});
+    node["tourism"="attraction"](${south},${west},${north},${east});
+    node["historic"](${south},${west},${north},${east});
+    node["leisure"="park"](${south},${west},${north},${east});
+  );out body;`
+
+  try {
+    const res  = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: q })
+    const data = await res.json()
+
+    const features = data.elements
+      .filter(el => isNearRoute(el.lon, el.lat, coords, 60))
+      .map(el => {
+        const t = el.tags ?? {}
+        let cat = 'landmark'
+        if (t.amenity === 'bench')          cat = 'seating'
+        if (t.amenity === 'drinking_water') cat = 'drinking_fountain'
+        if (t.amenity === 'toilets')        cat = 'restroom'
+        if (t.leisure === 'park')           cat = 'shaded'
+        const name = t.name ?? catLabel[cat] ?? cat
+        return {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [el.lon, el.lat] },
+          properties: { cat, name, id: el.id },
+        }
+      })
+
+    const geojson = { type: 'FeatureCollection', features }
+
+    if (mainMap.getSource('pois')) {
+      mainMap.getSource('pois').setData(geojson)
+      applyPOIFilter()
+    } else {
+      mainMap.addSource('pois', { type: 'geojson', data: geojson })
+
+      // Normal POI layer
+      mainMap.addLayer({
+        id: 'pois-layer', type: 'circle', source: 'pois',
+        paint: {
+          'circle-color': ['match', ['get', 'cat'],
+            'shaded',            '#1a5c54',
+            'seating',           '#8b3a2a',
+            'drinking_fountain', '#2d7d78',
+            'landmark',          '#c9a96e',
+            'restroom',          '#7a8c72',
+            '#888',
+          ],
+          'circle-radius':       9,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#fff',
+        },
+      })
+
+      // Added POI layer (gold ring, larger)
+      mainMap.addLayer({
+        id: 'pois-added-layer', type: 'circle', source: 'pois',
+        filter: ['==', ['get', 'cat'], '__none__'],
+        paint: {
+          'circle-color': ['match', ['get', 'cat'],
+            'shaded',            '#1a5c54',
+            'seating',           '#8b3a2a',
+            'drinking_fountain', '#2d7d78',
+            'landmark',          '#c9a96e',
+            'restroom',          '#7a8c72',
+            '#888',
+          ],
+          'circle-radius':       13,
+          'circle-stroke-width': 4,
+          'circle-stroke-color': '#f59e0b',
+        },
+      })
+    }
+
+    if (!poisListenersAdded) {
+      poisListenersAdded = true
+
+      const onPOIClick = e => {
+        e.originalEvent.stopPropagation()
+        openPOIModal(e.features[0])
+      }
+      mainMap.on('click', 'pois-layer',       onPOIClick)
+      mainMap.on('click', 'pois-added-layer', onPOIClick)
+      mainMap.on('mouseenter', 'pois-layer',       () => { mainMap.getCanvas().style.cursor = 'pointer' })
+      mainMap.on('mouseenter', 'pois-added-layer', () => { mainMap.getCanvas().style.cursor = 'pointer' })
+      mainMap.on('mouseleave', 'pois-layer',       () => { mainMap.getCanvas().style.cursor = '' })
+      mainMap.on('mouseleave', 'pois-added-layer', () => { mainMap.getCanvas().style.cursor = '' })
+    }
+  } catch (err) {
+    console.warn('POI fetch failed:', err.message)
+  }
+}
+
 // ── Ready modal ──
 const showReady = ref(false)
 function openReady()    { showReady.value = true }
 function closeReady()   { showReady.value = false }
-function inviteOthers() { router.push('/invite') }
+function beginJourney() { router.push('/journey1') }
 function goReady()      { openReady() }
 
-// ── Navigation mode ──
-const navMode           = ref(false)
-const distanceRemaining = ref('')
-const navSpeed          = ref('')
-let navMap    = null
-let navMarker = null
-let watchId   = null
+// ── Schedule & Invite modal ──
+const showSchedule     = ref(false)
+const scheduleDate     = ref('')
+const scheduleCreating = ref(false)
+const scheduleError    = ref('')
+const shareCode        = ref('')
+const shareCodeUrl     = computed(() =>
+  shareCode.value && typeof window !== 'undefined'
+    ? `${window.location.origin}/planner?code=${shareCode.value}`
+    : ''
+)
+const copiedCode = ref(false)
 
-function haversine(a, b) {
-  const R    = 6371000
-  const dLat = (b[1] - a[1]) * Math.PI / 180
-  const dLon = (b[0] - a[0]) * Math.PI / 180
-  const lat1 = a[1] * Math.PI / 180
-  const lat2 = b[1] * Math.PI / 180
-  const sin2 = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(sin2), Math.sqrt(1 - sin2))
+const scheduleMin = computed(() => new Date().toISOString().split('T')[0])
+const scheduleMax = computed(() => {
+  const d = new Date(); d.setMonth(d.getMonth() + 3); return d.toISOString().split('T')[0]
+})
+
+function openSchedule() {
+  showReady.value = false
+  showSchedule.value = true
+  shareCode.value = ''
+  scheduleDate.value = ''
+  scheduleError.value = ''
 }
 
-function updateDistanceRemaining(userPos) {
-  const coords = routes.value[activeRoute.value]?.geometry?.coordinates
-  if (!coords) return
-  let minDist = Infinity, nearestIdx = 0
-  coords.forEach((c, i) => {
-    const d = haversine(userPos, c)
-    if (d < minDist) { minDist = d; nearestIdx = i }
-  })
-  let remaining = 0
-  for (let i = nearestIdx; i < coords.length - 1; i++) {
-    remaining += haversine(coords[i], coords[i + 1])
+function inviteOthers() { openSchedule() }
+
+async function createEvent() {
+  if (!scheduleDate.value) { scheduleError.value = 'Please pick a date.'; return }
+  scheduleCreating.value = true; scheduleError.value = ''
+  try {
+    const currentRoute = routes.value[activeRoute.value]
+    const res = await fetch(`${API}/api/shared-routes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        activity_type:  survey.value?.activity_type,
+        distance_label: currentRoute?.distance_label,
+        duration_label: currentRoute?.duration_label,
+        preferred_pace: survey.value?.preferred_pace,
+        start_address:  survey.value?.start_address || '',
+        scheduled_date: scheduleDate.value,
+        route_geometry: currentRoute?.geometry,   // full GeoJSON geometry
+        survey_data:    survey.value,             // full survey for reconstruction
+      }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Failed to create event')
+    shareCode.value = data.code
+  } catch (e) {
+    scheduleError.value = e.message
+  } finally {
+    scheduleCreating.value = false
   }
-  distanceRemaining.value = remaining >= 1000
-    ? `${(remaining / 1000).toFixed(1)} km`
-    : `${Math.round(remaining)} m`
 }
 
-async function beginJourney() {
-  closeReady()
-  navMode.value = true
-  await nextTick()
-  await new Promise(r => setTimeout(r, 100)) // let container paint before Mapbox measures it
-
-  const route  = routes.value[activeRoute.value]
-  const coords = route.geometry.coordinates
-
-  navMap = new mapboxgl.Map({
-    container: 'map-nav',
-    style:     'mapbox://styles/mapbox/streets-v12',
-    bounds:    routeBounds(coords),
-    fitBoundsOptions: { padding: 60 },
-    attributionControl: false,
-  })
-
-  navMap.addControl(new mapboxgl.NavigationControl(), 'top-right')
-
-  navMap.on('load', () => {
-    // ── Route line ──
-    navMap.addSource('nav-route', {
-      type: 'geojson',
-      data: { type: 'Feature', geometry: route.geometry },
-    })
-    navMap.addLayer({
-      id:     'nav-route-casing',
-      type:   'line',
-      source: 'nav-route',
-      layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint:  { 'line-color': '#ffffff', 'line-width': 10 },
-    })
-    navMap.addLayer({
-      id:     'nav-route-line',
-      type:   'line',
-      source: 'nav-route',
-      layout: { 'line-join': 'round', 'line-cap': 'round' },
-      paint:  { 'line-color': COLOUR, 'line-width': 6 },
-    })
-
-    distanceRemaining.value = routes.value[activeRoute.value]?.distance_label ?? ''
-
-    // ── Arrow marker: placed at route start immediately so it's always visible ──
-    const arrowEl = document.createElement('div')
-    arrowEl.className = 'nav-arrow-marker'
-    navMarker = new mapboxgl.Marker({
-      element:           arrowEl,
-      rotationAlignment: 'map',
-      anchor:            'center',
-    })
-      .setLngLat(coords[0])
-      .addTo(navMap)
-
-    // ── GPS tracking (moves the marker when device position is available) ──
-    if (!navigator.geolocation) return
-    watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude: lat, longitude: lng, heading, speed } = pos.coords
-        const userPos = [lng, lat]
-
-        navMarker.setLngLat(userPos)
-        if (heading !== null) navMarker.setRotation(heading)
-
-        navMap.easeTo({
-          center:   userPos,
-          bearing:  heading ?? navMap.getBearing(),
-          zoom:     17,
-          pitch:    45,
-          duration: 800,
-        })
-
-        updateDistanceRemaining(userPos)
-        navSpeed.value = speed !== null ? `${Math.round(speed * 3.6)} km/h` : ''
-      },
-      (err) => console.warn('GPS error:', err.message),
-      { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 }
-    )
+function copyCodeUrl() {
+  navigator.clipboard.writeText(shareCodeUrl.value).then(() => {
+    copiedCode.value = true
+    setTimeout(() => { copiedCode.value = false }, 2000)
   })
 }
 
-function endJourney() {
-  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null }
-  if (navMarker)        { navMarker.remove(); navMarker = null }
-  if (navMap)           { navMap.remove();    navMap    = null }
-  navMode.value           = false
-  distanceRemaining.value = ''
-  navSpeed.value          = ''
+async function downloadPDF() {
+  // Capture the current map view as a base64 image
+  let mapImageData = null
+  if (mainMap) {
+    mainMap.triggerRepaint()
+    await new Promise(r => setTimeout(r, 80))
+    try { mapImageData = mainMap.getCanvas().toDataURL('image/jpeg', 0.85) } catch (_) {}
+  }
+
+  const act  = activityLabel[survey.value?.activity_type] ?? 'Walking'
+  const dist = routes.value[activeRoute.value]?.distance_label ?? '-'
+  const dur  = routes.value[activeRoute.value]?.duration_label ?? '-'
+  const pace = survey.value?.preferred_pace ?? '-'
+  const date = scheduleDate.value
+  const code = shareCode.value
+  const url  = shareCodeUrl.value
+
+  const mapHtml = mapImageData
+    ? `<img src="${mapImageData}" style="width:100%;border-radius:10px;margin-bottom:22px;max-height:280px;object-fit:cover;display:block" />`
+    : ''
+
+  const win = window.open('', '_blank', 'width=720,height=960')
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+<title>ActiveAgeing – Route Event</title>
+<style>
+  body{font-family:Arial,sans-serif;max-width:580px;margin:44px auto;color:#222;line-height:1.5}
+  h1{color:#0b5d57;font-size:26px;margin-bottom:4px}
+  .sub{color:#888;font-size:14px;margin-bottom:24px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}
+  .cell{background:#f4f1eb;border-radius:10px;padding:14px 16px}
+  .lbl{font-size:11px;font-weight:700;color:#9aafaa;text-transform:uppercase;letter-spacing:.06em}
+  .val{font-size:16px;font-weight:700;color:#0b3d38;margin-top:4px;text-transform:capitalize}
+  .code-box{text-align:center;background:#e8f5f3;border-radius:14px;padding:22px;margin:20px 0}
+  .code-lbl{font-size:12px;font-weight:700;color:#0b5d57;text-transform:uppercase;letter-spacing:.08em}
+  .code-val{font-size:40px;font-weight:800;color:#0b5d57;letter-spacing:8px;margin-top:8px}
+  .url-lbl{font-size:12px;color:#666;margin-top:10px;word-break:break-all}
+  .note{font-size:12px;color:#aaa;text-align:center;margin-top:16px}
+  @media print{body{margin:20px}}
+</style></head><body>
+<h1>ActiveAgeing Route Event</h1>
+<p class="sub">Share the code below so friends can join your route!</p>
+${mapHtml}
+<div class="grid">
+  <div class="cell"><div class="lbl">Activity</div><div class="val">${act}</div></div>
+  <div class="cell"><div class="lbl">Distance</div><div class="val">${dist}</div></div>
+  <div class="cell"><div class="lbl">Duration</div><div class="val">${dur}</div></div>
+  <div class="cell"><div class="lbl">Pace</div><div class="val">${pace}</div></div>
+  <div class="cell"><div class="lbl">Scheduled Date</div><div class="val">${date}</div></div>
+</div>
+<div class="code-box">
+  <div class="code-lbl">Event Code</div>
+  <div class="code-val">${code}</div>
+  <div class="url-lbl">Or visit: ${url}</div>
+</div>
+<p class="note">This event expires 48 hours after the scheduled date.</p>
+</body></html>`)
+  win.document.close()
+  win.print()
+}
+
+// ── Code lookup — loads shared route directly into planner ──
+const codeInput   = ref('')
+const codeLooking = ref(false)
+const codeError   = ref('')
+
+async function lookupEvent() {
+  const code = codeInput.value.trim().toUpperCase()
+  if (!code) return
+  codeLooking.value = true; codeError.value = ''
+  try {
+    const res  = await fetch(`${API}/api/shared-routes/${code}`)
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Event not found or has expired')
+
+    if (!data.route_geometry || !data.survey_data) {
+      throw new Error('This event does not have a saved route. Ask the organiser to reshare.')
+    }
+
+    // Populate the planner with the shared route's data
+    survey.value = data.survey_data
+    routes.value = [{
+      index:          0,
+      geometry:       data.route_geometry,
+      distance_label: data.distance_label,
+      duration_label: data.duration_label,
+      distance_m:     0,
+      duration_s:     0,
+    }]
+    activeRoute.value       = 0
+    currentWaypoints.value  = []
+    addedPOIIds.value       = new Set()
+    removedPOIIds.value     = new Set()
+
+    sharedEventBanner.value = {
+      code:     data.code,
+      activity: activityLabel[data.activity_type] ?? data.activity_type ?? 'Route',
+      date:     String(data.scheduled_date ?? '').split('T')[0],
+      expires:  data.expires_at,
+    }
+
+    error.value   = null
+    loading.value = false
+
+    if (mainMap) {
+      // Map already running — just redraw the route
+      drawMainRoute(0)
+    } else {
+      // First load via URL code — init the map
+      await new Promise(r => setTimeout(r, 80))
+      initMaps()
+    }
+  } catch (e) {
+    codeError.value = e.message
+  } finally {
+    codeLooking.value = false
+  }
 }
 
 // ── Route selection ──
 function selectRoute(index) {
-  activeRoute.value = index
+  activeRoute.value      = index
+  currentWaypoints.value = []
+  addedPOIIds.value      = new Set()
+  sharedEventBanner.value = null   // exiting shared view when user picks their own route
   drawMainRoute(index)
 }
 
@@ -184,22 +586,26 @@ function drawMainRoute(index) {
   if (!mainMap) return
   const route = routes.value[index]
   if (!route) return
+  const coords = route.geometry.coordinates
 
-  const coords = route.geometry.coordinates  // already [lng, lat] from ORS
+  mainMap.getSource('main-route').setData({ type: 'Feature', geometry: route.geometry })
 
-  // Update route line source
-  mainMap.getSource('main-route').setData({
-    type: 'Feature',
-    geometry: route.geometry,
-  })
+  if (mainStartMarker) mainStartMarker.remove()
+  if (mainEndMarker)   mainEndMarker.remove()
 
-  // Move start marker
-  if (mainMarker) mainMarker.remove()
-  mainMarker = new mapboxgl.Marker({ color: COLOUR })
+  const rt = isRoundTrip(coords)
+
+  // Add F first (lower in DOM stack), then S on top; offset both when round trip
+  mainEndMarker = new mapboxgl.Marker({ element: makeMarkerEl('F', '#dc2626'), offset: rt ? [26, 0] : [0, 0] })
+    .setLngLat(coords[coords.length - 1])
+    .addTo(mainMap)
+
+  mainStartMarker = new mapboxgl.Marker({ element: makeMarkerEl('S', '#16a34a'), offset: rt ? [-26, 0] : [0, 0] })
     .setLngLat(coords[0])
     .addTo(mainMap)
 
-  mainMap.fitBounds(routeBounds(coords), { padding: 40, duration: 600 })
+  mainMap.fitBounds(routeBounds(coords), { padding: 50, duration: 600 })
+  fetchAndDrawPOIs(coords)
 }
 
 function routeDescription(index) {
@@ -210,98 +616,115 @@ function routeDescription(index) {
 }
 
 onMounted(async () => {
+  const urlParams = new URLSearchParams(window.location.search)
+  const urlCode   = urlParams.get('code')
+  if (urlCode) codeInput.value = urlCode
+
+  // If a share code is in the URL, load that route directly — no survey needed
+  if (urlCode) {
+    await lookupEvent()
+    // lookupEvent sets loading=false and calls initMaps() on success
+    // If it errored, fall through to show the normal error/survey path below
+    if (!error.value && routes.value.length) return
+  }
+
   const raw = sessionStorage.getItem('routeSurvey')
   if (!raw) {
     error.value = 'No survey data found. Please complete the route survey first.'
     loading.value = false
     return
   }
-
   survey.value = JSON.parse(raw)
-
   if (!survey.value.start_lat || !survey.value.start_lng) {
     error.value = 'No starting location was set. Please go back and enter a starting suburb.'
     loading.value = false
     return
   }
-
   try {
     const res  = await fetch(`${API}/api/routes`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(survey.value),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(survey.value),
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? 'Failed to load routes')
     routes.value = data.routes
   } catch (e) {
-    error.value   = e.message
-    loading.value = false
-    return
+    error.value = e.message; loading.value = false; return
   }
-
   loading.value = false
   await new Promise(r => setTimeout(r, 80))
   initMaps()
 })
 
 function initMaps() {
-  // ── Main interactive map ──
   const mainContainer = document.getElementById('map-main')
   if (mainContainer && routes.value[0]) {
     const firstCoords = routes.value[0].geometry.coordinates
     mainMap = new mapboxgl.Map({
-      container:  mainContainer,
-      style:      'mapbox://styles/mapbox/streets-v12',
-      bounds:     routeBounds(firstCoords),
-      fitBoundsOptions: { padding: 40 },
-      attributionControl: false,
+      container:            mainContainer,
+      style:                'mapbox://styles/mapbox/streets-v12',
+      bounds:               routeBounds(firstCoords),
+      fitBoundsOptions:     { padding: 50 },
+      attributionControl:   false,
+      preserveDrawingBuffer: true,   // needed for map-capture in PDF
     })
     mainMap.addControl(new mapboxgl.NavigationControl(), 'top-right')
 
     mainMap.on('load', () => {
-      // Add empty source + styled line layer
+      // Route source + line layer
       mainMap.addSource('main-route', {
         type: 'geojson',
         data: { type: 'Feature', geometry: routes.value[0].geometry },
       })
       mainMap.addLayer({
-        id:     'main-route-line',
-        type:   'line',
-        source: 'main-route',
+        id: 'main-route-line', type: 'line', source: 'main-route',
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint:  { 'line-color': COLOUR, 'line-width': 5 },
       })
 
-      // Start marker
-      mainMarker = new mapboxgl.Marker({ color: COLOUR })
-        .setLngLat(firstCoords[0])
-        .addTo(mainMap)
+      // Direction arrows along the path
+      mainMap.addImage('route-arrow', buildArrowImage())
+      mainMap.addLayer({
+        id: 'route-arrows', type: 'symbol', source: 'main-route',
+        layout: {
+          'symbol-placement':      'line',
+          'symbol-spacing':        ['interpolate', ['linear'], ['zoom'], 10, 350, 14, 150, 17, 60],
+          'icon-image':            'route-arrow',
+          'icon-size':             ['interpolate', ['linear'], ['zoom'], 10, 0.55, 17, 1.1],
+          'icon-allow-overlap':    true,
+          'icon-ignore-placement': true,
+          'icon-rotation-alignment': 'map',
+        },
+      })
+
+      // Start / Finish markers (offset when round trip)
+      const rt = isRoundTrip(firstCoords)
+
+      mainEndMarker = new mapboxgl.Marker({
+        element: makeMarkerEl('F', '#dc2626'), offset: rt ? [26, 0] : [0, 0],
+      }).setLngLat(firstCoords[firstCoords.length - 1]).addTo(mainMap)
+
+      mainStartMarker = new mapboxgl.Marker({
+        element: makeMarkerEl('S', '#16a34a'), offset: rt ? [-26, 0] : [0, 0],
+      }).setLngLat(firstCoords[0]).addTo(mainMap)
+
+      fetchAndDrawPOIs(firstCoords)
     })
   }
 
-  // ── Thumbnail maps ──
   routes.value.forEach((route, i) => {
     const container = document.getElementById(`map-t${i}`)
     if (!container) return
     const coords = route.geometry.coordinates
     const m = new mapboxgl.Map({
-      container,
-      style:      'mapbox://styles/mapbox/streets-v12',
-      bounds:     routeBounds(coords),
-      fitBoundsOptions: { padding: 8 },
-      interactive:       false,
-      attributionControl: false,
+      container, style: 'mapbox://styles/mapbox/streets-v12',
+      bounds: routeBounds(coords), fitBoundsOptions: { padding: 8 },
+      interactive: false, attributionControl: false,
     })
     m.on('load', () => {
-      m.addSource(`thumb-route-${i}`, {
-        type: 'geojson',
-        data: { type: 'Feature', geometry: route.geometry },
-      })
+      m.addSource(`thumb-route-${i}`, { type: 'geojson', data: { type: 'Feature', geometry: route.geometry } })
       m.addLayer({
-        id:     `thumb-route-line-${i}`,
-        type:   'line',
-        source: `thumb-route-${i}`,
+        id: `thumb-route-line-${i}`, type: 'line', source: `thumb-route-${i}`,
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint:  { 'line-color': COLOUR, 'line-width': 3 },
       })
@@ -311,13 +734,12 @@ function initMaps() {
 }
 
 onBeforeUnmount(() => {
-  if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null }
-  if (navMarker)  { navMarker.remove();  navMarker  = null }
-  if (navMap)     { navMap.remove();     navMap     = null }
-  if (mainMarker) { mainMarker.remove(); mainMarker = null }
-  if (mainMap)    { mainMap.remove();    mainMap    = null }
+  if (mainStartMarker) { mainStartMarker.remove(); mainStartMarker = null }
+  if (mainEndMarker)   { mainEndMarker.remove();   mainEndMarker   = null }
+  if (mainMap)         { mainMap.remove();          mainMap         = null }
   thumbMaps.forEach(m => m.remove())
   thumbMaps.length = 0
+  poisListenersAdded = false
 })
 </script>
 
@@ -328,9 +750,45 @@ onBeforeUnmount(() => {
 
     <div class="container">
 
+      <!-- Shared event banner -->
+      <Transition name="fade">
+        <div v-if="sharedEventBanner" class="shared-banner">
+          <div class="shared-banner-left">
+            <span class="shared-banner-icon">📅</span>
+            <div>
+              <div class="shared-banner-title">Viewing shared event</div>
+              <div class="shared-banner-meta">
+                <span class="shared-banner-chip">{{ sharedEventBanner.code }}</span>
+                <span>{{ sharedEventBanner.activity }}</span>
+                <span v-if="sharedEventBanner.date">· {{ sharedEventBanner.date }}</span>
+              </div>
+            </div>
+          </div>
+          <button class="shared-banner-close" @click="sharedEventBanner = null">✕ Exit</button>
+        </div>
+      </Transition>
+
       <!-- Title -->
       <h1>Route Planner</h1>
       <p class="subtitle">AI-optimized routes designed for accessibility, comfort, and scenic beauty.</p>
+
+      <!-- Code entry bar -->
+      <div class="code-entry-bar">
+        <div class="code-entry-inner">
+          <span class="code-entry-label">Have an event code?</span>
+          <input
+            v-model="codeInput"
+            class="code-entry-input"
+            placeholder="Enter code (e.g. AB1C2D)"
+            maxlength="8"
+            @keyup.enter="lookupEvent"
+          />
+          <button class="code-entry-btn" :disabled="codeLooking || !codeInput.trim()" @click="lookupEvent">
+            {{ codeLooking ? 'Looking…' : 'View Event' }}
+          </button>
+        </div>
+        <p v-if="codeError" class="code-entry-error">{{ codeError }}</p>
+      </div>
 
       <!-- Loading -->
       <div v-if="loading" class="status-box">
@@ -376,10 +834,32 @@ onBeforeUnmount(() => {
 
           <!-- LEFT MAP -->
           <div class="map-card">
-            <div id="map-main"></div>
+            <div id="map-main" style="position:relative">
+              <!-- Rerouting spinner overlay -->
+              <Transition name="fade">
+                <div v-if="routeLoading" class="reroute-overlay">
+                  <div class="reroute-spinner"></div>
+                  <span>Updating route…</span>
+                </div>
+              </Transition>
+            </div>
+
+            <!-- Stop-point legend with checkboxes -->
             <div class="stop-legend">
-              <div v-for="s in STOP_POINTS" :key="s.label" class="stop-item">
-                <span class="stop-dot" :style="{ background: s.color }"></span>
+              <div
+                v-for="s in STOP_POINTS"
+                :key="s.cat"
+                class="stop-item"
+                :class="{ 'stop-item-off': !activeCategories.has(s.cat) }"
+                @click="toggleCategory(s.cat)"
+              >
+                <input
+                  type="checkbox"
+                  class="stop-checkbox"
+                  :checked="activeCategories.has(s.cat)"
+                  @click.stop="toggleCategory(s.cat)"
+                />
+                <span class="stop-dot" :style="{ background: s.color, opacity: activeCategories.has(s.cat) ? 1 : 0.3 }"></span>
                 <span class="stop-label">{{ s.label }}</span>
               </div>
             </div>
@@ -457,39 +937,6 @@ onBeforeUnmount(() => {
       <div class="footer-copy">© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</div>
     </footer>
 
-    <!-- Navigation mode overlay -->
-    <Transition name="fade">
-      <div v-if="navMode" class="nav-mode">
-
-        <!-- Map fills the screen -->
-        <div id="map-nav" class="nav-map"></div>
-
-        <!-- Top bar -->
-        <div class="nav-top-bar">
-          <div class="nav-top-left">
-            <div class="nav-dist">{{ distanceRemaining || routes[activeRoute]?.distance_label }}</div>
-            <div class="nav-label">remaining</div>
-          </div>
-          <div class="nav-top-center">
-            <div class="nav-route-pill">Route {{ activeRoute + 1 }}</div>
-          </div>
-          <div class="nav-top-right">
-            <div v-if="navSpeed" class="nav-speed">{{ navSpeed }}</div>
-          </div>
-        </div>
-
-        <!-- Bottom bar -->
-        <div class="nav-bottom-bar">
-          <div class="nav-info">
-            <span class="nav-info-icon">📍</span>
-            <span>Following your route — stay on the highlighted path</span>
-          </div>
-          <button class="nav-end-btn" @click="endJourney">End Journey</button>
-        </div>
-
-      </div>
-    </Transition>
-
     <!-- Ready to Go modal -->
     <Transition name="fade">
       <div v-if="showReady" class="ready-overlay" @click.self="closeReady">
@@ -511,8 +958,8 @@ onBeforeUnmount(() => {
             <button class="btn-invite" @click="inviteOthers">
               <div class="rdy-btn-content">
                 <div class="rdy-btn-text">
-                  <div class="rdy-label rdy-label-dark">Invite Others</div>
-                  <div class="rdy-desc rdy-desc-dark">Create an event and walk together</div>
+                  <div class="rdy-label rdy-label-dark">Schedule and Invite</div>
+                  <div class="rdy-desc rdy-desc-dark">Pick a date and share with friends</div>
                 </div>
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
                   <circle cx="10" cy="9" r="4" stroke="#0b5d57" stroke-width="1.8" fill="none"/>
@@ -526,6 +973,109 @@ onBeforeUnmount(() => {
             <button class="rdy-cancel" @click="closeReady">Cancel</button>
           </div>
         </Transition>
+      </div>
+    </Transition>
+
+    <!-- Schedule & Invite modal -->
+    <Transition name="fade">
+      <div v-if="showSchedule" class="share-overlay" @click.self="showSchedule = false">
+        <div class="share-modal">
+          <div class="share-modal-header">
+            <h3>Schedule &amp; Invite</h3>
+            <button class="share-close-x" @click="showSchedule = false">✕</button>
+          </div>
+
+          <template v-if="!shareCode">
+            <p class="share-sub">Pick a date for this route — a share code will be generated for your friends.</p>
+
+            <div class="share-route-info">
+              <div class="share-detail">
+                <span class="share-detail-label">Activity</span>
+                <span class="share-detail-val">{{ activityLabel[survey?.activity_type] ?? 'Walking' }}</span>
+              </div>
+              <div class="share-detail">
+                <span class="share-detail-label">Distance</span>
+                <span class="share-detail-val">{{ routes[activeRoute]?.distance_label }}</span>
+              </div>
+              <div class="share-detail">
+                <span class="share-detail-label">Duration</span>
+                <span class="share-detail-val">{{ routes[activeRoute]?.duration_label }}</span>
+              </div>
+            </div>
+
+            <label class="sched-label">Scheduled date</label>
+            <input
+              v-model="scheduleDate"
+              type="date"
+              class="sched-date-input"
+              :min="scheduleMin"
+              :max="scheduleMax"
+            />
+            <p v-if="scheduleError" class="sched-error">{{ scheduleError }}</p>
+
+            <button class="share-done-btn sched-create-btn" :disabled="scheduleCreating" @click="createEvent">
+              {{ scheduleCreating ? 'Creating…' : 'Create Event →' }}
+            </button>
+          </template>
+
+          <template v-else>
+            <p class="share-sub">Your event is ready! Share the code or link. It expires 48 hours after the scheduled date.</p>
+
+            <div class="share-route-info">
+              <div class="share-detail">
+                <span class="share-detail-label">Activity</span>
+                <span class="share-detail-val">{{ activityLabel[survey?.activity_type] ?? 'Walking' }}</span>
+              </div>
+              <div class="share-detail">
+                <span class="share-detail-label">Date</span>
+                <span class="share-detail-val">{{ scheduleDate }}</span>
+              </div>
+            </div>
+
+            <div class="code-display-box">
+              <div class="code-display-label">Event Code</div>
+              <div class="code-display-val">{{ shareCode }}</div>
+            </div>
+
+            <div class="share-url-row">
+              <input class="share-url-input" :value="shareCodeUrl" readonly />
+              <button class="share-copy-btn" @click="copyCodeUrl">
+                {{ copiedCode ? '✓ Copied!' : 'Copy' }}
+              </button>
+            </div>
+
+            <div class="sched-action-row">
+              <button class="sched-pdf-btn" @click="downloadPDF">⬇ Download PDF</button>
+              <button class="share-done-btn sched-done-btn" @click="showSchedule = false">Done</button>
+            </div>
+          </template>
+        </div>
+      </div>
+    </Transition>
+
+    <!-- POI action modal -->
+    <Transition name="fade">
+      <div v-if="showPOIModal && selectedPOI" class="poi-overlay" @click.self="showPOIModal = false">
+        <div class="poi-modal">
+          <button class="share-close-x poi-close" @click="showPOIModal = false">✕</button>
+
+          <div class="poi-cat-badge" :style="{ background: STOP_POINTS.find(s => s.cat === selectedPOI.cat)?.color ?? '#888' }">
+            {{ catLabel[selectedPOI.cat] ?? selectedPOI.cat }}
+          </div>
+
+          <div class="poi-name">{{ selectedPOI.name }}</div>
+
+          <p class="poi-hint">Add this stop to your planned route, or remove it from the map.</p>
+
+          <div class="poi-actions">
+            <button class="poi-btn-add" @click="addPOI">
+              ✓ Add to Route
+            </button>
+            <button class="poi-btn-remove" @click="removePOI">
+              ✕ Remove
+            </button>
+          </div>
+        </div>
       </div>
     </Transition>
 
@@ -546,7 +1096,37 @@ onBeforeUnmount(() => {
 }
 
 h1 { font-size: 42px; color: #0b5d57; }
-.subtitle { color: #666; margin-bottom: 24px; }
+.subtitle { color: #666; margin-bottom: 20px; }
+
+/* Code entry bar */
+.code-entry-bar {
+  background: white; border-radius: 14px;
+  padding: 16px 20px; margin-bottom: 24px;
+  border: 1.5px solid #e8f0ee;
+}
+.code-entry-inner {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.code-entry-label {
+  font-size: 14px; font-weight: 600; color: #0b5d57; white-space: nowrap;
+}
+.code-entry-input {
+  flex: 1; min-width: 160px; padding: 10px 14px;
+  border: 1.5px solid #d0d9d6; border-radius: 10px;
+  font-family: 'Poppins', sans-serif; font-size: 14px; color: #333;
+  outline: none; background: #f9f9f7; letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.code-entry-input:focus { border-color: #0b5d57; }
+.code-entry-btn {
+  padding: 10px 20px; background: #0b5d57; color: white;
+  border: none; border-radius: 10px; font-family: 'Poppins', sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background 0.2s; white-space: nowrap;
+}
+.code-entry-btn:hover:not(:disabled) { background: #084a45; }
+.code-entry-btn:disabled { opacity: 0.55; cursor: default; }
+.code-entry-error { margin: 8px 0 0; font-size: 13px; color: #c0392b; }
 
 /* Loading / error */
 .status-box {
@@ -604,13 +1184,25 @@ h1 { font-size: 42px; color: #0b5d57; }
 }
 .btn:hover { opacity: 0.92; transform: translateY(-1px); }
 
-/* Stop points */
+/* Stop-point legend with checkboxes */
 .stop-legend {
-  display: flex; flex-wrap: wrap; gap: 10px 18px;
+  display: flex; flex-wrap: wrap; gap: 6px 16px;
   padding: 12px 16px; border-top: 1px solid #f0f0f0; background: white;
 }
-.stop-item  { display: flex; align-items: center; gap: 6px; }
-.stop-dot   { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+.stop-item {
+  display: flex; align-items: center; gap: 7px;
+  cursor: pointer; user-select: none;
+  padding: 4px 6px; border-radius: 8px;
+  transition: background 0.15s;
+}
+.stop-item:hover { background: #f4f1eb; }
+.stop-item-off .stop-label { color: #bbb; text-decoration: line-through; }
+
+.stop-checkbox {
+  width: 15px; height: 15px; cursor: pointer;
+  accent-color: #0b5d57; flex-shrink: 0;
+}
+.stop-dot   { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; transition: opacity 0.2s; }
 .stop-label { font-size: 12px; color: #555; }
 
 /* Highlight */
@@ -628,7 +1220,7 @@ h1 { font-size: 42px; color: #0b5d57; }
   background: white; padding: 20px; border-radius: 15px;
   display: flex; gap: 18px; flex: 1; align-items: center;
   min-height: 130px; cursor: pointer;
-  transition: box-shadow 0.2s, border-color 0.2s, opacity 0.3s, filter 0.3s;
+  transition: box-shadow 0.2s, border-color 0.2s;
   border: 2px solid transparent;
 }
 .suggest-card:hover  { box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
@@ -708,87 +1300,194 @@ h1 { font-size: 42px; color: #0b5d57; }
 .slide-up-enter-from   { transform: translateY(32px); opacity: 0; }
 .slide-up-leave-to     { transform: translateY(16px); opacity: 0; }
 
-/* ── Navigation Mode ── */
-.nav-mode {
+/* Share / Schedule modal */
+.share-overlay {
   position: fixed; inset: 0;
-  z-index: 4000;
-  display: flex; flex-direction: column;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 3000; padding: 24px;
+}
+.share-modal {
+  background: white; border-radius: 20px; padding: 32px 28px;
+  width: 100%; max-width: 460px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+}
+.share-modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.share-modal-header h3 { margin: 0; font-size: 20px; color: #0b3d38; }
+.share-close-x {
+  background: none; border: none; font-size: 18px;
+  cursor: pointer; color: #888; padding: 4px 8px;
+  border-radius: 6px; transition: background 0.15s;
+}
+.share-close-x:hover { background: #f0f0f0; color: #333; }
+.share-sub { font-size: 14px; color: #6a7a76; margin-bottom: 20px; line-height: 1.5; }
+
+.share-route-info {
+  display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.share-detail {
+  flex: 1; min-width: 90px; background: #f4f1eb; border-radius: 12px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+}
+.share-detail-label { font-size: 11px; font-weight: 600; color: #9aafaa; text-transform: uppercase; letter-spacing: 0.06em; }
+.share-detail-val   { font-size: 14px; font-weight: 700; color: #0b3d38; }
+
+.sched-label {
+  display: block; font-size: 13px; font-weight: 600;
+  color: #0b3d38; margin-bottom: 8px;
+}
+.sched-date-input {
+  width: 100%; padding: 11px 14px; border: 1.5px solid #d0d9d6;
+  border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 14px;
+  color: #333; background: #f9f9f7; outline: none; margin-bottom: 12px;
+  box-sizing: border-box;
+}
+.sched-date-input:focus { border-color: #0b5d57; }
+.sched-error { font-size: 13px; color: #c0392b; margin: -8px 0 10px; }
+.sched-create-btn { margin-top: 4px; }
+
+.code-display-box {
+  text-align: center; background: #e8f5f3; border-radius: 14px;
+  padding: 20px; margin-bottom: 16px;
+}
+.code-display-label {
+  font-size: 11px; font-weight: 700; color: #0b5d57;
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.code-display-val {
+  font-size: 36px; font-weight: 800; color: #0b5d57;
+  letter-spacing: 8px; margin-top: 6px;
 }
 
-.nav-map {
-  flex: 1;
-  width: 100%;
+.share-url-row { display: flex; gap: 8px; margin-bottom: 16px; }
+.share-url-input {
+  flex: 1; padding: 11px 14px; border: 1.5px solid #d0d9d6;
+  border-radius: 10px; font-size: 13px; color: #444;
+  font-family: 'Poppins', sans-serif; background: #f9f9f7; outline: none;
 }
+.share-copy-btn {
+  padding: 11px 18px; background: #0b5d57; color: white;
+  border: none; border-radius: 10px; font-family: 'Poppins', sans-serif;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background 0.2s; white-space: nowrap; min-width: 80px;
+}
+.share-copy-btn:hover { background: #084a45; }
 
-/* Top bar */
-.nav-top-bar {
-  position: absolute; top: 0; left: 0; right: 0;
-  height: 80px;
-  background: rgba(255,255,255,0.96);
-  backdrop-filter: blur(10px);
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 24px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.12);
-  z-index: 10;
+.sched-action-row { display: flex; gap: 10px; }
+.sched-pdf-btn {
+  flex: 1; padding: 13px; background: #f4f1eb;
+  color: #0b3d38; border: none; border-radius: 12px;
+  font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: background 0.2s;
 }
+.sched-pdf-btn:hover { background: #e8e4da; }
+.sched-done-btn { flex: 1; }
 
-.nav-top-left  { display: flex; flex-direction: column; align-items: flex-start; }
-.nav-top-center{ position: absolute; left: 50%; transform: translateX(-50%); }
-.nav-top-right { display: flex; flex-direction: column; align-items: flex-end; min-width: 80px; }
+.share-done-btn {
+  width: 100%; padding: 13px; background: #0b5d57;
+  color: white; border: none; border-radius: 12px;
+  font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: background 0.2s;
+}
+.share-done-btn:hover:not(:disabled) { background: #084a45; }
+.share-done-btn:disabled { opacity: 0.55; cursor: default; }
 
-.nav-dist {
-  font-size: 28px; font-weight: 800;
-  color: #0b5d57; line-height: 1;
-}
-.nav-label {
-  font-size: 12px; font-weight: 500;
-  color: #888; margin-top: 2px;
-}
-.nav-route-pill {
-  background: #0b5d57; color: white;
-  font-size: 13px; font-weight: 600;
-  padding: 6px 18px; border-radius: 999px;
-}
-.nav-speed {
-  font-size: 20px; font-weight: 700; color: #c2185b;
-  line-height: 1;
-}
-
-/* Bottom bar */
-.nav-bottom-bar {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  background: rgba(255,255,255,0.96);
-  backdrop-filter: blur(10px);
-  padding: 16px 24px 28px;
+/* Shared event banner */
+.shared-banner {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  box-shadow: 0 -2px 16px rgba(0,0,0,0.10);
-  z-index: 10;
+  background: linear-gradient(135deg, #0b5d57, #0f7a72);
+  color: white; border-radius: 14px; padding: 14px 18px;
+  margin-bottom: 20px; flex-wrap: wrap;
+}
+.shared-banner-left {
+  display: flex; align-items: center; gap: 12px;
+}
+.shared-banner-icon { font-size: 24px; flex-shrink: 0; }
+.shared-banner-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: rgba(255,255,255,0.75); margin-bottom: 4px;
+}
+.shared-banner-meta {
+  display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; flex-wrap: wrap;
+}
+.shared-banner-chip {
+  background: rgba(255,255,255,0.2); padding: 2px 10px;
+  border-radius: 20px; font-size: 13px; font-weight: 800; letter-spacing: 2px;
+}
+.shared-banner-close {
+  background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.3);
+  color: white; padding: 7px 14px; border-radius: 8px;
+  font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: background 0.2s; white-space: nowrap;
+}
+.shared-banner-close:hover { background: rgba(255,255,255,0.25); }
+
+/* POI action modal */
+.poi-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.38);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 4000; padding: 24px;
+}
+.poi-modal {
+  background: white; border-radius: 18px; padding: 28px 26px 24px;
+  width: 100%; max-width: 340px; position: relative;
+  box-shadow: 0 20px 56px rgba(0,0,0,0.22);
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.poi-close {
+  position: absolute; top: 12px; right: 12px;
+}
+.poi-cat-badge {
+  color: white; font-size: 12px; font-weight: 700;
+  padding: 5px 14px; border-radius: 20px; text-transform: uppercase;
+  letter-spacing: 0.06em; margin-top: 4px;
+}
+.poi-name {
+  font-size: 18px; font-weight: 700; color: #0b3d38;
+  text-align: center; line-height: 1.35; margin-top: 2px;
+}
+.poi-hint {
+  font-size: 13px; color: #6a7a76; text-align: center;
+  margin: 0 0 6px; line-height: 1.5;
+}
+.poi-actions {
+  display: flex; gap: 10px; width: 100%;
+}
+.poi-btn-add {
+  flex: 1; padding: 12px; background: #0b5d57; color: white;
+  border: none; border-radius: 12px; font-family: 'Poppins', sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.poi-btn-add:hover { background: #084a45; }
+.poi-btn-remove {
+  flex: 1; padding: 12px; background: #fee2e2; color: #b91c1c;
+  border: none; border-radius: 12px; font-family: 'Poppins', sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.poi-btn-remove:hover { background: #fecaca; }
+
+/* Rerouting overlay on map */
+.reroute-overlay {
+  position: absolute; inset: 0; z-index: 10;
+  background: rgba(255,255,255,0.62);
+  backdrop-filter: blur(2px);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; font-size: 14px; font-weight: 600; color: #0b5d57;
+  border-radius: 20px 20px 0 0;
+  pointer-events: none;
+}
+.reroute-spinner {
+  width: 32px; height: 32px;
+  border: 3px solid #d0ede9; border-top-color: #0b5d57;
+  border-radius: 50%; animation: spin 0.7s linear infinite;
 }
 
-.nav-info {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 14px; color: #555; flex: 1;
-}
-.nav-info-icon { font-size: 18px; flex-shrink: 0; }
 
-.nav-end-btn {
-  background: #c2185b; color: white;
-  border: none; border-radius: 12px;
-  padding: 14px 28px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 15px; font-weight: 700;
-  cursor: pointer; flex-shrink: 0;
-  box-shadow: 0 4px 14px rgba(194,24,91,0.35);
-  transition: opacity 0.2s, transform 0.15s;
-}
-.nav-end-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-
-/* GPS arrow marker — must have real dimensions for Mapbox to anchor it */
-.nav-arrow-marker {
-  width: 28px;
-  height: 36px;
-  background: #c2185b;
-  clip-path: polygon(50% 0%, 0% 100%, 50% 78%, 100% 100%);
-  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.5));
-}
 </style>

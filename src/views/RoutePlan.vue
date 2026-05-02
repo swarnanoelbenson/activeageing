@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
 
@@ -6,6 +7,16 @@ const router = useRouter()
 
 function planRoute() {
   router.push('/routesurvey')
+}
+
+const codeInput    = ref('')
+const codeInputErr = ref('')
+
+function viewEvent() {
+  const code = codeInput.value.trim().toUpperCase()
+  if (!code) { codeInputErr.value = 'Please enter an event code.'; return }
+  codeInputErr.value = ''
+  router.push(`/planner?code=${code}`)
 }
 </script>
 
@@ -80,6 +91,31 @@ function planRoute() {
           </div>
         </div>
 
+      </div>
+
+      <!-- Enter Code -->
+      <div class="enter-code-card">
+        <div class="enter-code-left">
+          <div class="enter-code-icon">🔑</div>
+          <div>
+            <div class="enter-code-title">Have an event code?</div>
+            <div class="enter-code-desc">Someone shared a walking event with you. Enter the code to view the route and join them.</div>
+          </div>
+        </div>
+        <div class="enter-code-right">
+          <div class="enter-code-row">
+            <input
+              v-model="codeInput"
+              class="enter-code-input"
+              placeholder="e.g. AB1C2D"
+              maxlength="8"
+              @keyup.enter="viewEvent"
+              @input="codeInputErr = ''"
+            />
+            <button class="enter-code-btn" @click="viewEvent">View Event →</button>
+          </div>
+          <p v-if="codeInputErr" class="enter-code-err">{{ codeInputErr }}</p>
+        </div>
       </div>
 
       <!-- Footer -->
@@ -221,6 +257,105 @@ function planRoute() {
 .summary-check { color: #0b5d57; font-size: 16px; font-weight: 700; }
 .summary-label { font-size: 11px; color: #888; }
 .summary-value { font-size: 13px; font-weight: 700; color: #0b5d57; }
+
+/* Enter Code card */
+.enter-code-card {
+  margin-top: 24px;
+  background: white;
+  border-radius: 20px;
+  padding: 32px 40px;
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  border: 1.5px solid #e4eeec;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+.enter-code-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1;
+}
+
+.enter-code-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.enter-code-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0b3d38;
+  margin-bottom: 6px;
+}
+
+.enter-code-desc {
+  font-size: 14px;
+  color: #6a7a76;
+  line-height: 1.55;
+  max-width: 340px;
+}
+
+.enter-code-right {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 280px;
+}
+
+.enter-code-row {
+  display: flex;
+  gap: 10px;
+}
+
+.enter-code-input {
+  flex: 1;
+  padding: 13px 16px;
+  border: 1.5px solid #ccd8d5;
+  border-radius: 12px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0b3d38;
+  background: #f8faf9;
+  outline: none;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: border-color 0.2s;
+}
+.enter-code-input::placeholder { font-weight: 400; letter-spacing: 0; color: #aab8b5; text-transform: none; }
+.enter-code-input:focus { border-color: #0b5d57; background: white; }
+
+.enter-code-btn {
+  padding: 13px 22px;
+  background: #0b5d57;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+.enter-code-btn:hover { background: #084a45; transform: translateY(-1px); }
+
+.enter-code-err {
+  font-size: 13px;
+  color: #c0392b;
+  margin: 0;
+  padding-left: 4px;
+}
+
+@media (max-width: 900px) {
+  .enter-code-card { flex-direction: column; padding: 24px; gap: 20px; }
+  .enter-code-right { min-width: unset; width: 100%; }
+  .enter-code-desc { max-width: unset; }
+}
 
 .footer { text-align: center; padding: 40px 0; font-size: 14px; color: #777; margin-top: auto; }
 .footer h3 { font-family: 'Playfair Display', Georgia, serif; color: #0b5d57; margin-bottom: 10px; }

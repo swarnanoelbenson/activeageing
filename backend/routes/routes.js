@@ -109,4 +109,55 @@ function formatDuration(seconds) {
   return m < 60 ? `${m} min` : `${Math.floor(m / 60)}h ${m % 60}min`;
 }
 
+// POST /api/routes/waypoint
+// Body: { activity_type, start_lat, start_lng, waypoints: [[lng, lat], ...] }
+router.post("/waypoint", async (req, res) => {
+  const { activity_type = "walking", start_lat, start_lng, waypoints = [] } = req.body;
+
+  if (!start_lat || !start_lng) {
+    return res.status(400).json({ error: "start_lat and start_lng are required" });
+  }
+  if (!waypoints.length) {
+    return res.status(400).json({ error: "At least one waypoint is required" });
+  }
+
+  const profile = ORS_PROFILE[activity_type] ?? "foot-walking";
+  const coordinates = [
+    [Number(start_lng), Number(start_lat)],
+    ...waypoints,
+    [Number(start_lng), Number(start_lat)],  // return to start
+  ];
+
+  const headers = {
+    "Content-Type":  "application/json",
+    "Accept":        "application/json, application/geo+json",
+    "Authorization": process.env.ORS_API_KEY,
+  };
+
+  try {
+    const r    = await fetch(`${ORS_BASE}/${profile}/geojson`, {
+      method: "POST", headers, body: JSON.stringify({ coordinates }),
+    });
+    const data = await r.json();
+
+    if (!data.features?.length) {
+      return res.status(502).json({ error: data.error?.message ?? "ORS returned no route for these waypoints" });
+    }
+
+    const feature = data.features[0];
+    const summary = feature.properties.summary;
+
+    res.json({
+      geometry:       feature.geometry,
+      distance_m:     Math.round(summary.distance),
+      duration_s:     Math.round(summary.duration),
+      distance_label: formatDistance(summary.distance),
+      duration_label: formatDuration(summary.duration),
+    });
+  } catch (err) {
+    console.error("ORS waypoint error:", err.message);
+    res.status(502).json({ error: "Failed to fetch waypoint route from ORS" });
+  }
+});
+
 module.exports = router;

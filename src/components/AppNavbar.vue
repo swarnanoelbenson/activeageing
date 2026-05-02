@@ -20,6 +20,7 @@ const router = useRouter()
         <span class="nav-link" :class="{ active: active === 'checkin' }" @click="router.push('/survey')">Check-In</span>
         <span class="nav-link" :class="{ active: active === 'events' }" @click="router.push('/events')">Events</span>
         <span class="nav-link" :class="{ active: active === 'routeplan' }" @click="router.push('/routeplan')">Plan Route</span>
+        <span class="nav-link" :class="{ active: active === 'snapshot' }" @click="router.push('/results')">My Snapshot</span>
       </div>
     </div>
   </nav>

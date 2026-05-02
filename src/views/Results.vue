@@ -1,7 +1,7 @@
 <template>
   <div class="page">
     <!-- NAV -->
-    <AppNavbar active="checkin" />
+    <AppNavbar active="snapshot" />
 
     <!-- MAIN -->
     <main class="main">
@@ -24,27 +24,28 @@
       </div> -->
 
       <!-- EMPTY STATE — no survey result -->
-      <div v-if="!surveyResult" class="grid" :class="{ visible }" style="transition-delay: 150ms;">
-        <div class="card card-light empty-card">
-          <div class="empty-icon">📊</div>
-          <p class="empty-label">Activity Comparison</p>
-          <p class="empty-hint">Complete the survey to see your results here.</p>
-        </div>
-        <div class="right-col">
-          <div class="card card-light empty-card">
-            <div class="empty-icon">🚀</div>
-            <p class="empty-label">Current Status</p>
-            <p class="empty-hint">Your wellness category will appear after the survey.</p>
+      <div v-if="!surveyResult" class="checkin-empty" :class="{ visible }" style="transition-delay: 150ms;">
+        <div class="checkin-empty-icon">📋</div>
+        <h2 class="checkin-empty-title">No snapshot yet</h2>
+        <p class="checkin-empty-desc">
+          Take a quick 5-minute check-in to see how you're tracking against the Australian benchmark
+          for adults 65 and over. You'll get a personalised wellness category and exercise suggestions.
+        </p>
+        <div class="checkin-empty-steps">
+          <div class="checkin-step">
+            <div class="checkin-step-num">1</div>
+            <span>Answer a few questions about your activity, sleep, and wellbeing</span>
           </div>
-          <div class="card card-light empty-card">
-            <div class="empty-icon">✦</div>
-            <p class="empty-label">Your Actions</p>
-            <p class="empty-hint">Personalised exercise and event recommendations await.</p>
+          <div class="checkin-step">
+            <div class="checkin-step-num">2</div>
+            <span>Get your wellness category scored against the 65+ benchmark</span>
+          </div>
+          <div class="checkin-step">
+            <div class="checkin-step-num">3</div>
+            <span>See personalised exercises and events matched to your level</span>
           </div>
         </div>
-      </div>
-      <div v-if="!surveyResult" class="empty-cta" :class="{ visible }" style="transition-delay: 250ms;">
-        <button class="btn-home" @click="router.push('/survey')">Get Started →</button>
+        <button class="btn-checkin" @click="router.push('/survey')">Start Check-in →</button>
       </div>
 
       <!-- TWO COLUMN GRID — has survey result -->
@@ -348,46 +349,80 @@ onMounted(() => {
   line-height: 1.5;
 }
 
-/* EMPTY STATE */
-.empty-card {
+/* EMPTY STATE — Start Check-in */
+.checkin-empty {
+  max-width: 560px;
+  margin: 0 auto 48px;
+  background: #f9f7f3;
+  border-radius: 24px;
+  padding: 48px 40px;
+  text-align: center;
+  border: 1.5px solid #e4dfd5;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.checkin-empty.visible { opacity: 1; transform: translateY(0); }
+
+.checkin-empty-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+.checkin-empty-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f3d35;
+  margin-bottom: 14px;
+}
+.checkin-empty-desc {
+  font-size: 15px;
+  color: #5a6b67;
+  line-height: 1.7;
+  margin-bottom: 28px;
+}
+.checkin-empty-steps {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  margin-bottom: 32px;
+}
+.checkin-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  color: #3a5a55;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.checkin-step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #e0ede9;
+  color: #0b5d57;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 40px 24px;
-  gap: 10px;
-  min-height: 180px;
-  border: 2px dashed #d5cfc4;
-  background: #f9f7f3;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
-.empty-icon { font-size: 32px; opacity: 0.4; }
-.empty-label { font-size: 15px; font-weight: 600; color: #a0998e; margin: 0; }
-.empty-hint  { font-size: 13px; color: #b8b0a5; margin: 0; line-height: 1.5; }
-
-.empty-cta {
-  display: flex;
-  justify-content: center;
-  margin-top: 32px;
-  opacity: 0;
-  transform: translateY(12px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
-}
-.empty-cta.visible { opacity: 1; transform: translateY(0); }
-
-.btn-home {
+.btn-checkin {
   background: #0b5d57;
   color: #fff;
   border: none;
   border-radius: 12px;
-  padding: 14px 32px;
+  padding: 15px 36px;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.15s;
 }
-.btn-home:hover { background: #0f3d35; }
+.btn-checkin:hover { background: #0f3d35; transform: translateY(-1px); }
 
 /* Session points badge */
 .points-badge {
