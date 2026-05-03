@@ -75,7 +75,7 @@ const showSubmit      = computed(() => step.value === total && answers.value[ste
 function selectOption(option) {
   answers.value[step.value - 1] = option.label
   if (step.value < total) {
-    setTimeout(() => { step.value++ })
+    step.value++
   }
 }
 

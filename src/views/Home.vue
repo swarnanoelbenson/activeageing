@@ -96,10 +96,10 @@ function goToEvents()      { router.push('/events') }
       <section class="hero-section">
         <div class="hero-inner">
           <div class="hero-left">
-            <div class="welcome-pill">Welcome back</div>
+            <div class="welcome-pill">Welcome</div>
             <h1 class="hero-title">
               Active Ageing,<br />
-              Rediscovering<br />
+              Rediscovering
               Memories
             </h1>
             <p class="hero-desc">
@@ -399,7 +399,7 @@ function goToEvents()      { router.push('/events') }
 }
 
 .main-content {
-  padding-top: 64px; /* navbar height */
+  padding-top: 15px; /* navbar height */
 }
 
 /* ── Shared Buttons ── */
@@ -407,7 +407,7 @@ function goToEvents()      { router.push('/events') }
   background: #0b5d57;
   color: white;
   font-family: 'Poppins', sans-serif;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 600;
   padding: 13px 28px;
   border-radius: 8px;
@@ -453,12 +453,12 @@ function goToEvents()      { router.push('/events') }
 
 /* ── HERO ── */
 .hero-section {
-  background: #faf8f3;
-  padding: 48px 5vw 40px;
+  background: #ffffff;
+  padding: 130px 3vw 60px;
 }
 
 .hero-inner {
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -471,7 +471,7 @@ function goToEvents()      { router.push('/events') }
   display: inline-block;
   background: #e0ede9;
   color: #0b5d57;
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 600;
   padding: 5px 14px;
   border-radius: 999px;
@@ -479,27 +479,27 @@ function goToEvents()      { router.push('/events') }
 }
 
 .hero-title {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(28px, 3.5vw, 46px);
-  font-weight: 800;
+  font-family: 'Poppins', sans-serif;
+  font-size: clamp(60px, 4.5vw, 30px);
+  font-weight: 600;
   color: #0b5d57;
-  line-height: 1.15;
+  line-height: 1.3;
   margin-bottom: 18px;
 }
 
 .hero-desc {
-  font-size: 14px;
+  font-size: 20px;
   line-height: 1.75;
   color: #5a6a66;
-  max-width: 44ch;
+  max-width: 60ch;
   margin-bottom: 24px;
 }
 
 .hero-right { flex-shrink: 0; }
 
 .hero-image-box {
-  width: clamp(300px, 30vw, 440px);
-  height: clamp(460px, 22vw, 240px);
+  width: clamp(360px, 40vw, 520px);
+  height: clamp(400px, 28vw, 320px);
   border-radius: 16px;
   overflow: hidden;
   flex-shrink: 0;
@@ -515,10 +515,10 @@ function goToEvents()      { router.push('/events') }
 /* ── STATS BAR ── */
 .stats-bar {
   background: #ece9e2;
-  padding: 24px 5vw;
+  padding: 24px 3vw;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-evenly;
   gap: 0;
 }
 
@@ -526,12 +526,13 @@ function goToEvents()      { router.push('/events') }
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 40px;
+  flex: 1;          
+  padding: 0;
 }
 
 .stat-num {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 26px;
+  font-size: 40px;
   font-weight: 800;
   color: #0b5d57;
   line-height: 1;
@@ -540,7 +541,7 @@ function goToEvents()      { router.push('/events') }
 .stat-num.orange { color: #e07b39; }
 
 .stat-label {
-  font-size: 13px;
+  font-size: 20px;
   color: #7a9490;
   margin-top: 4px;
   font-weight: 500;
@@ -555,16 +556,16 @@ function goToEvents()      { router.push('/events') }
 
 /* ── PLAN MY PATH ── */
 .plan-section {
-  padding: 48px 5vw;
+  padding: 48px 3vw;
   background: #faf8f3;
 }
 
 .plan-card {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
   background: #f0f4f2;
   border-radius: 20px;
-  padding: 40px 48px;
+  padding: 48px 56px;
   display: flex;
   gap: 48px;
   align-items: center;
@@ -576,7 +577,7 @@ function goToEvents()      { router.push('/events') }
   display: inline-block;
   background: #e0ede9;
   color: #0b5d57;
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 600;
   padding: 4px 14px;
   border-radius: 999px;
@@ -585,14 +586,14 @@ function goToEvents()      { router.push('/events') }
 
 .plan-title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(22px, 2.5vw, 32px);
+  font-size: clamp(32px, 2.5vw, 50px);
   font-weight: 800;
   color: #0b5d57;
   margin-bottom: 14px;
 }
 
 .plan-desc {
-  font-size: 14px;
+  font-size: 18px;
   line-height: 1.7;
   color: #5a6a66;
   margin-bottom: 18px;
@@ -611,7 +612,7 @@ function goToEvents()      { router.push('/events') }
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
+  font-size: 18px;
   color: #3a5a55;
   font-weight: 500;
 }
@@ -625,7 +626,7 @@ function goToEvents()      { router.push('/events') }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 20px;
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -633,8 +634,8 @@ function goToEvents()      { router.push('/events') }
 .plan-right { flex-shrink: 0; }
 
 .map-preview {
-  width: 260px;
-  height: 220px;
+  width: 400px;
+  height: 400px;
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -644,7 +645,7 @@ function goToEvents()      { router.push('/events') }
 
 /* ── WELLNESS SNAPSHOT ── */
 .snap-section {
-  padding: 56px 5vw;
+  padding: 56px 3vw;
   background: #ffffff;
 }
 
@@ -657,7 +658,7 @@ function goToEvents()      { router.push('/events') }
   display: inline-block;
   background: #fde8d8;
   color: #c06030;
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 600;
   padding: 5px 18px;
   border-radius: 999px;
@@ -666,26 +667,26 @@ function goToEvents()      { router.push('/events') }
 
 .snap-title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(24px, 2.5vw, 36px);
+  font-size: clamp(36px, 2.5vw, 50px);
   font-weight: 800;
   color: #0b5d57;
   margin-bottom: 12px;
 }
 
 .snap-sub {
-  font-size: 14px;
+  font-size: 20px;
   color: #5a6a66;
   line-height: 1.65;
 }
 
 .snap-body {
-  max-width: 860px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   gap: 40px;
   background: #f7faf9;
   border-radius: 20px;
-  padding: 36px 40px;
+  padding: 40px 56px;
   box-shadow: 0 2px 20px rgba(0,0,0,0.05);
 }
 
@@ -712,21 +713,21 @@ function goToEvents()      { router.push('/events') }
   width: 38px; height: 38px;
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 16px; font-weight: 700;
+  font-size: 20px; font-weight: 700;
   flex-shrink: 0; color: white;
 }
 .green-icon  { background: #0b5d57; }
 .teal-icon   { background: #2a9d8f; }
 .orange-icon { background: #e07b39; }
 
-.cat-title { font-size: 14px; font-weight: 700; color: #0b5d57; }
+.cat-title { font-size: 20px; font-weight: 700; color: #0b5d57; }
 .cat-orange-text { color: #c06030; }
-.cat-sub { font-size: 12px; color: #7a9490; margin-top: 2px; }
+.cat-sub { font-size: 18px; color: #7a9490; margin-top: 2px; }
 
 .snap-how { flex: 1; }
 
 .how-label {
-  font-size: 11px;
+  font-size: 18px;
   font-weight: 600;
   color: #9aafaa;
   letter-spacing: 0.08em;
@@ -752,17 +753,17 @@ function goToEvents()      { router.push('/events') }
   border-radius: 50%;
   background: #e0ede9;
   color: #0b5d57;
-  font-size: 12px; font-weight: 700;
+  font-size: 20px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; margin-top: 1px;
 }
 
-.step-title { font-size: 14px; font-weight: 700; color: #0b5d57; margin-bottom: 2px; }
-.step-desc  { font-size: 12px; color: #7a9490; line-height: 1.5; }
+.step-title { font-size: 20px; font-weight: 700; color: #0b5d57; margin-bottom: 2px; }
+.step-desc  { font-size: 18px; color: #7a9490; line-height: 1.5; }
 
 /* ── EXPLORE SECTION ── */
 .explore-section {
-  padding: 56px 5vw;
+  padding: 56px 3vw;
   background: #ffffff;
   text-align: center;
 }
@@ -771,7 +772,7 @@ function goToEvents()      { router.push('/events') }
   display: inline-block;
   background: #e0ede9;
   color: #0b5d57;
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 600;
   padding: 5px 18px;
   border-radius: 999px;
@@ -780,7 +781,7 @@ function goToEvents()      { router.push('/events') }
 
 .explore-title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(22px, 2.5vw, 32px);
+  font-size: clamp(32px, 2.5vw, 50px);
   font-weight: 800;
   font-style: normal;
   color: #0b5d57;
@@ -788,7 +789,7 @@ function goToEvents()      { router.push('/events') }
 }
 
 .explore-cards {
-  max-width: 860px;
+  max-width: 1200px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -810,14 +811,14 @@ function goToEvents()      { router.push('/events') }
 
 .explore-text h3 {
   font-family: 'Poppins', sans-serif;
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   color: #0b5d57;
   margin-bottom: 10px;
 }
 
 .explore-text p {
-  font-size: 13px;
+  font-size: 18px;
   color: #5a6a66;
   line-height: 1.65;
   max-width: 26ch;
@@ -850,18 +851,18 @@ function goToEvents()      { router.push('/events') }
   background: #0b5d57;
   color: white;
   text-align: center;
-  padding: 60px 5vw;
+  padding: 60px 3vw;
 }
 
 .cta-banner h2 {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: clamp(22px, 2.5vw, 34px);
+  font-size: clamp(32px, 2.5vw, 50px);
   font-weight: 800;
   margin-bottom: 12px;
 }
 
 .cta-banner p {
-  font-size: 15px;
+  font-size: 20px;
   opacity: 0.85;
   line-height: 1.6;
 }

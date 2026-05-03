@@ -338,9 +338,7 @@ async function findMyRoute() {
       <div class="footer-links">
         <a @click="router.push('/privacy')">Privacy Policy</a>
         <a @click="router.push('/terms')">Terms of Service</a>
-        <a @click="router.push('/contact')">Contact Support</a>
       </div>
-      <div class="footer-copy">© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</div>
     </footer>
 
   </div>
@@ -364,24 +362,24 @@ async function findMyRoute() {
   flex: 1;
   display: flex;
   justify-content: center;
-  padding: 8px 20px 48px;
+  padding: 8px 15px 48px;
 }
 
 .survey-container {
   width: 100%;
-  max-width: 500px;
+  max-width: 1000px;
 }
 
 .page-title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 30px;
+  font-size: 50px;
   font-weight: 800;
   color: #1a1a1a;
   margin-bottom: 8px;
 }
 
 .page-sub {
-  font-size: 13px;
+  font-size: 20px;
   color: #888;
   line-height: 1.6;
   margin-bottom: 32px;
@@ -409,7 +407,7 @@ async function findMyRoute() {
 }
 
 .q-text {
-  font-size: 15px;
+  font-size: 25px;
   font-weight: 600;
   color: #1a1a1a;
 }
@@ -467,7 +465,7 @@ async function findMyRoute() {
 }
 
 .opt-label {
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 600;
   color: #222;
   line-height: 1.4;
@@ -478,7 +476,7 @@ async function findMyRoute() {
 
 .time-num {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 24px;
+  font-size: 32px;
   font-weight: 800;
   color: #1a1a1a;
   line-height: 1;
@@ -488,7 +486,7 @@ async function findMyRoute() {
 .time-card.selected .time-num { color: #0b5d57; }
 
 .time-unit {
-  font-size: 11px;
+  font-size: 17px;
   color: #999;
   font-weight: 500;
 }
@@ -511,7 +509,7 @@ async function findMyRoute() {
   border: 1.5px solid #e2e2e2;
   border-radius: 10px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   color: #1a1a1a;
   background: white;
   outline: none;
@@ -580,7 +578,7 @@ async function findMyRoute() {
   background: #0b5d57;
   color: white;
   font-family: 'Poppins', sans-serif;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   padding: 17px 52px;
   border-radius: 14px;

@@ -932,9 +932,7 @@ onBeforeUnmount(() => {
       <div class="footer-links">
         <a @click="router.push('/privacy')">Privacy Policy</a>
         <a @click="router.push('/terms')">Terms of Service</a>
-        <a @click="router.push('/contact')">Contact Support</a>
       </div>
-      <div class="footer-copy">© 2024 ActiveAgeing Australia. Your journey to wellness, clarified.</div>
     </footer>
 
     <!-- Ready to Go modal -->
