@@ -8,7 +8,7 @@ import AppNavbar from '../components/AppNavbar.vue'
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
 const router = useRouter()
-const API    = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const API    = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const COLOUR = '#c2185b'
 
 const loading     = ref(true)
@@ -325,28 +325,22 @@ async function fetchAndDrawPOIs(coords) {
   const west  = (Math.min(...lngs) - 0.002).toFixed(5)
   const east  = (Math.max(...lngs) + 0.002).toFixed(5)
 
-  const q = `[out:json][timeout:20];(
-    node["amenity"="bench"](${south},${west},${north},${east});
-    node["amenity"="drinking_water"](${south},${west},${north},${east});
-    node["amenity"="toilets"](${south},${west},${north},${east});
-    node["tourism"="attraction"](${south},${west},${north},${east});
-    node["historic"](${south},${west},${north},${east});
-    node["leisure"="park"](${south},${west},${north},${east});
-  );out body;`
-
   try {
-    const res  = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: q })
+    const params = new URLSearchParams({ south, west, north, east })
+    const res  = await fetch(`${API}/api/pois?${params}`)
     const data = await res.json()
 
-    const features = data.elements
-      .filter(el => isNearRoute(el.lon, el.lat, coords, 60))
+    const features = (data.elements ?? [])
+      .filter(el => el.lon != null && el.lat != null)
+      .filter(el => isNearRoute(el.lon, el.lat, coords, 200))
       .map(el => {
         const t = el.tags ?? {}
         let cat = 'landmark'
-        if (t.amenity === 'bench')          cat = 'seating'
-        if (t.amenity === 'drinking_water') cat = 'drinking_fountain'
-        if (t.amenity === 'toilets')        cat = 'restroom'
-        if (t.leisure === 'park')           cat = 'shaded'
+        if (t.amenity === 'bench' || t.amenity === 'seat')           cat = 'seating'
+        if (t.leisure === 'picnic_table')                             cat = 'seating'
+        if (t.amenity === 'drinking_water' || t.amenity === 'fountain') cat = 'drinking_fountain'
+        if (t.amenity === 'toilets')                                  cat = 'restroom'
+        if (t.amenity === 'shelter')                                  cat = 'shaded'
         const name = t.name ?? catLabel[cat] ?? cat
         return {
           type: 'Feature',
