@@ -46,6 +46,7 @@ const showPOIModal     = ref(false)
 // ── Waypoint rerouting ──
 const currentWaypoints = ref([])   // [[lng, lat], ...] accumulated across Add actions
 const routeLoading     = ref(false)
+const poisLoading      = ref(false)
 
 // ── Shared event banner (shown when a code is loaded) ──
 const sharedEventBanner = ref(null)
@@ -318,6 +319,8 @@ async function rerouteWithWaypoints(waypoints) {
 // ── POI fetch (Overpass API) ──
 async function fetchAndDrawPOIs(coords) {
   if (!mainMap) return
+  poisLoading.value = true
+  setTimeout(() => { poisLoading.value = false }, 6000)
   const lngs  = coords.map(c => c[0])
   const lats  = coords.map(c => c[1])
   const south = (Math.min(...lats) - 0.002).toFixed(5)
@@ -901,6 +904,14 @@ onBeforeUnmount(() => {
                 <div v-if="routeLoading" class="reroute-overlay">
                   <div class="reroute-spinner"></div>
                   <span>Updating route…</span>
+                </div>
+              </Transition>
+
+              <!-- POI loading notice -->
+              <Transition name="fade">
+                <div v-if="poisLoading" class="poi-loading-notice">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  Stop points may take a moment to load
                 </div>
               </Transition>
 
@@ -1591,6 +1602,18 @@ h1 { font-size: 42px; color: #0b5d57; }
   align-items: center; justify-content: center;
   gap: 10px; font-size: 20px; font-weight: 600; color: #0b5d57;
   border-radius: 20px 20px 0 0;
+  pointer-events: none;
+}
+.poi-loading-notice {
+  position: absolute; inset: 0; z-index: 10;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(3px);
+  border-radius: 20px 20px 0 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px;
+  color: #fff; font-size: 20px; font-weight: 500; text-align: center;
+  padding: 24px;
   pointer-events: none;
 }
 .reroute-spinner {
