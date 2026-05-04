@@ -50,6 +50,42 @@ const routeLoading     = ref(false)
 // ── Shared event banner (shown when a code is loaded) ──
 const sharedEventBanner = ref(null)
 
+// ── Fullscreen ──
+const isFullscreen = ref(false)
+function toggleFullscreen() {
+  const el = document.getElementById('map-main')
+  if (!el) return
+  if (!document.fullscreenElement) {
+    el.requestFullscreen?.()
+  } else {
+    document.exitFullscreen?.()
+  }
+}
+function onFullscreenChange() {
+  isFullscreen.value = !!document.fullscreenElement
+  setTimeout(() => mainMap?.resize(), 100)
+}
+
+// ── Open in Google Maps ──
+function openInGoogleMaps() {
+  const route = routes.value[activeRoute.value]
+  if (!route) return
+  const coords = route.geometry.coordinates
+  const origin      = `${coords[0][1]},${coords[0][0]}`
+  const destination = `${coords[coords.length - 1][1]},${coords[coords.length - 1][0]}`
+  const MAX_WP = 8
+  const step = Math.max(1, Math.floor((coords.length - 2) / MAX_WP))
+  const wps = []
+  for (let i = step; i < coords.length - 1; i += step) {
+    wps.push(`${coords[i][1]},${coords[i][0]}`)
+    if (wps.length >= MAX_WP) break
+  }
+  const mode = survey.value?.activity_type === 'cycling' ? 'bicycling' : 'walking'
+  let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=${mode}`
+  if (wps.length) url += `&waypoints=${encodeURIComponent(wps.join('|'))}`
+  window.open(url, '_blank')
+}
+
 // ── Main map ──
 let mainMap         = null
 let mainStartMarker = null
@@ -72,7 +108,7 @@ function makeMarkerEl(label, bg) {
   el.style.cssText = `
     width:42px;height:42px;background:${bg};border:3px solid #fff;
     border-radius:50%;display:flex;align-items:center;justify-content:center;
-    color:#fff;font-weight:800;font-size:14px;font-family:'Poppins',sans-serif;
+    color:#fff;font-weight:800;font-size: 20px;font-family:'Poppins',sans-serif;
     box-shadow:0 4px 12px rgba(0,0,0,0.35);cursor:default;
   `
   el.textContent = label
@@ -388,7 +424,7 @@ async function fetchAndDrawPOIs(coords) {
 const showReady = ref(false)
 function openReady()    { showReady.value = true }
 function closeReady()   { showReady.value = false }
-function beginJourney() { router.push('/journey1') }
+function beginJourney() { closeReady(); openInGoogleMaps() }
 function goReady()      { openReady() }
 
 // ── Schedule & Invite modal ──
@@ -482,16 +518,16 @@ async function downloadPDF() {
 <style>
   body{font-family:Arial,sans-serif;max-width:580px;margin:44px auto;color:#222;line-height:1.5}
   h1{color:#0b5d57;font-size:26px;margin-bottom:4px}
-  .sub{color:#888;font-size:14px;margin-bottom:24px}
+  .sub{color:#888;font-size: 20px;margin-bottom:24px}
   .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}
   .cell{background:#f4f1eb;border-radius:10px;padding:14px 16px}
-  .lbl{font-size:11px;font-weight:700;color:#9aafaa;text-transform:uppercase;letter-spacing:.06em}
-  .val{font-size:16px;font-weight:700;color:#0b3d38;margin-top:4px;text-transform:capitalize}
+  .lbl{font-size: 20px;font-weight:700;color:#9aafaa;text-transform:uppercase;letter-spacing:.06em}
+  .val{font-size: 20px;font-weight:700;color:#0b3d38;margin-top:4px;text-transform:capitalize}
   .code-box{text-align:center;background:#e8f5f3;border-radius:14px;padding:22px;margin:20px 0}
-  .code-lbl{font-size:12px;font-weight:700;color:#0b5d57;text-transform:uppercase;letter-spacing:.08em}
+  .code-lbl{font-size: 20px;font-weight:700;color:#0b5d57;text-transform:uppercase;letter-spacing:.08em}
   .code-val{font-size:40px;font-weight:800;color:#0b5d57;letter-spacing:8px;margin-top:8px}
-  .url-lbl{font-size:12px;color:#666;margin-top:10px;word-break:break-all}
-  .note{font-size:12px;color:#aaa;text-align:center;margin-top:16px}
+  .url-lbl{font-size: 20px;color:#666;margin-top:10px;word-break:break-all}
+  .note{font-size: 20px;color:#aaa;text-align:center;margin-top:16px}
   @media print{body{margin:20px}}
 </style></head><body>
 <h1>ActiveAgeing Route Event</h1>
@@ -616,6 +652,7 @@ function routeDescription(index) {
 }
 
 onMounted(async () => {
+  document.addEventListener('fullscreenchange', onFullscreenChange)
   const urlParams = new URLSearchParams(window.location.search)
   const urlCode   = urlParams.get('code')
   if (urlCode) codeInput.value = urlCode
@@ -734,6 +771,7 @@ function initMaps() {
 }
 
 onBeforeUnmount(() => {
+  document.removeEventListener('fullscreenchange', onFullscreenChange)
   if (mainStartMarker) { mainStartMarker.remove(); mainStartMarker = null }
   if (mainEndMarker)   { mainEndMarker.remove();   mainEndMarker   = null }
   if (mainMap)         { mainMap.remove();          mainMap         = null }
@@ -842,6 +880,16 @@ onBeforeUnmount(() => {
                   <span>Updating route…</span>
                 </div>
               </Transition>
+
+              <!-- Fullscreen toggle button -->
+              <button class="map-fullscreen-btn" @click="toggleFullscreen" :title="isFullscreen ? 'Exit fullscreen' : 'Fullscreen'">
+                <svg v-if="!isFullscreen" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M1 6V1h5M12 1h5v5M17 12v5h-5M6 17H1v-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <svg v-else width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M6 1v5H1M17 6h-5V1M12 17v-5h5M1 12h5v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
             </div>
 
             <!-- Stop-point legend with checkboxes -->
@@ -888,6 +936,13 @@ onBeforeUnmount(() => {
             </div>
 
             <button class="btn" @click="goReady()">Select This Route →</button>
+            <button class="btn-gmaps" @click="openInGoogleMaps">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" fill="#4285F4"/>
+                <circle cx="12" cy="9" r="2.5" fill="white"/>
+              </svg>
+              Open in Google Maps
+            </button>
           </div>
 
         </div>
@@ -914,7 +969,7 @@ onBeforeUnmount(() => {
               <div :id="`map-t${i}`" class="suggest-map"></div>
               <div class="suggest-info">
                 <h4>Route {{ i + 1 }}</h4>
-                <p>{{ route.distance_label }} · {{ route.duration_label }}</p>
+                <p>{{ route.duration_label }}</p>
               </div>
               <div class="suggest-actions">
                 <span class="distance">{{ route.distance_label }}</span>
@@ -1106,12 +1161,12 @@ h1 { font-size: 42px; color: #0b5d57; }
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
 }
 .code-entry-label {
-  font-size: 14px; font-weight: 600; color: #0b5d57; white-space: nowrap;
+  font-size: 20px; font-weight: 600; color: #0b5d57; white-space: nowrap;
 }
 .code-entry-input {
   flex: 1; min-width: 160px; padding: 10px 14px;
   border: 1.5px solid #d0d9d6; border-radius: 10px;
-  font-family: 'Poppins', sans-serif; font-size: 14px; color: #333;
+  font-family: 'Poppins', sans-serif; font-size: 20px; color: #333;
   outline: none; background: #f9f9f7; letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -1119,12 +1174,12 @@ h1 { font-size: 42px; color: #0b5d57; }
 .code-entry-btn {
   padding: 10px 20px; background: #0b5d57; color: white;
   border: none; border-radius: 10px; font-family: 'Poppins', sans-serif;
-  font-size: 14px; font-weight: 600; cursor: pointer;
+  font-size: 20px; font-weight: 600; cursor: pointer;
   transition: background 0.2s; white-space: nowrap;
 }
 .code-entry-btn:hover:not(:disabled) { background: #084a45; }
 .code-entry-btn:disabled { opacity: 0.55; cursor: default; }
-.code-entry-error { margin: 8px 0 0; font-size: 13px; color: #c0392b; }
+.code-entry-error { margin: 8px 0 0; font-size: 20px; color: #c0392b; }
 
 /* Loading / error */
 .status-box {
@@ -1149,7 +1204,7 @@ h1 { font-size: 42px; color: #0b5d57; }
 
 .metric-icon  { font-size: 20px; color: #0b5d57; flex-shrink: 0; }
 .metric-value { font-size: 20px; font-weight: 700; color: #0b5d57; line-height: 1.2; }
-.metric-label { font-size: 12px; color: #888; margin-top: 2px; }
+.metric-label { font-size: 20px; color: #888; margin-top: 2px; }
 
 /* Main layout */
 .main { display: flex; gap: 24px; }
@@ -1166,17 +1221,17 @@ h1 { font-size: 42px; color: #0b5d57; }
 
 .tag {
   background: #5a2d0c; color: white;
-  display: inline-block; padding: 5px 10px; border-radius: 10px; font-size: 12px;
+  display: inline-block; padding: 5px 10px; border-radius: 10px; font-size: 20px;
 }
 
 .meta { color: #0b5d57; margin-bottom: 20px; }
-.info p { font-size: 13px; color: #555; }
+.info p { font-size: 20px; color: #555; }
 
 .btn {
   margin-top: 20px; width: 100%; padding: 14px;
   background: linear-gradient(135deg, #0f7a72, #0b5d57);
   color: white; border-radius: 10px; border: none; cursor: pointer;
-  font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600;
+  font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600;
   box-shadow: 0 4px 14px rgba(11,93,87,0.28);
   transition: opacity 0.2s, transform 0.15s;
 }
@@ -1201,7 +1256,7 @@ h1 { font-size: 42px; color: #0b5d57; }
   accent-color: #0b5d57; flex-shrink: 0;
 }
 .stop-dot   { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; transition: opacity 0.2s; }
-.stop-label { font-size: 12px; color: #555; }
+.stop-label { font-size: 20px; color: #555; }
 
 /* Highlight */
 .highlight {
@@ -1227,22 +1282,22 @@ h1 { font-size: 42px; color: #0b5d57; }
 .suggest-map { width: 110px; height: 110px; border-radius: 12px; overflow: hidden; flex-shrink: 0; }
 
 .suggest-info       { flex: 1; }
-.suggest-info h4    { margin: 0 0 6px; font-size: 16px; }
-.suggest-info p     { margin: 0; font-size: 14px; color: #888; }
+.suggest-info h4    { margin: 0 0 6px; font-size: 20px; }
+.suggest-info p     { margin: 0; font-size: 20px; color: #888; }
 
-.suggest-actions    { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.suggest-actions    { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; font-size: 20px;  }
 .distance           { color: #0b5d57; font-weight: 700; }
 
 /* Footer */
 .footer {
   background: #0b5d57; color: rgba(255,255,255,0.75);
-  text-align: center; padding: 28px 24px 20px; font-size: 13px; margin-top: 40px;
+  text-align: center; padding: 28px 24px 20px; font-size: 20px; margin-top: 40px;
 }
-.footer-brand { font-size: 17px; font-weight: 700; color: white; margin-bottom: 10px; }
+.footer-brand { font-size: 20px; font-weight: 700; color: white; margin-bottom: 10px; }
 .footer-links { display: flex; justify-content: center; gap: 20px; margin-bottom: 12px; flex-wrap: wrap; }
-.footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 13px; cursor: pointer; transition: color 0.2s; }
+.footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 20px; cursor: pointer; transition: color 0.2s; }
 .footer-links a:hover { color: white; }
-.footer-copy { font-size: 12px; color: rgba(255,255,255,0.45); }
+.footer-copy { font-size: 20px; color: rgba(255,255,255,0.45); }
 
 /* Ready modal */
 .ready-overlay {
@@ -1259,7 +1314,7 @@ h1 { font-size: 42px; color: #0b5d57; }
   box-shadow: 0 24px 64px rgba(0,0,0,0.18);
 }
 .ready-title { font-size: 28px; font-weight: 800; color: #0b3d38; text-align: center; margin: 0; }
-.ready-sub   { font-size: 14px; color: #6a7a76; text-align: center; margin: -4px 0 6px; }
+.ready-sub   { font-size: 20px; color: #6a7a76; text-align: center; margin: -4px 0 6px; }
 
 .btn-begin {
   width: 100%; background: linear-gradient(135deg, #12897f, #0b5d57);
@@ -1278,15 +1333,15 @@ h1 { font-size: 42px; color: #0b5d57; }
 
 .rdy-btn-content { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .rdy-btn-text    { text-align: left; }
-.rdy-label       { font-size: 17px; font-weight: 700; color: white; line-height: 1.3; }
+.rdy-label       { font-size: 20px; font-weight: 700; color: white; line-height: 1.3; }
 .rdy-label-dark  { color: #0b3d38; }
-.rdy-desc        { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.85); margin-top: 3px; }
+.rdy-desc        { font-size: 20px; font-weight: 400; color: rgba(255,255,255,0.85); margin-top: 3px; }
 .rdy-desc-dark   { color: #6a7a76; }
 .rdy-arrow       { font-size: 22px; color: white; font-weight: 600; flex-shrink: 0; }
 
 .rdy-cancel {
   background: none; border: none; font-family: 'Poppins', sans-serif;
-  font-size: 14px; font-weight: 500; color: #6a7a76;
+  font-size: 20px; font-weight: 500; color: #6a7a76;
   cursor: pointer; padding: 4px 16px; margin-top: 2px; transition: color 0.2s;
 }
 .rdy-cancel:hover { color: #0b5d57; }
@@ -1317,12 +1372,12 @@ h1 { font-size: 42px; color: #0b5d57; }
 }
 .share-modal-header h3 { margin: 0; font-size: 20px; color: #0b3d38; }
 .share-close-x {
-  background: none; border: none; font-size: 18px;
+  background: none; border: none; font-size: 20px;
   cursor: pointer; color: #888; padding: 4px 8px;
   border-radius: 6px; transition: background 0.15s;
 }
 .share-close-x:hover { background: #f0f0f0; color: #333; }
-.share-sub { font-size: 14px; color: #6a7a76; margin-bottom: 20px; line-height: 1.5; }
+.share-sub { font-size: 20px; color: #6a7a76; margin-bottom: 20px; line-height: 1.5; }
 
 .share-route-info {
   display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
@@ -1331,21 +1386,21 @@ h1 { font-size: 42px; color: #0b5d57; }
   flex: 1; min-width: 90px; background: #f4f1eb; border-radius: 12px;
   padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
 }
-.share-detail-label { font-size: 11px; font-weight: 600; color: #9aafaa; text-transform: uppercase; letter-spacing: 0.06em; }
-.share-detail-val   { font-size: 14px; font-weight: 700; color: #0b3d38; }
+.share-detail-label { font-size: 20px; font-weight: 600; color: #9aafaa; text-transform: uppercase; letter-spacing: 0.06em; }
+.share-detail-val   { font-size: 20px; font-weight: 700; color: #0b3d38; }
 
 .sched-label {
-  display: block; font-size: 13px; font-weight: 600;
+  display: block; font-size: 20px; font-weight: 600;
   color: #0b3d38; margin-bottom: 8px;
 }
 .sched-date-input {
   width: 100%; padding: 11px 14px; border: 1.5px solid #d0d9d6;
-  border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 14px;
+  border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 20px;
   color: #333; background: #f9f9f7; outline: none; margin-bottom: 12px;
   box-sizing: border-box;
 }
 .sched-date-input:focus { border-color: #0b5d57; }
-.sched-error { font-size: 13px; color: #c0392b; margin: -8px 0 10px; }
+.sched-error { font-size: 20px; color: #c0392b; margin: -8px 0 10px; }
 .sched-create-btn { margin-top: 4px; }
 
 .code-display-box {
@@ -1353,7 +1408,7 @@ h1 { font-size: 42px; color: #0b5d57; }
   padding: 20px; margin-bottom: 16px;
 }
 .code-display-label {
-  font-size: 11px; font-weight: 700; color: #0b5d57;
+  font-size: 20px; font-weight: 700; color: #0b5d57;
   text-transform: uppercase; letter-spacing: 0.08em;
 }
 .code-display-val {
@@ -1364,13 +1419,13 @@ h1 { font-size: 42px; color: #0b5d57; }
 .share-url-row { display: flex; gap: 8px; margin-bottom: 16px; }
 .share-url-input {
   flex: 1; padding: 11px 14px; border: 1.5px solid #d0d9d6;
-  border-radius: 10px; font-size: 13px; color: #444;
+  border-radius: 10px; font-size: 20px; color: #444;
   font-family: 'Poppins', sans-serif; background: #f9f9f7; outline: none;
 }
 .share-copy-btn {
   padding: 11px 18px; background: #0b5d57; color: white;
   border: none; border-radius: 10px; font-family: 'Poppins', sans-serif;
-  font-size: 13px; font-weight: 600; cursor: pointer;
+  font-size: 20px; font-weight: 600; cursor: pointer;
   transition: background 0.2s; white-space: nowrap; min-width: 80px;
 }
 .share-copy-btn:hover { background: #084a45; }
@@ -1379,7 +1434,7 @@ h1 { font-size: 42px; color: #0b5d57; }
 .sched-pdf-btn {
   flex: 1; padding: 13px; background: #f4f1eb;
   color: #0b3d38; border: none; border-radius: 12px;
-  font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600;
+  font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600;
   cursor: pointer; transition: background 0.2s;
 }
 .sched-pdf-btn:hover { background: #e8e4da; }
@@ -1388,7 +1443,7 @@ h1 { font-size: 42px; color: #0b5d57; }
 .share-done-btn {
   width: 100%; padding: 13px; background: #0b5d57;
   color: white; border: none; border-radius: 12px;
-  font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600;
+  font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600;
   cursor: pointer; transition: background 0.2s;
 }
 .share-done-btn:hover:not(:disabled) { background: #084a45; }
@@ -1406,20 +1461,20 @@ h1 { font-size: 42px; color: #0b5d57; }
 }
 .shared-banner-icon { font-size: 24px; flex-shrink: 0; }
 .shared-banner-title {
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  font-size: 20px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.08em; color: rgba(255,255,255,0.75); margin-bottom: 4px;
 }
 .shared-banner-meta {
-  display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; flex-wrap: wrap;
 }
 .shared-banner-chip {
   background: rgba(255,255,255,0.2); padding: 2px 10px;
-  border-radius: 20px; font-size: 13px; font-weight: 800; letter-spacing: 2px;
+  border-radius: 20px; font-size: 20px; font-weight: 800; letter-spacing: 2px;
 }
 .shared-banner-close {
   background: rgba(255,255,255,0.15); border: 1.5px solid rgba(255,255,255,0.3);
   color: white; padding: 7px 14px; border-radius: 8px;
-  font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
+  font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600;
   cursor: pointer; transition: background 0.2s; white-space: nowrap;
 }
 .shared-banner-close:hover { background: rgba(255,255,255,0.25); }
@@ -1442,16 +1497,16 @@ h1 { font-size: 42px; color: #0b5d57; }
   position: absolute; top: 12px; right: 12px;
 }
 .poi-cat-badge {
-  color: white; font-size: 12px; font-weight: 700;
+  color: white; font-size: 20px; font-weight: 700;
   padding: 5px 14px; border-radius: 20px; text-transform: uppercase;
   letter-spacing: 0.06em; margin-top: 4px;
 }
 .poi-name {
-  font-size: 18px; font-weight: 700; color: #0b3d38;
+  font-size: 20px; font-weight: 700; color: #0b3d38;
   text-align: center; line-height: 1.35; margin-top: 2px;
 }
 .poi-hint {
-  font-size: 13px; color: #6a7a76; text-align: center;
+  font-size: 20px; color: #6a7a76; text-align: center;
   margin: 0 0 6px; line-height: 1.5;
 }
 .poi-actions {
@@ -1460,15 +1515,49 @@ h1 { font-size: 42px; color: #0b5d57; }
 .poi-btn-add {
   flex: 1; padding: 12px; background: #0b5d57; color: white;
   border: none; border-radius: 12px; font-family: 'Poppins', sans-serif;
-  font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+  font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s;
 }
 .poi-btn-add:hover { background: #084a45; }
 .poi-btn-remove {
   flex: 1; padding: 12px; background: #fee2e2; color: #b91c1c;
   border: none; border-radius: 12px; font-family: 'Poppins', sans-serif;
-  font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+  font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s;
 }
 .poi-btn-remove:hover { background: #fecaca; }
+
+/* Fullscreen button */
+.map-fullscreen-btn {
+  position: absolute;
+  top: 10px; left: 10px;
+  z-index: 10;
+  width: 36px; height: 36px;
+  background: white;
+  border: none; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: #333;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  transition: background 0.15s, color 0.15s;
+}
+.map-fullscreen-btn:hover { background: #f0f0f0; color: #0b5d57; }
+
+/* Keep the fullscreen button visible when map is fullscreen */
+#map-main:fullscreen .map-fullscreen-btn {
+  top: 10px; left: 10px;
+}
+#map-main:fullscreen {
+  width: 100vw; height: 100vh;
+}
+
+/* Google Maps button */
+.btn-gmaps {
+  margin-top: 10px; width: 100%; padding: 13px 16px;
+  background: white; color: #333;
+  border: 1.5px solid #d8dbd9; border-radius: 10px;
+  font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+.btn-gmaps:hover { background: #90b3ee; border-color: #4285F4; transform: translateY(-1px); }
 
 /* Rerouting overlay on map */
 .reroute-overlay {
@@ -1477,7 +1566,7 @@ h1 { font-size: 42px; color: #0b5d57; }
   backdrop-filter: blur(2px);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
-  gap: 10px; font-size: 14px; font-weight: 600; color: #0b5d57;
+  gap: 10px; font-size: 20px; font-weight: 600; color: #0b5d57;
   border-radius: 20px 20px 0 0;
   pointer-events: none;
 }
@@ -1487,5 +1576,43 @@ h1 { font-size: 42px; color: #0b5d57; }
   border-radius: 50%; animation: spin 0.7s linear infinite;
 }
 
+@media (max-width: 768px) {
+  h1 { font-size: 28px; }
+  .subtitle { font-size: 20px; }
+  .container { padding: 80px 16px 20px; }
 
+  .code-entry-inner { flex-direction: column; align-items: stretch; }
+  .code-entry-input { min-width: 0; width: 100%; }
+
+  .metrics-row { flex-wrap: wrap; }
+  .metric-card { flex: 1 1 calc(50% - 8px); min-width: 0; }
+
+  .main { flex-direction: column; }
+  #map-main { min-height: 300px; }
+  .side-card { padding: 16px; }
+
+  .stop-legend { gap: 4px 12px; padding: 10px 12px; }
+
+  .highlight { font-size: 20px; padding: 14px; }
+
+  .cards { flex-direction: column; }
+  .suggest-card { min-height: unset; }
+  .suggest-map { width: 80px; height: 80px; flex-shrink: 0; }
+
+  .shared-banner { flex-direction: column; gap: 10px; }
+  .shared-banner-close { align-self: flex-start; }
+
+  .ready-modal { padding: 28px 20px 24px; max-width: 94vw; }
+  .share-modal { padding: 24px 18px; max-width: 94vw; }
+  .poi-modal { max-width: 94vw; padding: 22px 18px 20px; }
+
+  .sched-action-row { flex-direction: column; }
+  .sched-pdf-btn, .sched-done-btn { flex: unset; }
+}
+
+@media (max-width: 480px) {
+  .metrics-row { flex-direction: column; }
+  .metric-card { flex: 1 1 100%; }
+  .suggest-info h4 { font-size: 20px; }
+}
 </style>

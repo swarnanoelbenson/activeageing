@@ -126,7 +126,7 @@ function getSnapshot() {
   display: inline-block;
   background: #fde8d8;
   color: #c06030;
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 600;
   padding: 6px 20px;
   border-radius: 999px;
@@ -143,7 +143,7 @@ function getSnapshot() {
 }
 
 .snap-sub {
-  font-size: 16px;
+  font-size: 20px;
   color: #5a6a66;
   line-height: 1.65;
   margin: 0;
@@ -181,7 +181,7 @@ function getSnapshot() {
   width: 42px; height: 42px;
   border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   flex-shrink: 0;
   color: white;
@@ -190,15 +190,15 @@ function getSnapshot() {
 .teal-icon   { background: #2a9d8f; }
 .orange-icon { background: #e07b39; }
 
-.cat-title { font-size: 15px; font-weight: 700; color: #0b5d57; }
+.cat-title { font-size: 20px; font-weight: 700; color: #0b5d57; }
 .cat-orange-text { color: #c06030; }
-.cat-sub   { font-size: 13px; color: #7a9490; margin-top: 3px; }
+.cat-sub   { font-size: 20px; color: #7a9490; margin-top: 3px; }
 
 /* How it works */
 .snap-how { flex: 1; }
 
 .how-label {
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 600;
   color: #9aafaa;
   letter-spacing: 0.08em;
@@ -215,21 +215,21 @@ function getSnapshot() {
   border-radius: 50%;
   background: #e0ede9;
   color: #0b5d57;
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   margin-top: 2px;
 }
 
-.step-title { font-size: 15px; font-weight: 700; color: #0b5d57; margin-bottom: 3px; }
-.step-desc  { font-size: 13px; color: #7a9490; line-height: 1.5; }
+.step-title { font-size: 20px; font-weight: 700; color: #0b5d57; margin-bottom: 3px; }
+.step-desc  { font-size: 20px; color: #7a9490; line-height: 1.5; }
 
 .snap-btn {
   background: #0b5d57;
   color: white;
   font-family: 'Poppins', sans-serif;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   padding: 16px 32px;
   border-radius: 12px;
@@ -240,15 +240,22 @@ function getSnapshot() {
 .snap-btn:hover { background: #084a45; transform: translateY(-2px); }
 
 /* Footer */
-.footer { text-align: center; padding: 36px 0; font-size: 14px; color: #777; background: #faf8f3; }
+.footer { text-align: center; padding: 36px 0; font-size: 20px; color: #777; background: #faf8f3; }
 .footer h3 { font-family: 'Playfair Display', Georgia, serif; color: #0b5d57; margin-bottom: 10px; }
 .links a { margin: 0 10px; text-decoration: none; color: #777; transition: color 0.2s; cursor: pointer; }
 .links a:hover { color: #0b5d57; }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .snap-card { flex-direction: column; gap: 32px; padding: 28px 20px; }
-  .snap-header h1 { font-size: 30px; }
+  .snap-page { padding: 80px 20px 40px; }
+  .snap-card { flex-direction: column; gap: 24px; padding: 24px 20px; }
+  .snap-header h1 { font-size: 28px; }
   .snap-sub br { display: none; }
+  .snap-categories { gap: 10px; }
+}
+
+@media (max-width: 480px) {
+  .snap-page { padding: 72px 14px 32px; }
+  .snap-header h1 { font-size: 24px; }
 }
 </style>

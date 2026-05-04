@@ -72,7 +72,7 @@ function attempt() {
 }
 
 .gate-logo {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: #0b5d57;
   margin-bottom: 8px;
@@ -86,7 +86,7 @@ function attempt() {
 }
 
 .gate-sub {
-  font-size: 14px;
+  font-size: 20px;
   color: #5a6b67;
   margin: 0 0 8px;
 }
@@ -101,7 +101,7 @@ function attempt() {
   border: 2px solid #d5cfc4;
   border-radius: 10px;
   font-family: 'Poppins', sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   letter-spacing: 0.2em;
   text-align: center;
   outline: none;
@@ -113,7 +113,7 @@ function attempt() {
 .gate-input.error  { border-color: #c14f4f; }
 
 .gate-error {
-  font-size: 13px;
+  font-size: 20px;
   color: #c14f4f;
   margin: 8px 0 0;
 }
@@ -126,7 +126,7 @@ function attempt() {
   border-radius: 10px;
   padding: 14px;
   font-family: 'Poppins', sans-serif;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;

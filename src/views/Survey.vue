@@ -208,7 +208,7 @@ nav a {
   margin-left: 28px;
   text-decoration: none;
   color: #0b5d57;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 500;
   cursor: pointer;
 }
@@ -223,7 +223,7 @@ nav a.active {
 /* ── Main ── */
 .survey-container {
   flex: 1;
-  max-width: 860px;
+  max-width: 1100px;
   width: 100%;
   margin: 0 auto;
   padding: 20px 48px 48px;
@@ -240,7 +240,7 @@ nav a.active {
 }
 
 .final-label {
-  font-size: 11px;
+  font-size: 20px;
   font-weight: 700;
   color: #c14f4f;
   letter-spacing: 0.08em;
@@ -249,7 +249,7 @@ nav a.active {
 }
 
 .step-label {
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 600;
   color: #0b5d57;
   letter-spacing: 0.06em;
@@ -257,14 +257,14 @@ nav a.active {
 }
 
 .step-sub {
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 700;
   color: #111;
   margin-top: 2px;
 }
 
 .progress-right {
-  font-size: 13px;
+  font-size: 20px;
   color: #555;
   font-weight: 500;
 }
@@ -293,7 +293,7 @@ nav a.active {
 }
 
 .question-subtitle {
-  font-size: 14px;
+  font-size: 20px;
   color: #666;
   margin-bottom: 28px;
   line-height: 1.6;
@@ -339,14 +339,14 @@ nav a.active {
 }
 
 .option-text strong {
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   color: #111;
   display: block;
   margin-bottom: 4px;
 }
 
-.option-text p { font-size: 12px; color: #555; line-height: 1.4; }
+.option-text p { font-size: 20px; color: #555; line-height: 1.4; }
 
 /* ── Buttons ── */
 .btn-row {
@@ -363,7 +363,7 @@ nav a.active {
   background: transparent;
   color: #c14f4f;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -379,7 +379,7 @@ nav a.active {
   border-radius: 10px;
   color: #fff;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: 0.06em;
   cursor: pointer;
@@ -395,7 +395,7 @@ nav a.active {
   border-radius: 10px;
   color: #fff;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: 0.04em;
   cursor: pointer;
@@ -412,7 +412,7 @@ nav a.active {
   padding: 32px 48px 24px;
 }
 
-.footer-logo { font-size: 16px; font-weight: 700; color: #0b5d57; margin-bottom: 12px; }
+.footer-logo { font-size: 20px; font-weight: 700; color: #0b5d57; margin-bottom: 12px; }
 
 .footer-links {
   display: flex;
@@ -423,14 +423,14 @@ nav a.active {
 
 .footer-links a {
   text-decoration: none;
-  font-size: 13px;
+  font-size: 20px;
   color: #555;
   font-weight: 500;
   cursor: pointer;
 }
 
 .footer-links a:hover { color: #0b5d57; }
-.footer-copy { font-size: 12px; color: #888; }
+.footer-copy { font-size: 20px; color: #888; }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
@@ -438,11 +438,16 @@ nav a.active {
   .options-grid { grid-template-columns: 1fr; }
   .survey-container { max-width: 100%; margin: 0; padding: 16px 20px 40px; }
   .navbar { max-width: 100%; margin: 0; padding: 16px 20px; }
-  .logo { font-size: 18px; }
-  nav a { font-size: 14px; margin-left: 16px; }
+  .logo { font-size: 20px; }
+  nav a { font-size: 20px; margin-left: 16px; }
   .question-title { font-size: 22px; }
-  .question-subtitle { font-size: 13px; }
+  .question-subtitle { font-size: 20px; }
   .btn-row { flex-direction: column-reverse; gap: 12px; }
   .btn-back, .btn-next, .btn-submit { width: 100%; text-align: center; }
+}
+
+@media (max-width: 480px) {
+  .survey-container { padding: 12px 14px 32px; }
+  .question-title { font-size: 20px; }
 }
 </style>

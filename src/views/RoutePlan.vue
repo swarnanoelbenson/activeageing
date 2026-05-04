@@ -166,7 +166,7 @@ function viewEvent() {
   display: inline-block;
   background: white;
   color: #444;
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 600;
   padding: 6px 16px;
   border-radius: 999px;
@@ -183,7 +183,7 @@ function viewEvent() {
 }
 
 .card-desc {
-  font-size: 15px;
+  font-size: 20px;
   line-height: 1.7;
   color: #555;
   margin-bottom: 28px;
@@ -202,7 +202,7 @@ function viewEvent() {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 15px;
+  font-size: 20px;
   color: #333;
   font-weight: 500;
 }
@@ -212,7 +212,7 @@ function viewEvent() {
   color: white;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 700;
+  font-size: 20px; font-weight: 700;
   flex-shrink: 0;
 }
 
@@ -220,7 +220,7 @@ function viewEvent() {
   background: #0b5d57;
   color: white;
   font-family: 'Poppins', sans-serif;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   padding: 16px 36px;
   border-radius: 12px;
@@ -254,9 +254,9 @@ function viewEvent() {
   gap: 10px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.08);
 }
-.summary-check { color: #0b5d57; font-size: 16px; font-weight: 700; }
-.summary-label { font-size: 11px; color: #888; }
-.summary-value { font-size: 13px; font-weight: 700; color: #0b5d57; }
+.summary-check { color: #0b5d57; font-size: 20px; font-weight: 700; }
+.summary-label { font-size: 20px; color: #888; }
+.summary-value { font-size: 20px; font-weight: 700; color: #0b5d57; }
 
 /* Enter Code card */
 .enter-code-card {
@@ -285,14 +285,14 @@ function viewEvent() {
 }
 
 .enter-code-title {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   color: #0b3d38;
   margin-bottom: 6px;
 }
 
 .enter-code-desc {
-  font-size: 14px;
+  font-size: 20px;
   color: #6a7a76;
   line-height: 1.55;
   max-width: 340px;
@@ -317,7 +317,7 @@ function viewEvent() {
   border: 1.5px solid #ccd8d5;
   border-radius: 12px;
   font-family: 'Poppins', sans-serif;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 600;
   color: #0b3d38;
   background: #f8faf9;
@@ -336,7 +336,7 @@ function viewEvent() {
   border: none;
   border-radius: 12px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, transform 0.15s;
@@ -345,27 +345,27 @@ function viewEvent() {
 .enter-code-btn:hover { background: #084a45; transform: translateY(-1px); }
 
 .enter-code-err {
-  font-size: 13px;
+  font-size: 20px;
   color: #c0392b;
   margin: 0;
   padding-left: 4px;
 }
 
-@media (max-width: 900px) {
-  .enter-code-card { flex-direction: column; padding: 24px; gap: 20px; }
-  .enter-code-right { min-width: unset; width: 100%; }
-  .enter-code-desc { max-width: unset; }
-}
-
-.footer { text-align: center; padding: 40px 0; font-size: 14px; color: #777; margin-top: auto; }
+.footer { text-align: center; padding: 40px 0; font-size: 20px; color: #777; margin-top: auto; }
 .footer h3 { font-family: 'Playfair Display', Georgia, serif; color: #0b5d57; margin-bottom: 10px; }
 .links a { margin: 0 10px; text-decoration: none; color: #777; transition: color 0.2s; cursor: pointer; }
 .links a:hover { color: #0b5d57; }
 
-@media (max-width: 900px) {
-  .page-container { padding: 90px 20px 0; }
-  .feature-card { flex-direction: column; padding: 32px 24px; gap: 32px; }
-  .map-box { width: 100%; }
-  .card-left h2 { font-size: 28px; }
+@media (max-width: 768px) {
+  .page-container { padding: 80px 16px 0; }
+  .feature-card { flex-direction: column; padding: 28px 20px; gap: 24px; }
+  .map-box { width: 100%; height: 240px; }
+  .card-left h2 { font-size: 26px; }
+  .card-desc { max-width: 100%; }
+  .enter-code-card { flex-direction: column; padding: 20px; gap: 16px; }
+  .enter-code-right { min-width: unset; width: 100%; }
+  .enter-code-desc { max-width: unset; }
+  .enter-code-row { flex-direction: column; }
+  .enter-code-btn { width: 100%; }
 }
 </style>

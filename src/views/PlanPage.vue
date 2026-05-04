@@ -297,7 +297,7 @@ ul { list-style: none; }
 }
 .brand {
   font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--teal);
   letter-spacing: -0.02em;
@@ -307,7 +307,7 @@ ul { list-style: none; }
   gap: 32px;
 }
 .nav-links a {
-  font-size: 0.9rem;
+  font-size: 1.25rem;
   color: var(--text-muted);
   font-weight: 500;
   padding-bottom: 3px;
@@ -337,7 +337,7 @@ ul { list-style: none; }
   display: inline-block;
   background: #e8f5f4;
   color: var(--teal);
-  font-size: 0.78rem;
+  font-size: 1.25rem;
   font-weight: 600;
   padding: 4px 12px;
   border-radius: 20px;
@@ -355,7 +355,7 @@ ul { list-style: none; }
   letter-spacing: -0.02em;
 }
 .hero-text p {
-  font-size: 0.95rem;
+  font-size: 1.25rem;
   color: var(--text-muted);
   line-height: 1.7;
   margin-bottom: 28px;
@@ -371,7 +371,7 @@ ul { list-style: none; }
 }
 .hero-image span {
   color: rgba(255,255,255,0.6);
-  font-size: 0.85rem;
+  font-size: 1.25rem;
   font-style: italic;
 }
 
@@ -382,7 +382,7 @@ ul { list-style: none; }
   color: #fff;
   padding: 12px 24px;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 1.25rem;
   font-weight: 600;
   transition: background 0.2s, transform 0.15s;
 }
@@ -396,7 +396,7 @@ ul { list-style: none; }
   color: var(--teal);
   padding: 10px 20px;
   border-radius: 8px;
-  font-size: 0.88rem;
+  font-size: 1.25rem;
   font-weight: 600;
   transition: background 0.2s, color 0.2s;
 }
@@ -410,7 +410,7 @@ ul { list-style: none; }
   color: var(--teal);
   padding: 12px 28px;
   border-radius: 8px;
-  font-size: 0.9rem;
+  font-size: 1.25rem;
   font-weight: 600;
   transition: opacity 0.2s, transform 0.15s;
 }
@@ -443,7 +443,7 @@ ul { list-style: none; }
   letter-spacing: -0.02em;
 }
 .stat span {
-  font-size: 0.82rem;
+  font-size: 1.25rem;
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -464,7 +464,7 @@ ul { list-style: none; }
   padding: 36px;
 }
 .feature-label {
-  font-size: 0.78rem;
+  font-size: 1.25rem;
   color: var(--teal);
   font-weight: 700;
   text-transform: uppercase;
@@ -486,7 +486,7 @@ ul { list-style: none; }
   letter-spacing: -0.02em;
 }
 .feature-text p {
-  font-size: 0.92rem;
+  font-size: 1.25rem;
   color: var(--text-muted);
   line-height: 1.65;
   margin-bottom: 20px;
@@ -498,7 +498,7 @@ ul { list-style: none; }
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 0.9rem;
+  font-size: 1.25rem;
   color: var(--text);
   margin-bottom: 10px;
 }
@@ -511,7 +511,7 @@ ul { list-style: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
+  font-size: 1.25rem;
   font-weight: 700;
   flex-shrink: 0;
   line-height: 22px;
@@ -541,7 +541,7 @@ ul { list-style: none; }
   margin: 0 auto;
 }
 .section-tag {
-  font-size: 0.78rem;
+  font-size: 1.25rem;
   color: var(--orange);
   font-weight: 700;
   text-transform: uppercase;
@@ -558,7 +558,7 @@ ul { list-style: none; }
   letter-spacing: -0.02em;
 }
 .section-sub {
-  font-size: 0.92rem;
+  font-size: 1.25rem;
   color: var(--text-muted);
   line-height: 1.65;
   max-width: 480px;
@@ -595,19 +595,19 @@ ul { list-style: none; }
 }
 .category strong {
   display: block;
-  font-size: 0.93rem;
+  font-size: 1.25rem;
   color: var(--text);
   margin-bottom: 2px;
 }
 .category p {
-  font-size: 0.82rem;
+  font-size: 1.25rem;
   color: var(--text-muted);
 }
 .wellness-how {
   text-align: left;
 }
 .how-title {
-  font-size: 0.78rem;
+  font-size: 1.25rem;
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
@@ -634,7 +634,7 @@ ul { list-style: none; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.82rem;
+  font-size: 1.25rem;
   font-weight: 700;
   flex-shrink: 0;
   line-height: 28px;
@@ -642,12 +642,12 @@ ul { list-style: none; }
 }
 .steps-list strong {
   display: block;
-  font-size: 0.92rem;
+  font-size: 1.25rem;
   color: var(--text);
   margin-bottom: 3px;
 }
 .steps-list p {
-  font-size: 0.83rem;
+  font-size: 1.25rem;
   color: var(--text-muted);
   line-height: 1.5;
 }
@@ -687,13 +687,13 @@ ul { list-style: none; }
 }
 .explore-card h3 {
   font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--teal);
   margin-bottom: 8px;
 }
 .explore-card p {
-  font-size: 0.85rem;
+  font-size: 1.25rem;
   color: var(--text-muted);
   line-height: 1.6;
   margin-bottom: 18px;
@@ -721,7 +721,7 @@ ul { list-style: none; }
   letter-spacing: -0.02em;
 }
 .cta-footer p {
-  font-size: 0.95rem;
+  font-size: 1.25rem;
   color: rgba(255,255,255,0.75);
   margin-bottom: 32px;
   line-height: 1.65;

@@ -294,7 +294,7 @@ onMounted(() => {
   padding: 20px 40px;
 }
 .logo { font-weight: 700; font-size: 20px; color: #0b5d57; cursor: pointer; }
-.nav-links { display: flex; gap: 32px; font-size: 16px; font-weight: 500; }
+.nav-links { display: flex; gap: 32px; font-size: 20px; font-weight: 500; }
 .nav-link { color: #0b5d57; text-decoration: none; cursor: pointer; }
 .nav-link.active { text-decoration: underline; text-underline-offset: 4px; }
 
@@ -312,8 +312,8 @@ onMounted(() => {
 }
 .progress-label { display: flex; align-items: center; gap: 7px; grid-column: 1; grid-row: 1; }
 .progress-dot { width: 8px; height: 8px; border-radius: 50%; background: #0b5d57; }
-.progress-text { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: #5a6b67; text-transform: uppercase; }
-.progress-pct { grid-column: 3; grid-row: 1; font-size: 13px; font-weight: 600; color: #0b5d57; }
+.progress-text { font-size: 20px; font-weight: 600; letter-spacing: 0.1em; color: #5a6b67; text-transform: uppercase; }
+.progress-pct { grid-column: 3; grid-row: 1; font-size: 20px; font-weight: 600; color: #0b5d57; }
 .progress-track { grid-column: 1 / 4; grid-row: 2; height: 8px; background: #d5cfc4; border-radius: 99px; margin-top: 8px; overflow: hidden; }
 .progress-fill { height: 100%; background: #0b5d57; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
 
@@ -403,7 +403,7 @@ onMounted(() => {
 .encouragement {
   background: #0b5d57;
   color: #ffffff;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   padding: 10px 24px;
   border-radius: 10px;
@@ -421,7 +421,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   color: #0f3d35;
   margin-bottom: 16px;
@@ -429,13 +429,13 @@ onMounted(() => {
 .label-bar { width: 4px; height: 16px; background: #0b5d57; border-radius: 2px; }
 
 .instructions-text {
-  font-size: 15px;
+  font-size: 20px;
   line-height: 1.7;
   color: #5a6b67;
   margin: 0 0 16px;
 }
 .notes-text {
-  font-size: 13px;
+  font-size: 20px;
   color: #0b5d57;
   background: #e8f4f3;
   border-radius: 8px;
@@ -465,7 +465,7 @@ onMounted(() => {
   background: #1a5c52;
   color: #ffffff;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 20px;
   text-align: center;
   padding: 14px 12px;
 }
@@ -478,7 +478,7 @@ onMounted(() => {
 }
 
 .step-desc {
-  font-size: 14px;
+  font-size: 20px;
   line-height: 1.6;
   color: #4a4a4a;
   text-align: left;
@@ -503,7 +503,7 @@ onMounted(() => {
   border-radius: 12px;
   padding: 16px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -516,7 +516,7 @@ onMounted(() => {
   border-radius: 12px;
   padding: 16px 24px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -533,7 +533,7 @@ onMounted(() => {
   border-radius: 12px;
   padding: 16px 20px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -564,13 +564,13 @@ onMounted(() => {
   margin: 0;
 }
 .cel-subtitle {
-  font-size: 18px;
+  font-size: 20px;
   color: #5a6b67;
   margin: 0;
 }
 .cel-quote {
   max-width: 580px;
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.8;
   color: #4a4a4a;
   background: #f4f1eb;
@@ -594,7 +594,7 @@ onMounted(() => {
   color: #1a8a40;
 }
 .cel-stat-label {
-  font-size: 13px;
+  font-size: 20px;
   color: #5a6b67;
   font-weight: 500;
 }
@@ -612,7 +612,7 @@ onMounted(() => {
   border-radius: 12px;
   padding: 18px 40px;
   font-family: 'Poppins', sans-serif;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -627,7 +627,7 @@ onMounted(() => {
   border-radius: 12px;
   padding: 18px 40px;
   font-family: 'Poppins', sans-serif;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -664,7 +664,7 @@ onMounted(() => {
   margin: 0;
 }
 .modal-text {
-  font-size: 15px;
+  font-size: 20px;
   line-height: 1.7;
   color: #5a6b67;
   margin: 0;
@@ -682,7 +682,7 @@ onMounted(() => {
   border-radius: 10px;
   padding: 14px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -696,7 +696,7 @@ onMounted(() => {
   border-radius: 10px;
   padding: 14px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -709,11 +709,11 @@ onMounted(() => {
   text-align: center;
   padding: 32px 48px 24px;
 }
-.footer-logo { font-size: 16px; font-weight: 700; color: #0b5d57; margin-bottom: 12px; }
+.footer-logo { font-size: 20px; font-weight: 700; color: #0b5d57; margin-bottom: 12px; }
 .footer-links { display: flex; justify-content: center; gap: 24px; margin-bottom: 10px; }
-.footer-links a { font-size: 13px; color: #555; font-weight: 500; cursor: pointer; text-decoration: none; }
+.footer-links a { font-size: 20px; color: #555; font-weight: 500; cursor: pointer; text-decoration: none; }
 .footer-links a:hover { color: #0b5d57; }
-.footer-copy { font-size: 12px; color: #888; }
+.footer-copy { font-size: 20px; color: #888; }
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
@@ -724,8 +724,8 @@ onMounted(() => {
     box-sizing: border-box;
     width: 100%;
   }
-  .logo { font-size: 18px; }
-  .nav-links { gap: 16px; font-size: 14px; }
+  .logo { font-size: 20px; }
+  .nav-links { gap: 16px; font-size: 20px; }
 
   .progress-wrap {
     max-width: 100%;
@@ -747,16 +747,24 @@ onMounted(() => {
   .exercise-title { font-size: 24px; }
 
   .steps-grid { flex-direction: column; padding: 20px; gap: 16px; }
-  .step-subtitle { font-size: 14px; }
+  .step-subtitle { font-size: 20px; }
   .card-body { flex-direction: column; }
   .card-gif { width: 100%; border-right: none; border-bottom: 1px solid #e0dbd2; padding: 20px; }
   .figure-svg { width: 140px; height: 160px; }
   .card-instructions { padding: 20px; }
 
   .card-footer { flex-direction: column; padding: 20px; gap: 10px; }
-  .btn-primary, .btn-secondary { padding: 14px; }
+  .btn-primary, .btn-secondary { padding: 14px; width: 100%; }
 
   .footer { padding: 24px 20px; }
   .footer-links { flex-wrap: wrap; gap: 12px; }
+}
+
+@media (max-width: 480px) {
+  .main { padding: 20px 14px 40px; }
+  .card-header { padding: 20px 16px 14px; }
+  .card-instructions { padding: 16px; }
+  .card-gif { padding: 16px; }
+  .step-cards { gap: 8px; padding: 0 16px 16px; }
 }
 </style>

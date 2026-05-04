@@ -1,9 +1,20 @@
 <script setup>
 import { useRouter } from 'vue-router'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import AppNavbar from '../components/AppNavbar.vue'
 
 const router = useRouter()
+
+// ── Cached previous route survey (shown if one exists in this session) ──
+const cachedRoute = ref(null)
+const cActLabel  = { walking: 'Walking', jogging: 'Light Jogging', cycling: 'Cycling' }
+const cPaceLabel = { easy: 'Easy', moderate: 'Moderate', brisk: 'Brisk' }
+const cDurLabel  = { 15: '15 min', 30: '30 min', 45: '45 min', 60: '1 hour' }
+
+onMounted(() => {
+  const raw = sessionStorage.getItem('routeSurvey')
+  if (raw) { try { cachedRoute.value = JSON.parse(raw) } catch (_) {} }
+})
 
 const answers = ref({
   q1: null,
@@ -171,6 +182,23 @@ async function findMyRoute() {
           Select your preferences below to create a personalized<br />
           activity path designed just for you.
         </p>
+
+        <!-- Recent route cache banner -->
+        <div v-if="cachedRoute" class="cache-banner">
+          <div class="cache-banner-left">
+            <div class="cache-banner-icon">🗺️</div>
+            <div>
+              <div class="cache-banner-title">Continue your recent route plan</div>
+              <div class="cache-banner-pills">
+                <span class="cache-pill">{{ cActLabel[cachedRoute.activity_type] ?? cachedRoute.activity_type }}</span>
+                <span class="cache-pill">{{ cDurLabel[cachedRoute.duration_minutes] ?? cachedRoute.duration_minutes + ' min' }}</span>
+                <span class="cache-pill">{{ cPaceLabel[cachedRoute.preferred_pace] ?? cachedRoute.preferred_pace }}</span>
+                <span v-if="cachedRoute.start_address" class="cache-pill cache-pill-loc">📍 {{ cachedRoute.start_address }}</span>
+              </div>
+            </div>
+          </div>
+          <button class="cache-view-btn" @click="router.push('/planner')">View Route →</button>
+        </div>
 
         <!-- Q1 -->
         <div class="question-block" :class="{ 'q-error': submitted && !answers.q1 }">
@@ -401,7 +429,7 @@ async function findMyRoute() {
   border-radius: 50%;
   background: #0b5d57;
   color: white;
-  font-size: 13px; font-weight: 700;
+  font-size: 20px; font-weight: 700;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
@@ -486,7 +514,7 @@ async function findMyRoute() {
 .time-card.selected .time-num { color: #0b5d57; }
 
 .time-unit {
-  font-size: 17px;
+  font-size: 20px;
   color: #999;
   font-weight: 500;
 }
@@ -537,7 +565,7 @@ async function findMyRoute() {
 
 .suggestion-item {
   padding: 10px 14px;
-  font-size: 13px;
+  font-size: 20px;
   color: #1a1a1a;
   cursor: pointer;
   transition: background 0.15s;
@@ -552,7 +580,7 @@ async function findMyRoute() {
   border: none;
   border-radius: 10px;
   font-family: 'Poppins', sans-serif;
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -560,7 +588,7 @@ async function findMyRoute() {
 .locate-btn:hover:not(:disabled) { background: #084a45; }
 .locate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-.loc-status { font-size: 12px; margin-top: 6px; }
+.loc-status { font-size: 20px; margin-top: 6px; }
 .loc-ok  { color: #0b5d57; }
 .loc-err { color: #c0392b; }
 
@@ -578,7 +606,7 @@ async function findMyRoute() {
   background: #0b5d57;
   color: white;
   font-family: 'Poppins', sans-serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   padding: 17px 52px;
   border-radius: 14px;
@@ -593,7 +621,80 @@ async function findMyRoute() {
   box-shadow: 0 6px 20px rgba(11,93,87,0.35);
 }
 
-.find-btn-icon { font-size: 18px; }
+.find-btn-icon { font-size: 20px; }
+
+/* ── Recent route cache banner ── */
+.cache-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #e8f4f0;
+  border: 1.5px solid #b8ddd5;
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+
+.cache-banner-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cache-banner-icon { font-size: 28px; flex-shrink: 0; margin-top: 2px; }
+
+.cache-banner-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b3d38;
+  margin-bottom: 8px;
+}
+
+.cache-banner-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cache-pill {
+  background: white;
+  border: 1.5px solid #c5e0d8;
+  color: #0b5d57;
+  font-size: 20px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.cache-pill-loc {
+  color: #555;
+  border-color: #ddd;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 20px;
+}
+
+.cache-view-btn {
+  flex-shrink: 0;
+  padding: 11px 22px;
+  background: #0b5d57;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+.cache-view-btn:hover { background: #084a45; transform: translateY(-1px); }
 
 /* ── Footer ── */
 .footer {
@@ -601,12 +702,12 @@ async function findMyRoute() {
   color: rgba(255,255,255,0.75);
   text-align: center;
   padding: 28px 24px 20px;
-  font-size: 13px;
+  font-size: 20px;
 }
 
 .footer-brand {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   color: white;
   margin-bottom: 10px;
@@ -623,18 +724,31 @@ async function findMyRoute() {
 .footer-links a {
   color: rgba(255,255,255,0.75);
   text-decoration: none;
-  font-size: 13px;
+  font-size: 20px;
   cursor: pointer;
   transition: color 0.2s;
 }
 .footer-links a:hover { color: white; }
 
-.footer-copy { font-size: 12px; color: rgba(255,255,255,0.45); }
+.footer-copy { font-size: 20px; color: rgba(255,255,255,0.45); }
 
-@media (max-width: 560px) {
-  .survey-outer { padding: 8px 12px 32px; }
+@media (max-width: 768px) {
+  .survey-outer { padding: 8px 16px 40px; }
+  .page-title { font-size: 32px; }
+  .cols-3 { grid-template-columns: repeat(2, 1fr); }
   .cols-4 { grid-template-columns: repeat(2, 1fr); }
-  .page-title { font-size: 24px; }
+  .location-row { flex-direction: column; }
+  .locate-btn { width: 100%; }
+  .cache-banner { flex-direction: column; gap: 12px; }
+  .cache-view-btn { width: 100%; }
+}
+
+@media (max-width: 480px) {
+  .survey-outer { padding: 8px 12px 32px; }
+  .page-title { font-size: 26px; }
   .page-sub br { display: none; }
+  .cols-3 { grid-template-columns: 1fr; }
+  .cols-4 { grid-template-columns: repeat(2, 1fr); }
+  .find-btn { width: 100%; justify-content: center; }
 }
 </style>

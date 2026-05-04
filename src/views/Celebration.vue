@@ -118,7 +118,7 @@ function findEvents() {
 
 .logo {
   font-family: 'Georgia', serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   color: #1a7a6a;
   letter-spacing: 0.02em;
@@ -150,7 +150,7 @@ function findEvents() {
   gap: 6px;
   background-color: #fce8df;
   color: #b85c38;
-  font-size: 11px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.12em;
   padding: 6px 14px;
@@ -160,7 +160,7 @@ function findEvents() {
 }
 
 .badge-icon {
-  font-size: 12px;
+  font-size: 20px;
 }
 
 /* Heading */
@@ -175,7 +175,7 @@ function findEvents() {
 /* Subtext */
 .subtext {
   font-family: 'Helvetica Neue', Arial, sans-serif;
-  font-size: 15px;
+  font-size: 20px;
   line-height: 1.65;
   color: #4a6460;
   max-width: 380px;
@@ -212,7 +212,7 @@ function findEvents() {
 
 .social-text {
   font-family: 'Helvetica Neue', Arial, sans-serif;
-  font-size: 13px;
+  font-size: 20px;
   color: #1a3a35;
   line-height: 1.5;
 }
@@ -223,7 +223,7 @@ function findEvents() {
 
 .sub-label {
   color: #7a9490;
-  font-size: 12px;
+  font-size: 20px;
 }
 
 /* CTAs */
@@ -240,7 +240,7 @@ function findEvents() {
   padding: 14px 24px;
   border-radius: 8px;
   font-family: 'Helvetica Neue', Arial, sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   border: 2px solid transparent;
@@ -276,7 +276,7 @@ function findEvents() {
 
 .arrow,
 .calendar-icon {
-  font-size: 14px;
+  font-size: 20px;
 }
 
 /* Hero Image */
@@ -307,7 +307,7 @@ function findEvents() {
 
 .footer-brand {
   font-family: 'Georgia', serif;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 700;
   color: #1a7a6a;
 }
@@ -321,7 +321,7 @@ function findEvents() {
 
 .footer-nav a {
   font-family: 'Helvetica Neue', Arial, sans-serif;
-  font-size: 13px;
+  font-size: 20px;
   color: #4a6460;
   text-decoration: none;
   transition: color 0.15s;
@@ -333,7 +333,7 @@ function findEvents() {
 
 .footer-copy {
   font-family: 'Helvetica Neue', Arial, sans-serif;
-  font-size: 12px;
+  font-size: 20px;
   color: #7a9490;
 }
 

@@ -268,7 +268,7 @@ onMounted(() => {
 }
 .fact-box.visible { opacity: 1; transform: translateY(0); }
 .fact-icon { font-size: 20px; flex-shrink: 0; }
-.fact-text { font-size: 14px; color: #1a5c52; font-style: italic; line-height: 1.5; margin: 0; }
+.fact-text { font-size: 20px; color: #1a5c52; font-style: italic; line-height: 1.5; margin: 0; }
 
 /* HEADER */
 .header {
@@ -282,7 +282,7 @@ onMounted(() => {
   transform: translateY(0);
 }
 .title {
-  font-size: clamp(30px, 6vw, 25px);
+  font-size: clamp(24px, 4vw, 38px);
   font-weight: 700;
   color: #0f3d35;
   line-height: 1.1;
@@ -375,7 +375,7 @@ onMounted(() => {
   margin-bottom: 14px;
 }
 .checkin-empty-desc {
-  font-size: 15px;
+  font-size: 20px;
   color: #5a6b67;
   line-height: 1.7;
   margin-bottom: 28px;
@@ -391,7 +391,7 @@ onMounted(() => {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font-size: 14px;
+  font-size: 20px;
   color: #3a5a55;
   font-weight: 500;
   line-height: 1.5;
@@ -402,7 +402,7 @@ onMounted(() => {
   border-radius: 50%;
   background: #e0ede9;
   color: #0b5d57;
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -417,7 +417,7 @@ onMounted(() => {
   border-radius: 12px;
   padding: 15px 36px;
   font-family: inherit;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, transform 0.15s;
@@ -429,7 +429,7 @@ onMounted(() => {
   display: inline-block;
   background: #e6f9ec;
   color: #1a8a40;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 700;
   padding: 6px 16px;
   border-radius: 20px;
@@ -468,7 +468,7 @@ onMounted(() => {
 }
 .chart-sub {
   display: block;
-  font-size: 11px;
+  font-size: 20px;
   font-weight: 600;
   letter-spacing: 0.12em;
   color: #5a6b67;
@@ -482,7 +482,7 @@ onMounted(() => {
   justify-content: center;
   gap: 24px;
   margin-top: 24px;
-  font-size: 12px;
+  font-size: 20px;
   color: #5a6b67;
   font-weight: 500;
 }
@@ -513,23 +513,23 @@ onMounted(() => {
   gap: 8px;
   margin-bottom: 12px;
 }
-.status-icon { font-size: 14px; }
+.status-icon { font-size: 20px; }
 .status-label {
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.6);
 }
 .momentum-title {
-  font-size: 20px;
+  font-size: 25px;
   font-weight: 700;
   color: #ffffff;
   margin-bottom: 12px;
   line-height: 1.15;
 }
 .momentum-desc {
-  font-size: 15px;
+  font-size: 20px;
   color: rgba(255,255,255,0.75);
   line-height: 1.6;
 }
@@ -566,7 +566,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 .action-btn-label {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   color: #ffffff;
   flex: 1;
@@ -626,7 +626,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
   flex-shrink: 0;
 }
 .step-icon-light { background: rgba(255,255,255,0.12); }
@@ -639,7 +639,7 @@ onMounted(() => {
 }
 .step-name-dark { color: #0f3d35; }
 .step-desc {
-  font-size: 15px;
+  font-size: 20px;
   color: rgba(255,255,255,0.65);
   line-height: 1.5;
 }
@@ -657,7 +657,7 @@ onMounted(() => {
   padding: 32px 48px 24px;
 }
 .footer-logo {
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 700;
   color: #0b5d57;
   margin-bottom: 12px;
@@ -670,13 +670,13 @@ onMounted(() => {
 }
 .footer-links a {
   text-decoration: none;
-  font-size: 15px;
+  font-size: 20px;
   color: #555;
   font-weight: 500;
 }
 .footer-links a:hover { color: #0b5d57; }
 .footer-copy {
-  font-size: 12px;
+  font-size: 20px;
   color: #888;
 }
 
@@ -693,7 +693,7 @@ onMounted(() => {
   background: #e8f4f3;
   border-radius: 10px;
   padding: 12px 18px;
-  font-size: 15px;
+  font-size: 20px;
 }
 .summary-top { display: flex; align-items: center; gap: 4px; }
 .summary-q { font-weight: 700; color: #0b5d57; }
@@ -704,13 +704,13 @@ onMounted(() => {
 @media (max-width: 768px) {
   .page { overflow-x: hidden; width: 100%; }
   .nav { max-width: 100%; margin: 0; padding: 16px 20px; }
-  .nav-links { gap: 20px; font-size: 14px; }
-  .logo { font-size: 18px; }
+  .nav-links { gap: 20px; font-size: 20px; }
+  .logo { font-size: 20px; }
 
   .main { max-width: 100%; margin: 0; padding: 24px 20px 48px; }
 
   .title { font-size: 25px; }
-  .subtitle { font-size: 14px; }
+  .subtitle { font-size: 20px; }
 
   .grid {
     grid-template-columns: 1fr;
@@ -737,5 +737,8 @@ onMounted(() => {
 
   .footer { padding: 24px 20px; }
   .footer-links { flex-wrap: wrap; gap: 12px; justify-content: center; }
+
+  .checkin-empty { padding: 32px 20px; }
+  .checkin-empty-title { font-size: 22px; }
 }
 </style>

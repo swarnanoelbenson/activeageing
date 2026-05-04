@@ -62,7 +62,7 @@ const router = useRouter()
   display: flex;
   gap: 36px;
   font-family: 'Poppins', sans-serif;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 500;
 }
 
@@ -82,7 +82,12 @@ const router = useRouter()
 
 @media (max-width: 768px) {
   .nav-inner { padding: 14px 20px; }
-  .logo { font-size: 18px; }
-  .nav-links { gap: 16px; font-size: 14px; }
+  .logo { font-size: 20px; }
+  .nav-links { gap: 12px; font-size: 20px; }
+}
+
+@media (max-width: 600px) {
+  .nav-inner { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 16px; }
+  .nav-links { flex-wrap: wrap; gap: 6px 14px; font-size: 16px; }
 }
 </style>

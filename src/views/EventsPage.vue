@@ -127,7 +127,7 @@ onMounted(async () => {
           <div class="card-badges">
             <span v-if="event.is_free" class="badge-free">Free</span>
           </div>
-          <h3>{{ event.title }}</h3>
+          <h2>{{ event.title }}</h2>
 
           <p class="desc">{{ event.desc }}</p>
 
@@ -202,7 +202,7 @@ body {
   margin-left: 20px;
   text-decoration: none;
   color: #0b5d57;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 500;
   cursor: pointer;
 }
@@ -236,12 +236,12 @@ body {
   display: inline-block;
   padding: 6px 14px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 600;
 }
 
 .desc {
-  font-size: 15px;
+  font-size: 20px;
   line-height: 1.6;
   color: #4a4a4a;
 }
@@ -252,7 +252,7 @@ body {
   align-items: center;
   gap: 10px;
   margin-top: 32px;
-  font-size: 14px;
+  font-size: 20px;
   color: #555;
 }
 
@@ -261,7 +261,7 @@ body {
   border: 1px solid #ccc;
   border-radius: 8px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   color: #333;
   background: white;
   cursor: pointer;
@@ -303,7 +303,7 @@ body {
   text-align: center;
   padding: 60px 0;
   color: #5a6b67;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 .card-content {
@@ -321,7 +321,7 @@ body {
 .badge-free {
   background: #d4edda;
   color: #155724;
-  font-size: 11px;
+  font-size: 20px;
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 20px;
@@ -333,7 +333,7 @@ body {
 }
 
 .info {
-  font-size: 13px;
+  font-size: 20px;
   margin: 10px 0;
   color: #555;
 }
@@ -374,7 +374,7 @@ body {
   padding: 16px 30px;
   border-radius: 10px;
   color: white;
-  font-size: 16px;
+  font-size: 20px;
   cursor: pointer;
   transition: 0.2s;
 }
@@ -387,7 +387,7 @@ body {
 .footer {
   text-align: center;
   padding: 40px 0;
-  font-size: 14px;
+  font-size: 20px;
   color: #555;
 }
 
@@ -410,18 +410,22 @@ body {
 @media (max-width: 768px) {
   .container { max-width: 100%; margin: 0; padding: 0 20px; overflow-x: hidden; }
   .navbar { padding: 16px 20px; }
-  .logo { font-size: 18px; }
-  .navbar a { font-size: 14px; margin-left: 14px; }
+  .logo { font-size: 20px; }
+  .navbar a { font-size: 20px; margin-left: 14px; }
 
-  .container { padding: 0 20px; }
   .hero { margin-top: 32px; }
   .hero h1 { font-size: 28px; }
-  .desc { font-size: 14px; }
+  .desc { font-size: 20px; }
 
-  .cards { grid-template-columns: 1fr; }
-  .controls { margin-top: 20px; }
+  .cards { grid-template-columns: repeat(2, 1fr); }
+  .controls { margin-top: 20px; flex-wrap: wrap; gap: 8px; }
 
   .footer { padding: 24px 20px; }
   .footer-links { flex-wrap: wrap; gap: 12px; }
+}
+
+@media (max-width: 480px) {
+  .cards { grid-template-columns: 1fr; }
+  .controls { flex-direction: column; align-items: stretch; }
 }
 </style>
