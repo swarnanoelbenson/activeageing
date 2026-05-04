@@ -47,6 +47,7 @@ const showPOIModal     = ref(false)
 const currentWaypoints = ref([])   // [[lng, lat], ...] accumulated across Add actions
 const routeLoading     = ref(false)
 const poisLoading      = ref(false)
+const poisCounter      = ref(30)
 
 // ── Shared event banner (shown when a code is loaded) ──
 const sharedEventBanner = ref(null)
@@ -320,6 +321,10 @@ async function rerouteWithWaypoints(waypoints) {
 async function fetchAndDrawPOIs(coords) {
   if (!mainMap) return
   poisLoading.value = true
+  poisCounter.value = 30
+  const counterInterval = setInterval(() => {
+    if (poisCounter.value > 0) poisCounter.value--
+  }, 1000)
   const lngs  = coords.map(c => c[0])
   const lats  = coords.map(c => c[1])
   const south = (Math.min(...lats) - 0.002).toFixed(5)
@@ -443,6 +448,7 @@ async function fetchAndDrawPOIs(coords) {
   } catch (err) {
     console.warn('POI fetch failed:', err.message)
   } finally {
+    clearInterval(counterInterval)
     poisLoading.value = false
   }
 }
@@ -911,8 +917,9 @@ onBeforeUnmount(() => {
               <!-- POI loading notice -->
               <Transition name="fade">
                 <div v-if="poisLoading" class="poi-loading-notice">
+                  <div class="poi-notice-timer">{{ poisCounter }}</div>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                  Stop points may take a upto 30 seconds to load because of Vercel limitations. Thanks for your patience!
+                  Point-Of-Interest points may take up to 30 seconds to load. Thanks for your patience!
                 </div>
               </Transition>
 
@@ -1604,6 +1611,10 @@ h1 { font-size: 42px; color: #0b5d57; }
   gap: 10px; font-size: 20px; font-weight: 600; color: #0b5d57;
   border-radius: 20px 20px 0 0;
   pointer-events: none;
+}
+.poi-notice-timer {
+  font-size: 48px; font-weight: 700; line-height: 1;
+  opacity: 0.9;
 }
 .poi-loading-notice {
   position: absolute; inset: 0; z-index: 10;
