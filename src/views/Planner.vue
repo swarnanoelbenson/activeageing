@@ -320,7 +320,6 @@ async function rerouteWithWaypoints(waypoints) {
 async function fetchAndDrawPOIs(coords) {
   if (!mainMap) return
   poisLoading.value = true
-  setTimeout(() => { poisLoading.value = false }, 6000)
   const lngs  = coords.map(c => c[0])
   const lats  = coords.map(c => c[1])
   const south = (Math.min(...lats) - 0.002).toFixed(5)
@@ -443,6 +442,8 @@ async function fetchAndDrawPOIs(coords) {
     }
   } catch (err) {
     console.warn('POI fetch failed:', err.message)
+  } finally {
+    poisLoading.value = false
   }
 }
 
@@ -911,7 +912,7 @@ onBeforeUnmount(() => {
               <Transition name="fade">
                 <div v-if="poisLoading" class="poi-loading-notice">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                  Stop points may take a moment to load
+                  Stop points may take a upto 30 seconds to load because of Vercel limitations. Thanks for your patience!
                 </div>
               </Transition>
 
