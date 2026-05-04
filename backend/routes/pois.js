@@ -1,36 +1,41 @@
-const express = require('express')
-const router  = express.Router()
+const express = require("express");
+const router  = express.Router();
 
-router.get('/', async (req, res) => {
-  const { south, west, north, east } = req.query
-  if (!south || !west || !north || !east) {
-    return res.status(400).json({ error: 'Missing bounding box params' })
+// POST /api/pois
+// Body: { south, north, west, east }
+router.post("/", async (req, res) => {
+  const { south, north, west, east } = req.body;
+
+  if (!south || !north || !west || !east) {
+    return res.status(400).json({ error: "south, north, west, east are required" });
   }
 
-  const q = `[out:json][timeout:30];(
+  const q = `[out:json][timeout:25];(
     node["amenity"="bench"](${south},${west},${north},${east});
-    node["amenity"="seat"](${south},${west},${north},${east});
     node["amenity"="drinking_water"](${south},${west},${north},${east});
-    node["amenity"="fountain"]["drinking_water"="yes"](${south},${west},${north},${east});
     node["amenity"="toilets"](${south},${west},${north},${east});
-    node["amenity"="shelter"](${south},${west},${north},${east});
-    node["leisure"="picnic_table"](${south},${west},${north},${east});
     node["tourism"="attraction"](${south},${west},${north},${east});
-    node["tourism"="viewpoint"](${south},${west},${north},${east});
     node["historic"](${south},${west},${north},${east});
-  );out body;`
+    node["leisure"="park"](${south},${west},${north},${east});
+  );out body;`;
 
   try {
-    const response = await fetch(
-      'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(q),
-      { headers: { 'User-Agent': 'ActiveAgeing/1.0' } }
-    )
-    const data = await response.json()
-    res.json({ elements: data.elements ?? [] })
-  } catch (err) {
-    console.error('Overpass fetch failed:', err.message)
-    res.status(502).json({ error: 'POI fetch failed', elements: [] })
-  }
-})
+    const overpassRes = await fetch("https://overpass-api.de/api/interpreter", {
+      method:  "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body:    `data=${encodeURIComponent(q)}`,
+    });
 
-module.exports = router
+    if (!overpassRes.ok) {
+      return res.status(502).json({ error: `Overpass returned ${overpassRes.status}` });
+    }
+
+    const data = await overpassRes.json();
+    res.json(data);
+  } catch (err) {
+    console.error("Overpass error:", err.message);
+    res.status(502).json({ error: "Failed to fetch POIs from Overpass" });
+  }
+});
+
+module.exports = router;

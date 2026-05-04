@@ -8,7 +8,7 @@ import AppNavbar from '../components/AppNavbar.vue'
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
 const router = useRouter()
-const API    = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API    = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 const COLOUR = '#c2185b'
 
 const loading     = ref(true)
@@ -325,22 +325,51 @@ async function fetchAndDrawPOIs(coords) {
   const west  = (Math.min(...lngs) - 0.002).toFixed(5)
   const east  = (Math.max(...lngs) + 0.002).toFixed(5)
 
-  try {
-    const params = new URLSearchParams({ south, west, north, east })
-    const res  = await fetch(`${API}/api/pois?${params}`)
-    const data = await res.json()
+  const overpassQuery = `[out:json][timeout:25];(
+    node["amenity"="bench"](${south},${west},${north},${east});
+    node["amenity"="drinking_water"](${south},${west},${north},${east});
+    node["amenity"="toilets"](${south},${west},${north},${east});
+    node["tourism"="attraction"](${south},${west},${north},${east});
+    node["historic"](${south},${west},${north},${east});
+    node["leisure"="park"](${south},${west},${north},${east});
+  );out body;`
 
-    const features = (data.elements ?? [])
-      .filter(el => el.lon != null && el.lat != null)
-      .filter(el => isNearRoute(el.lon, el.lat, coords, 200))
+  const OVERPASS_MIRRORS = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  ]
+
+  async function tryOverpass(url) {
+    const r = await fetch(url, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body:    `data=${encodeURIComponent(overpassQuery)}`,
+    })
+    if (!r.ok) throw new Error(`HTTP ${r.status}`)
+    const text = await r.text()
+    // Overpass sometimes returns an HTML error page instead of JSON
+    if (!text.trimStart().startsWith('{')) throw new Error('Non-JSON response')
+    return JSON.parse(text)
+  }
+
+  try {
+    let data = null
+    for (const mirror of OVERPASS_MIRRORS) {
+      try { data = await tryOverpass(mirror); break }
+      catch (e) { console.warn(`Overpass mirror ${mirror} failed:`, e.message) }
+    }
+    if (!data) throw new Error('All Overpass mirrors failed')
+
+    const features = data.elements
+      .filter(el => isNearRoute(el.lon, el.lat, coords, 60))
       .map(el => {
         const t = el.tags ?? {}
         let cat = 'landmark'
-        if (t.amenity === 'bench' || t.amenity === 'seat')           cat = 'seating'
-        if (t.leisure === 'picnic_table')                             cat = 'seating'
-        if (t.amenity === 'drinking_water' || t.amenity === 'fountain') cat = 'drinking_fountain'
-        if (t.amenity === 'toilets')                                  cat = 'restroom'
-        if (t.amenity === 'shelter')                                  cat = 'shaded'
+        if (t.amenity === 'bench')          cat = 'seating'
+        if (t.amenity === 'drinking_water') cat = 'drinking_fountain'
+        if (t.amenity === 'toilets')        cat = 'restroom'
+        if (t.leisure === 'park')           cat = 'shaded'
         const name = t.name ?? catLabel[cat] ?? cat
         return {
           type: 'Feature',
