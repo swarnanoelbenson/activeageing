@@ -103,6 +103,14 @@ function closeDropdown() {
   setTimeout(() => { showDropdown.value = false }, 150)
 }
 
+function onAddressFocus() {
+  if (suggestions.value.length > 0) {
+    showDropdown.value = true
+  } else if (startAddress.value.trim().length >= 2 && !startLat.value) {
+    onAddressInput()
+  }
+}
+
 function useMyLocation() {
   if (!navigator.geolocation) {
     locationStatus.value = 'error'
@@ -328,6 +336,7 @@ async function findMyRoute() {
                 placeholder="Enter a suburb or address…"
                 v-model="startAddress"
                 @input="onAddressInput"
+                @focus="onAddressFocus"
                 @blur="closeDropdown"
                 autocomplete="off"
               />

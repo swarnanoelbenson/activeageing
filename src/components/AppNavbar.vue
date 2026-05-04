@@ -87,7 +87,16 @@ const router = useRouter()
 }
 
 @media (max-width: 600px) {
-  .nav-inner { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px 16px; }
-  .nav-links { flex-wrap: wrap; gap: 6px 14px; font-size: 16px; }
+  .nav-inner { padding: 10px 14px; }
+  .logo { font-size: 20px; flex-shrink: 0; }
+  .nav-links {
+    gap: 14px;
+    font-size: 16px;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
 }
 </style>

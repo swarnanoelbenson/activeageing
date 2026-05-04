@@ -110,7 +110,7 @@
 
           <!-- Action Buttons -->
           <div class="card card-white action-card">
-            <div class="action-btn action-btn-dark" @click="router.push('/exercise')">
+            <div class="action-btn action-btn-dark" @click="showExerciseModal = true">
               <span class="action-btn-icon">✦</span>
               <span class="action-btn-label">Guided Exercise Session</span>
               <span class="action-btn-arrow">→</span>
@@ -138,6 +138,22 @@
 
     </main>
 
+    <!-- Exercise session modal -->
+    <div v-if="showExerciseModal" class="modal-overlay" @click.self="showExerciseModal = false">
+      <div class="exercise-modal">
+        <div class="exercise-modal-play" @click="showExerciseModal = false; router.push('/exercise')">
+          <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+            <polygon points="12,8 30,18 12,28" fill="#ffffff"/>
+          </svg>
+        </div>
+        <h2 class="exercise-modal-title">This is a follow-along session</h2>
+        <p class="exercise-modal-desc">Please find a comfortable space and prepare to move with the instructions.</p>
+        <button class="exercise-modal-btn" @click="showExerciseModal = false; router.push('/exercise')">
+          I'm Ready, Let's Start →
+        </button>
+      </div>
+    </div>
+
     <!-- FOOTER -->
     <footer class="footer">
       <div class="footer-logo">ActiveAgeing</div>
@@ -156,6 +172,7 @@ import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
 
 const router = useRouter()
+const showExerciseModal = ref(false)
 
 const facts = [
   '"Every step counts!" - Telling us your routine helps us build a plan that fits your life, not someone else\'s.',
@@ -699,6 +716,69 @@ onMounted(() => {
 .summary-q { font-weight: 700; color: #0b5d57; }
 .summary-label { color: #5a6b67; }
 .summary-answer { font-weight: 600; color: #0f3d35; }
+
+/* EXERCISE SESSION MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+.exercise-modal {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 52px 44px;
+  max-width: 440px;
+  width: 90%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.exercise-modal-play {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #0b5d57;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+.exercise-modal-play:hover { background: #0f3d35; transform: scale(1.06); }
+.exercise-modal-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f3d35;
+  margin: 0;
+  line-height: 1.25;
+}
+.exercise-modal-desc {
+  font-size: 20px;
+  color: #5a6b67;
+  line-height: 1.65;
+  margin: 0;
+}
+.exercise-modal-btn {
+  background: #0b5d57;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 16px 36px;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  margin-top: 4px;
+}
+.exercise-modal-btn:hover { background: #0f3d35; transform: translateY(-1px); }
 
 /* MOBILE */
 @media (max-width: 768px) {

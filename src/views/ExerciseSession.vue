@@ -21,9 +21,9 @@
         <div class="card-header">
           <h1 class="exercise-title">{{ currentExercise.exercise_name }}</h1>
           <div class="tags">
-            <span class="tag">
+            <span class="tag" :class="{ 'tag-warning': timerSeconds <= 30 && timerSeconds > 0, 'tag-done': timerSeconds === 0 }">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              {{ currentExercise.duration_minutes }} min
+              {{ timerDisplay }}
             </span>
           </div>
         </div>
@@ -123,7 +123,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
 
@@ -134,6 +134,24 @@ const exercises = ref([])
 const exercisesCompleted = ref(0)
 const sessionDone = ref(false)
 const showPauseModal = ref(false)
+
+const timerSeconds = ref(0)
+let timerInterval = null
+
+function startTimer() {
+  clearInterval(timerInterval)
+  const mins = currentExercise.value?.duration_minutes ?? 5
+  timerSeconds.value = mins * 60
+  timerInterval = setInterval(() => {
+    if (timerSeconds.value > 0) timerSeconds.value--
+  }, 1000)
+}
+
+const timerDisplay = computed(() => {
+  const m = Math.floor(timerSeconds.value / 60)
+  const s = timerSeconds.value % 60
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+})
 
 const EXERCISE_CONTENT = {
   'neck rotations': [
@@ -247,6 +265,14 @@ function goToResults() {
   router.push('/results')
 }
 
+watch(currentIndex, () => {
+  startTimer()
+})
+
+onBeforeUnmount(() => {
+  clearInterval(timerInterval)
+})
+
 onMounted(() => {
   setTimeout(() => { visible.value = true }, 80)
 
@@ -255,6 +281,7 @@ onMounted(() => {
     const result = JSON.parse(stored)
     if (result.exercises && result.exercises.length > 0) {
       exercises.value = result.exercises.slice(0, 3)
+      startTimer()
       return
     }
   }
@@ -265,6 +292,7 @@ onMounted(() => {
     { exercise_name: 'Seated Chest Stretch', duration_minutes: 8 },
     { exercise_name: 'Ankle Rotations',      duration_minutes: 5 },
   ]
+  startTimer()
 })
 </script>
 
@@ -368,6 +396,16 @@ onMounted(() => {
   padding: 10px 20px;
   font-size: 20px;
   color: #000000;
+  transition: border-color 0.3s, color 0.3s;
+  font-variant-numeric: tabular-nums;
+}
+.tag.tag-warning {
+  border-color: #c14f4f;
+  color: #c14f4f;
+}
+.tag.tag-done {
+  border-color: #0b5d57;
+  color: #0b5d57;
 }
 
 /* Row 2: GIF left, instructions right */

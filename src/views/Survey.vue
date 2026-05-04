@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
 
@@ -76,6 +76,8 @@ function selectOption(option) {
   answers.value[step.value - 1] = option.label
   if (step.value < total) {
     step.value++
+  } else {
+    nextTick(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }))
   }
 }
 
