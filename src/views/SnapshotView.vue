@@ -247,7 +247,7 @@ function getSnapshot() {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .snap-page { padding: 80px 20px 40px; }
+  .snap-page { padding: 100px 20px 40px; }
   .snap-card { flex-direction: column; gap: 24px; padding: 24px 20px; }
   .snap-header h1 { font-size: 28px; }
   .snap-sub br { display: none; }

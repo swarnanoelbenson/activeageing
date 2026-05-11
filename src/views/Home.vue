@@ -498,8 +498,7 @@ function goToEvents()      { router.push('/events') }
 .hero-right { flex-shrink: 0; }
 
 .hero-image-box {
-  width: clamp(360px, 40vw, 520px);
-  height: clamp(400px, 28vw, 320px);
+  width: clamp(320px, 40vw, 520px);
   border-radius: 16px;
   overflow: hidden;
   flex-shrink: 0;
@@ -507,9 +506,9 @@ function goToEvents()      { router.push('/events') }
 
 .hero-img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
   display: block;
+  object-fit: contain;
 }
 
 /* ── STATS BAR ── */
@@ -1000,9 +999,9 @@ function goToEvents()      { router.push('/events') }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .hero-section { padding: 32px 5vw 24px; }
+  .hero-section { padding: 90px 5vw 24px; }
   .hero-inner { flex-direction: column; gap: 28px; }
-  .hero-image-box { width: 100%; height: 220px; min-width: unset; }
+  .hero-image-box { width: 100%; min-width: unset; }
   .hero-desc { max-width: 100%; }
   .plan-card { flex-direction: column; padding: 28px 24px; gap: 24px; }
   .map-preview { width: 100%; }

@@ -81,17 +81,23 @@ const router = useRouter()
 }
 
 @media (max-width: 768px) {
-  .nav-inner { padding: 14px 20px; }
+  .nav-inner { padding: 12px 20px; }
   .logo { font-size: 20px; }
-  .nav-links { gap: 12px; font-size: 20px; }
+  .nav-links { gap: 12px; font-size: 16px; }
 }
 
 @media (max-width: 600px) {
-  .nav-inner { padding: 10px 14px; }
-  .logo { font-size: 20px; flex-shrink: 0; }
+  .nav-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 16px 8px;
+    gap: 6px;
+  }
+  .logo { font-size: 20px; }
   .nav-links {
-    gap: 14px;
-    font-size: 16px;
+    width: 100%;
+    gap: 16px;
+    font-size: 14px;
     overflow-x: auto;
     flex-wrap: nowrap;
     padding-bottom: 2px;

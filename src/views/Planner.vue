@@ -47,7 +47,7 @@ const showPOIModal     = ref(false)
 const currentWaypoints = ref([])   // [[lng, lat], ...] accumulated across Add actions
 const routeLoading     = ref(false)
 const poisLoading      = ref(false)
-const poisCounter      = ref(30)
+const poisLoaded       = ref(false)
 
 // ── Shared event banner (shown when a code is loaded) ──
 const sharedEventBanner = ref(null)
@@ -320,11 +320,9 @@ async function rerouteWithWaypoints(waypoints) {
 // ── POI fetch (Overpass API) ──
 async function fetchAndDrawPOIs(coords) {
   if (!mainMap) return
+  if (poisLoaded.value) return
   poisLoading.value = true
-  poisCounter.value = 30
-  const counterInterval = setInterval(() => {
-    if (poisCounter.value > 0) poisCounter.value--
-  }, 1000)
+  const noticeTimer = setTimeout(() => { poisLoading.value = false }, 5000)
   const lngs  = coords.map(c => c[0])
   const lats  = coords.map(c => c[1])
   const south = (Math.min(...lats) - 0.002).toFixed(5)
@@ -448,8 +446,9 @@ async function fetchAndDrawPOIs(coords) {
   } catch (err) {
     console.warn('POI fetch failed:', err.message)
   } finally {
-    clearInterval(counterInterval)
+    clearTimeout(noticeTimer)
     poisLoading.value = false
+    poisLoaded.value = true
   }
 }
 
@@ -917,9 +916,8 @@ onBeforeUnmount(() => {
               <!-- POI loading notice -->
               <Transition name="fade">
                 <div v-if="poisLoading" class="poi-loading-notice">
-                  <div class="poi-notice-timer">{{ poisCounter }}</div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                  Point-Of-Interest points may take up to 30 seconds to load. Thanks for your patience!
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  Stop points may take a moment to load. Thanks for your patience!
                 </div>
               </Transition>
 
@@ -1612,10 +1610,6 @@ h1 { font-size: 42px; color: #0b5d57; }
   border-radius: 20px 20px 0 0;
   pointer-events: none;
 }
-.poi-notice-timer {
-  font-size: 48px; font-weight: 700; line-height: 1;
-  opacity: 0.9;
-}
 .poi-loading-notice {
   position: absolute; inset: 0; z-index: 10;
   background: rgba(0,0,0,0.45);
@@ -1637,7 +1631,7 @@ h1 { font-size: 42px; color: #0b5d57; }
 @media (max-width: 768px) {
   h1 { font-size: 28px; }
   .subtitle { font-size: 20px; }
-  .container { padding: 80px 16px 20px; }
+  .container { padding: 100px 16px 20px; }
 
   .code-entry-inner { flex-direction: column; align-items: stretch; }
   .code-entry-input { min-width: 0; width: 100%; }

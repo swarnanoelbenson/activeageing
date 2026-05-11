@@ -357,7 +357,7 @@ function viewEvent() {
 .links a:hover { color: #0b5d57; }
 
 @media (max-width: 768px) {
-  .page-container { padding: 80px 16px 0; }
+  .page-container { padding: 100px 16px 0; }
   .feature-card { flex-direction: column; padding: 28px 20px; gap: 24px; }
   .map-box { width: 100%; height: 240px; }
   .card-left h2 { font-size: 26px; }
