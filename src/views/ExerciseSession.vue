@@ -25,6 +25,8 @@
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
               {{ timerDisplay }}
             </span>
+            <!-- Did You Know Button -->
+            <button class="dyk-btn" @click="openDidYouKnow">💡 Did You Know?</button>
           </div>
           <button class="btn-interactive" @click="showInteractiveModal = true">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
@@ -66,7 +68,6 @@
     <main v-else class="main">
       <div class="celebration" :class="{ visible }">
 
-        <!-- 0 exercises completed -->
         <template v-if="exercisesCompleted === 0">
           <div class="cel-emoji">🌱</div>
           <h1 class="cel-title">Ready when you are!</h1>
@@ -77,21 +78,18 @@
           </div>
         </template>
 
-        <!-- 1 exercise completed -->
         <template v-else-if="exercisesCompleted === 1">
           <div class="cel-emoji">💪</div>
           <h1 class="cel-title">Back to your 40's!</h1>
           <p class="cel-subtitle">1 of 3 exercises done &#8208; every rep counts!</p>
         </template>
 
-        <!-- 2 exercises completed -->
-        <template v-else-if="exercisesCompleted === 2" >
+        <template v-else-if="exercisesCompleted === 2">
           <div class="cel-emoji">🔥</div>
           <h1 class="cel-title">Back to your 30's!</h1>
           <p class="cel-subtitle">2 of 3 exercises done &#8208; every rep counts!</p>
         </template>
 
-        <!-- All 3 exercises completed -->
         <template v-else>
           <div class="cel-emoji">🎉</div>
           <h1 class="cel-title">You Actually Did It!</h1>
@@ -123,6 +121,38 @@
       </div>
     </div>
 
+    <!-- Did You Know modal -->
+    <Teleport to="body">
+      <div v-if="showDidYouKnow" class="dyk-overlay" @click.self="closeDidYouKnow">
+        <div class="dyk-modal" role="dialog" aria-modal="true" aria-label="Did You Know?">
+
+          <button class="dyk-close" @click="closeDidYouKnow" aria-label="Close">✕</button>
+
+          <div class="dyk-header">
+            <h2 class="dyk-title">Did You Know?</h2>
+            <p class="dyk-subtitle">{{ currentExercise.exercise_name }}</p>
+          </div>
+
+          <div class="dyk-card">
+            <div class="dyk-icon-wrap">
+              <span class="dyk-icon">{{ currentFact.icon }}</span>
+            </div>
+            <p class="dyk-fact">{{ currentFact.fact }}</p>
+          </div>
+
+          <div class="dyk-source-box">
+            <span class="dyk-source-label">SOURCE:</span>
+            <a :href="currentFact.sourceUrl" target="_blank" rel="noopener" class="dyk-source-link">
+              📖 {{ currentFact.source }} ↗
+            </a>
+          </div>
+
+          <button class="dyk-back-btn" @click="closeDidYouKnow">← Back to Exercise</button>
+
+        </div>
+      </div>
+    </Teleport>
+
     <footer class="footer">
       <div class="footer-logo">ActiveAgeing</div>
       <div class="footer-links">
@@ -150,6 +180,133 @@ const showInteractiveModal = ref(false)
 
 const timerSeconds = ref(0)
 let timerInterval = null
+
+// ── Did You Know ──────────────────────────────────────────
+const showDidYouKnow = ref(false)
+
+const EXERCISE_FACTS = {
+  'sit-to-stand': {
+    icon: '🪑',
+    category: 'MOBILITY INSIGHT',
+    fact: 'Regular sit-to-stand practice can help older adults improve mobility and maintain independence in daily activities.',
+    desc: 'This simple movement trains the exact muscles used in everyday actions — getting up from a chair, out of a car, or off the floor.',
+    source: 'PubMed – Sit-to-stand activity to improve mobility in older people',
+    sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/32500976/',
+  },
+  'standing balance hold': {
+    icon: '⚖️',
+    category: 'FALL PREVENTION FACT',
+    fact: 'Balance exercises can reduce the risk of falls in older adults by nearly 40%.',
+    desc: 'Regular balance training strengthens the stabilising muscles and improves your body\'s ability to react quickly to unexpected shifts.',
+    source: 'PubMed – Exercise for preventing falls in older people living in the community',
+    sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/27707740/',
+  },
+  'hold and balance': {
+    icon: '⚖️',
+    category: 'FALL PREVENTION FACT',
+    fact: 'Balance exercises can reduce the risk of falls in older adults by nearly 40%.',
+    desc: 'Regular balance training strengthens the stabilising muscles and improves your body\'s ability to react quickly to unexpected shifts.',
+    source: 'PubMed – Exercise for preventing falls in older people living in the community',
+    sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/27707740/',
+  },
+  'ankle rotations': {
+    icon: '🦶',
+    category: 'BALANCE & SAFETY FACT',
+    fact: 'Healthy ankle movement helps support balance and may lower fall risk as we age.',
+    desc: 'Ankle strength and flexibility are key foundations of stable movement — keeping them mobile helps the whole body stay steady.',
+    source: 'PMC – The role of ankle strength and mobility in balance and fall risk',
+    sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC3604218/',
+  },
+  'brisk walking': {
+    icon: '🚶',
+    category: 'LONGEVITY INSIGHT',
+    fact: 'Older adults who maintain a brisk walking pace tend to have better long-term health and lower mortality risk.',
+    desc: 'Walking pace is one of the strongest predictors of healthy ageing — even modest increases in speed make a meaningful difference.',
+    source: 'PubMed – Walking cadence and health outcomes in older adults',
+    sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/24934147/',
+  },
+  'mini squats': {
+    icon: '🦵',
+    category: 'STRENGTH INSIGHT',
+    fact: 'Mini squats help build leg strength, making everyday activities like walking and getting up from a chair feel easier.',
+    desc: 'Strong legs are the foundation of independent movement. Even shallow squats activate the quads, glutes and core effectively.',
+    source: 'Nature Scientific Reports – Squat training in older adults',
+    sourceUrl: 'https://www.nature.com/articles/s41598-021-86030-7',
+  },
+  'neck rotations': {
+    icon: '🔄',
+    category: 'SAFETY & AWARENESS FACT',
+    fact: 'Being able to comfortably turn your head helps with everyday safety — from checking traffic while walking to maintaining balance and preventing falls.',
+    desc: 'Cervical mobility is often overlooked, but it plays a key role in spatial awareness and postural stability as we age.',
+    source: 'European Geriatric Medicine – Cervical mobility and fall risk among older adults',
+    sourceUrl: 'https://link.springer.com/article/10.1007/s41999-023-00785-y',
+  },
+  'seated chest stretch': {
+    icon: '🫁',
+    category: 'POSTURE & COMFORT FACT',
+    fact: 'Spending long periods sitting can make the chest and shoulders feel tight. Gentle chest stretches help keep the upper body feeling open and mobile.',
+    desc: 'Opening the chest counteracts the forward rounding that builds up from prolonged sitting, helping you breathe more freely and stand taller.',
+    source: 'NHS – Sitting exercises for older adults',
+    sourceUrl: 'https://www.nhs.uk/live-well/exercise/sitting-exercises/',
+  },
+  'calf raises': {
+    icon: '💪',
+    category: 'STRENGTH & STABILITY FACT',
+    fact: 'Strong calf muscles help with walking, climbing stairs, and staying steady on your feet.',
+    desc: 'The calves act as a secondary pump for circulation and play a vital role in propulsion and balance during every step you take.',
+    source: 'PMC – Calf muscle strength and function in older adults',
+    sourceUrl: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC5117878/',
+  },
+  'seated forward lean': {
+    icon: '🧘',
+    category: 'FLEXIBILITY INSIGHT',
+    fact: 'Gentle forward bending helps maintain spinal flexibility and can ease lower back tension that builds up from prolonged sitting.',
+    desc: 'A controlled forward lean stretches the back muscles and hamstrings while encouraging mindful, slow movement.',
+    source: 'NHS – Sitting exercises for older adults',
+    sourceUrl: 'https://www.nhs.uk/live-well/exercise/sitting-exercises/',
+  },
+  'seated knee extensions': {
+    icon: '🦵',
+    category: 'JOINT STRENGTH INSIGHT',
+    fact: 'Strengthening the muscles around the knee supports joint health and helps reduce the risk of knee pain and instability.',
+    desc: 'Knee extensions build the quadriceps — the muscles most responsible for stable, confident walking and stair climbing.',
+    source: 'PubMed – Sit-to-stand activity to improve mobility in older people',
+    sourceUrl: 'https://pubmed.ncbi.nlm.nih.gov/32500976/',
+  },
+  'arm raises': {
+    icon: '🙌',
+    category: 'SHOULDER HEALTH FACT',
+    fact: 'Shoulder mobility exercises help maintain the range of motion needed for everyday tasks like reaching shelves and dressing.',
+    desc: 'Keeping the shoulders strong and mobile reduces stiffness and supports good posture, which benefits balance and breathing.',
+    source: 'NHS – Sitting exercises for older adults',
+    sourceUrl: 'https://www.nhs.uk/live-well/exercise/sitting-exercises/',
+  },
+}
+
+const DEFAULT_FACT = {
+  icon: '❤️',
+  category: 'HEALTH INSIGHT',
+  fact: 'Regular gentle exercise helps older adults maintain strength, balance, and independence.',
+  desc: 'Even short bouts of movement each day contribute to better mobility, mood, and long-term wellbeing.',
+  source: 'NHS – Exercise as we get older',
+  sourceUrl: 'https://www.nhs.uk/live-well/exercise/',
+}
+
+const currentFact = computed(() => {
+  const name = (currentExercise.value.exercise_name ?? '').toLowerCase().trim()
+  return EXERCISE_FACTS[name] ?? DEFAULT_FACT
+})
+
+function openDidYouKnow() {
+  showDidYouKnow.value = true
+  document.body.style.overflow = 'hidden'
+}
+
+function closeDidYouKnow() {
+  showDidYouKnow.value = false
+  document.body.style.overflow = ''
+}
+// ─────────────────────────────────────────────────────────
 
 function startTimer() {
   clearInterval(timerInterval)
@@ -243,7 +400,6 @@ const progressPercent = computed(() => {
   return Math.round((currentIndex.value / exercises.value.length) * 100)
 })
 
-
 function prevExercise() {
   if (currentIndex.value > 0) {
     exercisesCompleted.value = Math.max(0, exercisesCompleted.value - 1)
@@ -252,7 +408,6 @@ function prevExercise() {
 }
 
 function nextExercise() {
-  // Count this exercise as completed before advancing
   exercisesCompleted.value++
   if (!isLastExercise.value) {
     currentIndex.value++
@@ -264,7 +419,6 @@ function nextExercise() {
 function finishSession() {
   showPauseModal.value = false
   const n = exercisesCompleted.value
-  // Write activity boost back to localStorage
   const stored = localStorage.getItem('surveyResult')
   if (stored) {
     const result = JSON.parse(stored)
@@ -311,7 +465,6 @@ onMounted(() => {
     }
   }
 
-  // Fallback if no survey result in localStorage
   exercises.value = [
     { exercise_name: 'Seated Forward Lean',  duration_minutes: 5 },
     { exercise_name: 'Seated Chest Stretch', duration_minutes: 8 },
@@ -336,7 +489,6 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-/* NAV — matches Results */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -351,7 +503,6 @@ onMounted(() => {
 .nav-link { color: #0b5d57; text-decoration: none; cursor: pointer; }
 .nav-link.active { text-decoration: underline; text-underline-offset: 4px; }
 
-/* PROGRESS */
 .progress-wrap {
   max-width: 1200px;
   margin: 0 auto;
@@ -370,7 +521,6 @@ onMounted(() => {
 .progress-track { grid-column: 1 / 4; grid-row: 2; height: 8px; background: #d5cfc4; border-radius: 99px; margin-top: 8px; overflow: hidden; }
 .progress-fill { height: 100%; background: #0b5d57; transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
 
-/* MAIN — matches Results padding */
 .main {
   max-width: 1200px;
   margin: 0 auto;
@@ -379,7 +529,6 @@ onMounted(() => {
   flex: 1;
 }
 
-/* CARD — vertical stack of 3 rows */
 .card {
   background: #ede9e1;
   border-radius: 20px;
@@ -392,7 +541,6 @@ onMounted(() => {
 }
 .card.visible { opacity: 1; transform: translateY(0); }
 
-/* Row 1: Title + tag */
 .card-header {
   background: #ede9e1;
   padding: 32px 40px 24px;
@@ -411,7 +559,7 @@ onMounted(() => {
   line-height: 1.2;
 }
 
-.tags { display: flex; gap: 20px; }
+.tags { display: flex; gap: 12px; align-items: center; }
 .tag {
   display: flex;
   align-items: center;
@@ -424,14 +572,24 @@ onMounted(() => {
   transition: border-color 0.3s, color 0.3s;
   font-variant-numeric: tabular-nums;
 }
-.tag.tag-warning {
-  border-color: #c14f4f;
-  color: #c14f4f;
-}
-.tag.tag-done {
-  border-color: #0b5d57;
+.tag.tag-warning { border-color: #c14f4f; color: #c14f4f; }
+.tag.tag-done { border-color: #0b5d57; color: #0b5d57; }
+
+/* Did You Know button */
+.dyk-btn {
+  padding: 10px 16px;
+  background: #e8f5f3;
   color: #0b5d57;
+  border: 1.5px solid #0b5d57;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
+.dyk-btn:hover { background: #0b5d57; color: white; }
 
 /* Interactive Mode button */
 .btn-interactive {
@@ -455,14 +613,7 @@ onMounted(() => {
 .btn-interactive-exit { background: #7a3a2a; }
 .btn-interactive-exit:hover { background: #5a2a1a; }
 
-
-/* Row 2: GIF left, instructions right */
-.card-body {
-  display: flex;
-  gap: 0;
-  flex: 1;
-}
-
+.card-body { display: flex; gap: 0; flex: 1; }
 .card-gif {
   width: 42%;
   background: #ffffff;
@@ -474,378 +625,147 @@ onMounted(() => {
   gap: 16px;
   border-right: 1px solid #e0dbd2;
 }
-
 .figure-svg { width: 200px; height: 220px; }
-
-.exercise-gif {
-  width: 100%;
-  max-height: 340px;
-  border-radius: 12px;
-  object-fit: cover;
-  object-position: top;
-  display: block;
-}
-
-.encouragement {
-  background: #0b5d57;
-  color: #ffffff;
-  font-size: 20px;
-  font-weight: 600;
-  padding: 10px 24px;
-  border-radius: 10px;
-}
-
-.card-instructions {
-  flex: 1;
-  padding: 32px 36px;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Instructions */
-.instructions-label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 20px;
-  font-weight: 600;
-  color: #0f3d35;
-  margin-bottom: 16px;
-}
+.exercise-gif { width: 100%; max-height: 340px; border-radius: 12px; object-fit: cover; object-position: top; display: block; }
+.encouragement { background: #0b5d57; color: #ffffff; font-size: 20px; font-weight: 600; padding: 10px 24px; border-radius: 10px; }
+.card-instructions { flex: 1; padding: 32px 36px; display: flex; flex-direction: column; }
+.instructions-label { display: flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 600; color: #0f3d35; margin-bottom: 16px; }
 .label-bar { width: 4px; height: 16px; background: #0b5d57; border-radius: 2px; }
+.instructions-text { font-size: 20px; line-height: 1.7; color: #5a6b67; margin: 0 0 16px; }
+.notes-text { font-size: 20px; color: #0b5d57; background: #e8f4f3; border-radius: 8px; padding: 10px 14px; margin: 0; line-height: 1.5; }
 
-.instructions-text {
-  font-size: 20px;
-  line-height: 1.7;
-  color: #5a6b67;
-  margin: 0 0 16px;
-}
-.notes-text {
-  font-size: 20px;
-  color: #0b5d57;
-  background: #e8f4f3;
-  border-radius: 8px;
-  padding: 10px 14px;
-  margin: 0;
-  line-height: 1.5;
-}
+.steps-grid { display: flex; gap: 20px; padding: 28px 40px; }
+.step-card { flex: 1; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.step-subtitle { background: #1a5c52; color: #ffffff; font-weight: 700; font-size: 20px; text-align: center; padding: 14px 12px; }
+.step-image { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+.step-desc { font-size: 20px; line-height: 1.6; color: #4a4a4a; text-align: left; padding: 14px 16px; margin: 0; }
 
-/* Row 2: 3-step image grid */
-.steps-grid {
-  display: flex;
-  gap: 20px;
-  padding: 28px 40px;
-}
+.card-footer { padding: 24px 40px; border-top: 1px solid #e0dbd2; display: flex; gap: 16px; background: #ede9e1; }
 
-.step-card {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  border-radius: 14px;
-  overflow: hidden;
-  background: #ffffff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-.step-subtitle {
-  background: #1a5c52;
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 20px;
-  text-align: center;
-  padding: 14px 12px;
-}
-
-.step-image {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  display: block;
-}
-
-.step-desc {
-  font-size: 20px;
-  line-height: 1.6;
-  color: #4a4a4a;
-  text-align: left;
-  padding: 14px 16px;
-  margin: 0;
-}
-
-/* Row 3: Actions */
-.card-footer {
-  padding: 24px 40px;
-  border-top: 1px solid #e0dbd2;
-  display: flex;
-  gap: 16px;
-  background: #ede9e1;
-}
-
-.btn-primary {
-  flex: 1;
-  background: #1a5c52;
-  color: #ffffff;
-  border: none;
-  border-radius: 12px;
-  padding: 16px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 20px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
+.btn-primary { flex: 1; background: #1a5c52; color: #ffffff; border: none; border-radius: 12px; padding: 16px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
 .btn-primary:hover { background: #0f3d35; }
-.btn-secondary {
-  background: #ffffff;
-  color: #1a2e2b;
-  border: none;
-  border-radius: 12px;
-  padding: 16px 24px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 20px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
+.btn-secondary { background: #ffffff; color: #1a2e2b; border: none; border-radius: 12px; padding: 16px 24px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
 .btn-secondary:hover { background: #f0ede6; }
 .btn-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
 .btn-secondary:disabled:hover { background: #ffffff; }
-
-/* Pause button */
-.btn-pause {
-  background: #f4f1eb;
-  color: #1a2e2b;
-  border: 1.5px solid #c8c2b8;
-  border-radius: 12px;
-  padding: 16px 20px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 20px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-  white-space: nowrap;
-}
+.btn-pause { background: #f4f1eb; color: #1a2e2b; border: 1.5px solid #c8c2b8; border-radius: 12px; padding: 16px 20px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
 .btn-pause:hover { background: #e8e2d8; }
 
-/* CELEBRATION SCREEN */
-.celebration {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 64px 48px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 24px;
-  opacity: 0;
-  transform: translateY(18px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
-}
+.celebration { background: #ffffff; border-radius: 20px; padding: 64px 48px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 24px; opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
 .celebration.visible { opacity: 1; transform: translateY(0); }
 .cel-emoji { font-size: 56px; line-height: 1; }
-.cel-title {
-  font-size: 40px;
-  font-weight: 700;
-  color: #0f3d35;
-  margin: 0;
-}
-.cel-subtitle {
-  font-size: 20px;
-  color: #5a6b67;
-  margin: 0;
-}
-.cel-quote {
-  max-width: 580px;
-  font-size: 20px;
-  line-height: 1.8;
-  color: #4a4a4a;
-  background: #f4f1eb;
-  border-radius: 16px;
-  padding: 24px 32px;
-  font-style: italic;
-}
-.cel-stats {
-  display: flex;
-  gap: 32px;
-}
-.cel-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-.cel-stat-num {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1a8a40;
-}
-.cel-stat-label {
-  font-size: 20px;
-  color: #5a6b67;
-  font-weight: 500;
-}
-.cel-actions-try {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.btn-try-again {
-  background: #b45309;
-  color: #ffffff;
-  border: none;
-  border-radius: 12px;
-  padding: 18px 40px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 20px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-  margin-top: 8px;
-}
+.cel-title { font-size: 40px; font-weight: 700; color: #0f3d35; margin: 0; }
+.cel-subtitle { font-size: 20px; color: #5a6b67; margin: 0; }
+.cel-quote { max-width: 580px; font-size: 20px; line-height: 1.8; color: #4a4a4a; background: #f4f1eb; border-radius: 16px; padding: 24px 32px; font-style: italic; }
+.cel-stats { display: flex; gap: 32px; }
+.cel-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.cel-stat-num { font-size: 32px; font-weight: 700; color: #1a8a40; }
+.cel-stat-label { font-size: 20px; color: #5a6b67; font-weight: 500; }
+.cel-actions-try { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.btn-try-again { background: #b45309; color: #ffffff; border: none; border-radius: 12px; padding: 18px 40px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 8px; }
 .btn-try-again:hover { background: #92400e; }
-
-.btn-celebrate {
-  background: #0b5d57;
-  color: #ffffff;
-  border: none;
-  border-radius: 12px;
-  padding: 18px 40px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 20px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-  margin-top: 8px;
-}
+.btn-celebrate { background: #0b5d57; color: #ffffff; border: none; border-radius: 12px; padding: 18px 40px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 8px; }
 .btn-celebrate:hover { background: #0f3d35; }
 
 /* PAUSE MODAL */
-.modal-overlay {
+.modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal { background: #ffffff; border-radius: 20px; padding: 48px 40px; max-width: 440px; width: 90%; text-align: center; display: flex; flex-direction: column; gap: 16px; }
+.modal-emoji { font-size: 40px; }
+.modal-title { font-size: 24px; font-weight: 700; color: #0f3d35; margin: 0; }
+.modal-text { font-size: 20px; line-height: 1.7; color: #5a6b67; margin: 0; }
+.modal-actions { display: flex; gap: 12px; margin-top: 8px; }
+.modal-btn-primary { flex: 1; background: #1a5c52; color: #fff; border: none; border-radius: 10px; padding: 14px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.modal-btn-primary:hover { background: #0f3d35; }
+.modal-btn-secondary { flex: 1; background: #f4f1eb; color: #1a2e2b; border: none; border-radius: 10px; padding: 14px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.modal-btn-secondary:hover { background: #e8e2d8; }
+
+/* DID YOU KNOW MODAL */
+.dyk-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  padding: 20px;
+  box-sizing: border-box;
 }
-.modal {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 48px 40px;
-  max-width: 440px;
-  width: 90%;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.modal-emoji { font-size: 40px; }
-.modal-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #0f3d35;
-  margin: 0;
-}
-.modal-text {
-  font-size: 20px;
-  line-height: 1.7;
-  color: #5a6b67;
-  margin: 0;
-}
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 8px;
-}
-.modal-btn-primary {
-  flex: 1;
-  background: #1a5c52;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 14px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 20px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.modal-btn-primary:hover { background: #0f3d35; }
-.modal-btn-secondary {
-  flex: 1;
-  background: #f4f1eb;
-  color: #1a2e2b;
-  border: none;
-  border-radius: 10px;
-  padding: 14px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 20px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.modal-btn-secondary:hover { background: #e8e2d8; }
 
-/* FOOTER — matches Results */
-.footer {
-  border-top: 1px solid #ddd;
-  text-align: center;
-  padding: 32px 48px 24px;
+.dyk-modal {
+  background: #f5f0e8;
+  border-radius: 24px;
+  padding: 36px 32px 28px;
+  max-width: 480px;
+  width: 100%;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  animation: dyk-pop 0.25s ease;
+  box-sizing: border-box;
 }
+
+@keyframes dyk-pop {
+  from { transform: scale(0.92); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+.dyk-close { position: absolute; top: 16px; right: 20px; background: none; border: none; font-size: 20px; color: #888; cursor: pointer; line-height: 1; padding: 4px; }
+.dyk-close:hover { color: #333; }
+
+.dyk-header { text-align: center; margin-bottom: 20px; }
+.dyk-title { font-size: 30px; font-weight: 700; color: #0b5d57; margin: 0 0 4px; }
+.dyk-subtitle { font-size: 16px; color: #6b7280; margin: 0; font-weight: 500; }
+
+.dyk-card { background: white; border-radius: 18px; padding: 24px 22px; margin-bottom: 16px; }
+
+.dyk-icon-wrap { width: 64px; height: 64px; background: #fce8e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 16px; }
+
+.dyk-fact { font-size: 28px; font-weight: 700; color: #1a1a1a; line-height: 1.45; margin: 0 0 14px; }
+
+.dyk-category-badge { display: inline-block; background: #fde8d8; color: #7c3d1a; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; padding: 5px 14px; border-radius: 20px; margin-bottom: 14px; }
+
+.dyk-fact-desc { font-size: 15px; color: #555; line-height: 1.6; margin: 0; }
+
+.dyk-source-box { background: #dff0ee; border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+.dyk-source-label { font-size: 13px; font-weight: 700; color: #0b5d57; letter-spacing: 0.06em; white-space: nowrap; }
+.dyk-source-link { font-size: 15px; color: #0b5d57; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; word-break: break-word; }
+.dyk-source-link:hover { color: #084a45; }
+
+.dyk-back-btn { display: block; width: 100%; padding: 14px; background: #0b5d57; color: white; border: none; border-radius: 12px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; cursor: pointer; transition: background 0.2s; text-align: center; box-sizing: border-box; }
+.dyk-back-btn:hover { background: #084a45; }
+
+/* FOOTER */
+.footer { border-top: 1px solid #ddd; text-align: center; padding: 32px 48px 24px; }
 .footer-logo { font-size: 20px; font-weight: 700; color: #0b5d57; margin-bottom: 12px; }
 .footer-links { display: flex; justify-content: center; gap: 24px; margin-bottom: 10px; }
 .footer-links a { font-size: 20px; color: #555; font-weight: 500; cursor: pointer; text-decoration: none; }
 .footer-links a:hover { color: #0b5d57; }
 .footer-copy { font-size: 20px; color: #888; }
 
-
 /* RESPONSIVE */
 @media (max-width: 768px) {
-  .navbar {
-    max-width: 100%;
-    margin: 0;
-    padding: 16px 20px;
-    box-sizing: border-box;
-    width: 100%;
-  }
+  .navbar { max-width: 100%; margin: 0; padding: 16px 20px; box-sizing: border-box; width: 100%; }
   .logo { font-size: 20px; }
   .nav-links { gap: 16px; font-size: 20px; }
-
-  .progress-wrap {
-    max-width: 100%;
-    margin: 0;
-    padding: 0 20px 16px;
-    box-sizing: border-box;
-    width: 100%;
-  }
-
-  .main {
-    max-width: 100%;
-    margin: 0;
-    padding: 24px 20px 48px;
-    box-sizing: border-box;
-    width: 100%;
-  }
-
+  .progress-wrap { max-width: 100%; margin: 0; padding: 0 20px 16px; box-sizing: border-box; width: 100%; }
+  .main { max-width: 100%; margin: 0; padding: 24px 20px 48px; box-sizing: border-box; width: 100%; }
   .card-header { padding: 24px 20px 16px; }
   .exercise-title { font-size: 24px; }
-
   .steps-grid { flex-direction: column; padding: 20px; gap: 16px; }
   .btn-interactive { font-size: 13px; padding: 8px 12px; }
+  .dyk-btn { font-size: 14px; padding: 8px 12px; }
   .step-subtitle { font-size: 20px; }
   .card-body { flex-direction: column; }
   .card-gif { width: 100%; border-right: none; border-bottom: 1px solid #e0dbd2; padding: 20px; }
   .figure-svg { width: 140px; height: 160px; }
   .card-instructions { padding: 20px; }
-
   .card-footer { flex-direction: column; padding: 20px; gap: 10px; }
   .btn-primary, .btn-secondary { padding: 14px; width: 100%; }
-
   .footer { padding: 24px 20px; }
   .footer-links { flex-wrap: wrap; gap: 12px; }
+  .dyk-modal { padding: 28px 20px 22px; }
+  .dyk-title { font-size: 26px; }
+  .dyk-fact { font-size: 17px; }
 }
 
 @media (max-width: 480px) {
