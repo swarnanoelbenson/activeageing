@@ -1,20 +1,38 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
+import ExerciseSessionModal from '../components/ExerciseSessionModal.vue'
 
 const router = useRouter()
 
 const showExerciseGrid  = ref(false)
 const selectedExercise  = ref(null)
+const playingExercise   = ref(null)
+
+function openSession(exercise) {
+  playingExercise.value  = exercise
+  selectedExercise.value = null
+}
+
+// Normalize the home exercise shape to what ExerciseSessionModal expects
+const sessionExercise = computed(() => {
+  const ex = playingExercise.value
+  if (!ex) return null
+  return {
+    name:            ex.name,
+    durationMinutes: parseInt(ex.duration) || 5,
+    steps:           ex.steps,
+  }
+})
 
 const allExercises = [
-  { name: 'Shoulder Rolls',         emoji: '🔄', category: 'Flexibility', duration: '5 min',
-    description: 'Gentle shoulder rolls to release tension and improve upper body mobility.',
+  { name: 'Seated Forward Lean',    emoji: '🪑', category: 'Flexibility', duration: '5 min',
+    description: 'A gentle seated forward lean to improve flexibility and stretch the lower back.',
     steps: [
-      { title: 'Start Position',   image: '/Images/shoulder_rolls_1.jpeg',  desc: 'Sit upright on a chair with your back straight, arms relaxed at your sides.' },
-      { title: 'Roll Forward',     image: '/Images/shoulder_rolls_2.jpeg',  desc: 'Slowly roll both shoulders forward in a smooth circular motion, keeping your neck relaxed.' },
-      { title: 'Roll Backward',    image: '/Images/shoulder_rolls_3.jpeg',  desc: 'Reverse the motion, rolling your shoulders backward and squeezing your shoulder blades together.' },
+      { title: 'Start Position', image: '/Images/seated_forward_lean_1.jpeg', desc: 'Sit upright on a chair with your feet flat on the floor and hands resting on your thighs.' },
+      { title: 'Lean Forward',   image: '/Images/seated_forward_lean_2.jpeg', desc: 'Slowly lean your upper body forward, sliding your hands down toward your knees. Keep your back straight.' },
+      { title: 'Return Upright', image: '/Images/seated_forward_lean_3.jpeg', desc: 'Gently return to the upright position and repeat the movement in a slow, controlled rhythm.' },
     ]},
   { name: 'Seated Knee Extensions', emoji: '🦵', category: 'Mobility',   duration: '5 min',
     description: 'Seated knee extensions to strengthen the quadriceps and improve knee flexibility.',
@@ -363,6 +381,10 @@ function goToEvents()      { router.push('/events') }
               <div class="ex-preview-cat">{{ selectedExercise.category }} · {{ selectedExercise.duration }}</div>
               <h3 class="ex-preview-name">{{ selectedExercise.name }}</h3>
             </div>
+            <button class="ex-play-btn" @click="openSession(selectedExercise)">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Play
+            </button>
             <button class="ex-close" @click="selectedExercise = null">✕</button>
           </div>
           <p class="ex-preview-desc">{{ selectedExercise.description }}</p>
@@ -381,6 +403,15 @@ function goToEvents()      { router.push('/events') }
           <button class="ex-preview-close-btn" @click="selectedExercise = null">Close</button>
         </div>
       </div>
+    </Transition>
+
+    <!-- Exercise session modal -->
+    <Transition name="fade">
+      <ExerciseSessionModal
+        v-if="sessionExercise"
+        :exercise="sessionExercise"
+        @close="playingExercise = null"
+      />
     </Transition>
 
   </div>
@@ -986,6 +1017,17 @@ function goToEvents()      { router.push('/events') }
   flex-shrink: 0;
 }
 .ex-step-text { font-size: 20px; color: #5a6a66; line-height: 1.6; margin: 0; }
+.ex-play-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: #0b5d57; color: #fff;
+  border: none; border-radius: 10px;
+  padding: 12px 24px; font-family: 'Poppins', sans-serif;
+  font-size: 17px; font-weight: 600; cursor: pointer;
+  transition: background 0.2s; white-space: nowrap; margin-left: auto;
+}
+.ex-play-btn:hover { background: #084a45; }
+
+
 .ex-preview-close-btn {
   width: 100%; background: #0b5d57; color: white;
   border: none; border-radius: 10px; padding: 13px;

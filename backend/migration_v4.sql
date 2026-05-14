@@ -1,10 +1,10 @@
 -- Run this in DBeaver against the ta15 database to update exercise names
 USE ta15;
 
--- Replace Neck Rotations → Shoulder Rolls
+-- Replace Neck Rotations → Seated Forward Lean
 UPDATE exercise_recommendations
-SET exercise_name = 'Shoulder Rolls',
-    instructions  = 'Sit upright on a chair with arms relaxed at your sides. Slowly roll both shoulders forward in a circular motion, then reverse and roll them backward.'
+SET exercise_name = 'Seated Forward Lean',
+    instructions  = 'Sit upright on a chair with feet flat on the floor. Slowly lean your upper body forward, sliding your hands toward your knees, keeping your back straight, then return upright.'
 WHERE exercise_name = 'Neck Rotations';
 
 -- Replace Ankle Rotations → Seated Knee Extensions

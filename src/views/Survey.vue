@@ -76,13 +76,15 @@ function selectOption(option) {
   answers.value[step.value - 1] = option.label
   if (step.value < total) {
     step.value++
-  } else {
-    nextTick(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }))
+    nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' }))
   }
 }
 
 function goNext() {
-  if (step.value < total) step.value++
+  if (step.value < total) {
+    step.value++
+    nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' }))
+  }
 }
 
 function goBack() {
@@ -228,7 +230,7 @@ nav a.active {
   max-width: 1100px;
   width: 100%;
   margin: 0 auto;
-  padding: 20px 48px 48px;
+  padding: 80px 48px 48px;
 }
 
 /* ── Progress ── */

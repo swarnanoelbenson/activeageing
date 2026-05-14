@@ -26,6 +26,10 @@
               {{ timerDisplay }}
             </span>
           </div>
+          <button class="btn-interactive" @click="showInteractiveModal = true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            Interactive Mode
+          </button>
         </div>
 
         <!-- Row 2: 3-step image grid -->
@@ -36,6 +40,13 @@
             <p class="step-desc">{{ step.description }}</p>
           </div>
         </div>
+
+        <!-- Interactive Mode modal -->
+        <ExerciseSessionModal
+          v-if="showInteractiveModal && sessionExercise"
+          :exercise="sessionExercise"
+          @close="showInteractiveModal = false"
+        />
 
         <!-- Row 3: Actions -->
         <div class="card-footer">
@@ -126,6 +137,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
+import ExerciseSessionModal from '../components/ExerciseSessionModal.vue'
 
 const router = useRouter()
 const visible = ref(false)
@@ -134,6 +146,7 @@ const exercises = ref([])
 const exercisesCompleted = ref(0)
 const sessionDone = ref(false)
 const showPauseModal = ref(false)
+const showInteractiveModal = ref(false)
 
 const timerSeconds = ref(0)
 let timerInterval = null
@@ -154,15 +167,15 @@ const timerDisplay = computed(() => {
 })
 
 const EXERCISE_CONTENT = {
-  'neck rotations': [
-    { subtitle: 'Start Position', image: '/Images/neck_rotation_1.jpeg', description: 'Sit upright on a chair with your back straight and shoulders relaxed.' },
-    { subtitle: 'Turn Right',     image: '/Images/neck_rotation_2.jpeg', description: 'Slowly turn your head to the right as far as comfortable, keeping your shoulders still.' },
-    { subtitle: 'Turn Left',      image: '/Images/neck_rotation_3.jpeg', description: 'Gently turn your head to the left side, moving slowly and staying relaxed.' },
+  'seated forward lean': [
+    { subtitle: 'Start Position', image: '/Images/seated_forward_lean_1.jpeg', description: 'Sit upright on a chair with your feet flat on the floor and hands resting on your thighs.' },
+    { subtitle: 'Lean Forward',   image: '/Images/seated_forward_lean_2.jpeg', description: 'Slowly lean your upper body forward, sliding your hands down toward your knees. Keep your back straight.' },
+    { subtitle: 'Return Upright', image: '/Images/seated_forward_lean_3.jpeg', description: 'Gently return to the upright position and repeat the movement in a slow, controlled rhythm.' },
   ],
-  'ankle rotations': [
-    { subtitle: 'Start Position',       image: '/Images/ankle_rotation_1.jpeg', description: 'Sit upright on a chair and gently lift one foot slightly off the ground.' },
-    { subtitle: 'Rotate Clockwise',     image: '/Images/ankle_rotation_2.jpeg', description: 'Slowly rotate your ankle in a circular motion in one direction.' },
-    { subtitle: 'Rotate Anti-Clockwise',image: '/Images/ankle_rotation_3.jpeg', description: 'Change direction and rotate your ankle the other way, keeping movements smooth.' },
+  'seated knee extensions': [
+    { subtitle: 'Start Position',   image: '/Images/seated_knee_ext_1.jpeg', description: 'Sit upright on a chair with your feet flat on the floor and hands resting on your thighs.' },
+    { subtitle: 'Extend Leg',       image: '/Images/seated_knee_ext_2.jpeg', description: 'Slowly straighten one leg until it is parallel to the floor, hold for a moment.' },
+    { subtitle: 'Lower and Switch', image: '/Images/seated_knee_ext_3.jpeg', description: 'Gently lower your foot back to the floor and repeat with the other leg.' },
   ],
   'seated chest stretch': [
     { subtitle: 'Start Position', image: '/Images/seated_chest_stretch_1.jpeg', description: 'Sit upright on a chair with your back straight and shoulders relaxed.' },
@@ -174,10 +187,10 @@ const EXERCISE_CONTENT = {
     { subtitle: 'Increase Pace',    image: '/Images/brisk_walking_2.jpeg', description: 'Gradually walk a little faster, swinging your arms naturally and taking steady steps.' },
     { subtitle: 'Extend Duration',  image: '/Images/brisk_walking_3.jpeg', description: 'Continue walking for a longer time at a comfortable pace, maintaining a steady rhythm.' },
   ],
-  'calf raises': [
-    { subtitle: 'Start Position', image: '/Images/calf_raises_1.jpeg', description: 'Stand straight behind a chair, holding it lightly for support.' },
-    { subtitle: 'Raise Heels',    image: '/Images/calf_raises_2.jpeg', description: 'Slowly lift your heels off the ground, rising onto your toes.' },
-    { subtitle: 'Lower Down',     image: '/Images/calf_raises_3.jpeg', description: 'Gently lower your heels back to the ground in a controlled movement.' },
+  'arm raises': [
+    { subtitle: 'Start Position', image: '/Images/arm_raises_1.jpeg', description: 'Stand or sit upright with your arms relaxed at your sides and shoulders down.' },
+    { subtitle: 'Raise Arms',     image: '/Images/arm_raises_2.jpeg', description: 'Slowly raise both arms out to the sides until they reach shoulder height, keeping them straight.' },
+    { subtitle: 'Lower Down',     image: '/Images/arm_raises_3.jpeg', description: 'Gently lower your arms back to your sides in a controlled movement and repeat.' },
   ],
   'sit-to-stand': [
     { subtitle: 'Start Position', image: '/Images/sit_to_stand_1.jpeg', description: 'Sit upright on a chair with your feet flat on the ground.' },
@@ -212,6 +225,16 @@ const currentExercise = computed(() => exercises.value[currentIndex.value] ?? {}
 const currentSteps = computed(() => {
   const name = (currentExercise.value.exercise_name ?? '').toLowerCase().trim()
   return EXERCISE_CONTENT[name] ?? DEFAULT_STEPS
+})
+
+const sessionExercise = computed(() => {
+  const ex = currentExercise.value
+  if (!ex.exercise_name) return null
+  return {
+    name:            ex.exercise_name,
+    durationMinutes: ex.duration_minutes ?? 5,
+    steps:           currentSteps.value.map(s => ({ title: s.subtitle, image: s.image, desc: s.description })),
+  }
 })
 const isLastExercise  = computed(() => currentIndex.value === exercises.value.length - 1)
 const progressPercent = computed(() => {
@@ -266,11 +289,13 @@ function goToResults() {
 }
 
 watch(currentIndex, () => {
+  showInteractiveModal.value = false
   startTimer()
 })
 
 onBeforeUnmount(() => {
   clearInterval(timerInterval)
+  showInteractiveModal.value = false
 })
 
 onMounted(() => {
@@ -288,9 +313,9 @@ onMounted(() => {
 
   // Fallback if no survey result in localStorage
   exercises.value = [
-    { exercise_name: 'Neck Rotations',       duration_minutes: 5 },
+    { exercise_name: 'Seated Forward Lean',  duration_minutes: 5 },
     { exercise_name: 'Seated Chest Stretch', duration_minutes: 8 },
-    { exercise_name: 'Ankle Rotations',      duration_minutes: 5 },
+    { exercise_name: 'Seated Knee Extensions', duration_minutes: 5 },
   ]
   startTimer()
 })
@@ -407,6 +432,29 @@ onMounted(() => {
   border-color: #0b5d57;
   color: #0b5d57;
 }
+
+/* Interactive Mode button */
+.btn-interactive {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  background: #0b5d57;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.btn-interactive:hover { background: #0f3d35; }
+.btn-interactive-exit { background: #7a3a2a; }
+.btn-interactive-exit:hover { background: #5a2a1a; }
+
 
 /* Row 2: GIF left, instructions right */
 .card-body {
@@ -753,6 +801,7 @@ onMounted(() => {
 .footer-links a:hover { color: #0b5d57; }
 .footer-copy { font-size: 20px; color: #888; }
 
+
 /* RESPONSIVE */
 @media (max-width: 768px) {
   .navbar {
@@ -785,6 +834,7 @@ onMounted(() => {
   .exercise-title { font-size: 24px; }
 
   .steps-grid { flex-direction: column; padding: 20px; gap: 16px; }
+  .btn-interactive { font-size: 13px; padding: 8px 12px; }
   .step-subtitle { font-size: 20px; }
   .card-body { flex-direction: column; }
   .card-gif { width: 100%; border-right: none; border-bottom: 1px solid #e0dbd2; padding: 20px; }
