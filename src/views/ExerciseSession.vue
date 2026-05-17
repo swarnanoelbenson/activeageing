@@ -147,7 +147,7 @@
             </a>
           </div>
 
-          <button class="dyk-back-btn" @click="closeDidYouKnow">← Back to Exercise</button>
+          <button class="dyk-back-btn" @click="closeDidYouKnow">Back to Exercise</button>
 
         </div>
       </div>
@@ -692,11 +692,25 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
+.dyk-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+  backdrop-filter: blur(6px);          
+  -webkit-backdrop-filter: blur(6px);  
+}
+
 .dyk-modal {
   background: #f5f0e8;
   border-radius: 24px;
   padding: 36px 32px 28px;
-  max-width: 480px;
+  max-width: 620px;
   width: 100%;
   position: relative;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);

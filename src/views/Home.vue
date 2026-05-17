@@ -125,7 +125,7 @@ function goToEvents()      { router.push('/events') }
               More energy, brighter moods, and a stronger sense of belonging through
               simple everyday movement and community activities.
             </p>
-            <button class="btn-primary" @click="getStarted">Get started →</button>
+            <button class="btn-primary" @click="getStarted">Get started</button>
           </div>
 
           <div class="hero-right">
@@ -174,7 +174,7 @@ function goToEvents()      { router.push('/events') }
               <li><span class="check-icon">✓</span> Pick scenic parks or quiet streets</li>
               <li><span class="check-icon">✓</span> Keep it private or invite others to join</li>
             </ul>
-            <button class="btn-primary" @click="exploreFeatures">Plan route →</button>
+            <button class="btn-primary" @click="exploreFeatures">Plan route</button>
           </div>
           <div class="plan-right">
             <div class="map-preview">
@@ -284,7 +284,7 @@ function goToEvents()      { router.push('/events') }
                 </div>
               </div>
             </div>
-            <button class="btn-primary" @click="goToSurvey">Get my snapshot →</button>
+            <button class="btn-primary" @click="goToSurvey">Get my snapshot</button>
           </div>
         </div>
       </section>
@@ -298,7 +298,7 @@ function goToEvents()      { router.push('/events') }
             <div class="explore-text">
               <h3>Explore events</h3>
               <p>Discover local walks, classes, and meetups happening in your community this week.</p>
-              <button class="btn-primary" @click="goToEvents">Find events →</button>
+              <button class="btn-primary" @click="goToEvents">Find events</button>
             </div>
             <div class="explore-icon-circle green-circle">
               <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -319,7 +319,7 @@ function goToEvents()      { router.push('/events') }
             <div class="explore-text">
               <h3>Browse exercises</h3>
               <p>All exercises in one place, from gentle stretches to guided strength routines.</p>
-              <button class="btn-primary" @click="showExerciseGrid = true">View all →</button>
+              <button class="btn-primary" @click="showExerciseGrid = true">View all</button>
             </div>
             <div class="explore-icon-circle peach-circle">
               <img src="/Images/dumbell.jpeg" alt="Dumbbell" class="explore-icon-img" />
@@ -332,7 +332,7 @@ function goToEvents()      { router.push('/events') }
       <section class="cta-banner">
         <h2>Ready to start your journey?</h2>
         <p>Take the snapshot, plan a walk, invite a friend. All at your own pace.</p>
-        <button class="btn-white" @click="exploreFeatures">Plan my route →</button>
+        <button class="btn-white" @click="exploreFeatures">Plan my route</button>
       </section>
 
     </main>
@@ -898,24 +898,38 @@ function goToEvents()      { router.push('/events') }
 }
 
 /* ── FOOTER ── */
-.site-footer {
-  background: #0b5d57;
-  color: rgba(255,255,255,0.75);
+.footer {
+  background: #f0ede6;
+  color: #3a5a55;
   padding: 32px 5vw;
   text-align: center;
+  border-top: 1px solid #e0ddd6;
 }
-.footer-inner { max-width: 900px; margin: 0 auto; }
-.footer-brand { font-size: 20px; font-weight: 700; color: white; margin-bottom: 10px; }
-.footer-links {
-  display: flex; justify-content: center; gap: 24px;
-  margin-bottom: 12px; flex-wrap: wrap;
+
+.footer h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0b5d57;
+  margin-bottom: 12px;
 }
-.footer-links span {
-  font-size: 20px; color: rgba(255,255,255,0.75);
-  cursor: pointer; transition: color 0.2s;
+
+.links {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
 }
-.footer-links span:hover { color: white; }
-.footer-copy { font-size: 20px; color: rgba(255,255,255,0.45); }
+
+.links a {
+  font-size: 16px;
+  color: #5a6a66;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.links a:hover {
+  color: #0b5d57;
+}
 
 /* ── EXERCISE GRID OVERLAY ── */
 .ex-overlay {
