@@ -1112,7 +1112,7 @@ onBeforeUnmount(() => {
           </template>
 
           <template v-else>
-            <p class="share-sub">Your event is ready! Share the code or link. It expires 48 hours after the scheduled date.</p>
+            <p class="share-sub">Your event is ready! Share the code below so friends can join your route. It expires 48 hours after the scheduled date.</p>
 
             <div class="share-route-info">
               <div class="share-detail">
@@ -1132,9 +1132,7 @@ onBeforeUnmount(() => {
 
             <div class="share-url-row">
               <input class="share-url-input" :value="shareCodeUrl" readonly />
-              <button class="share-copy-btn" @click="copyCodeUrl">
-                {{ copiedCode ? '✓ Copied!' : 'Copy' }}
-              </button>
+              <button class="share-copy-btn" @click="copyCodeUrl">{{ copiedCode ? '✓ Copied!' : 'Copy' }}</button>
             </div>
 
             <div class="sched-action-row">
@@ -1460,7 +1458,7 @@ h1 { font-size: 42px; color: #0b5d57; }
 .share-url-input {
   flex: 1; padding: 11px 14px; border: 1.5px solid #d0d9d6;
   border-radius: 10px; font-size: 20px; color: #444;
-  font-family: 'Poppins', sans-serif; background: #f9f9f7; outline: none;
+  font-family: 'Poppins', sans-serif; background: #f9f9f7; outline: none; max-width: 325px;
 }
 .share-copy-btn {
   padding: 11px 18px; background: #0b5d57; color: white;

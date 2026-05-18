@@ -15,6 +15,18 @@ const apiError = ref(false)
 // Tab state: 'personalized' | 'browse'
 const activeTab = ref(route.query.tab === 'personalized' ? 'personalized' : 'browse')
 
+// External link disclaimer
+const disclaimerUrl  = ref('')
+const showDisclaimer = ref(false)
+function openExternal(url) {
+  disclaimerUrl.value = url
+  showDisclaimer.value = true
+}
+function confirmExternal() {
+  window.open(disclaimerUrl.value, '_blank', 'noopener,noreferrer')
+  showDisclaimer.value = false
+}
+
 const hasSnapshot = computed(() => !!localStorage.getItem('surveyResult'))
 
 // Filter state
@@ -309,8 +321,7 @@ onMounted(async () => {
                 </div>
 
               </div>
-              <a v-if="event.url" :href="event.url" target="_blank" rel="noopener" class="btn">View</a>
-              <button v-else class="btn">Interested</button>
+              <button class="btn" @click="event.url ? openExternal(event.url) : null">View</button>
             </div>
           </div>
         </template>
@@ -343,8 +354,7 @@ onMounted(async () => {
                 </div>
 
               </div>
-              <a v-if="event.url" :href="event.url" target="_blank" rel="noopener" class="btn">View</a>
-              <button v-else class="btn">Interested</button>
+              <button class="btn" @click="event.url ? openExternal(event.url) : null">View</button>
             </div>
           </div>
           <div v-if="filteredEvents.length === 0" class="no-results">
@@ -368,6 +378,19 @@ onMounted(async () => {
 
 
 
+      <!-- PRIVATE EVENT CODE ENTRY -->
+      <section class="private-event-section">
+        <div class="private-event-box">
+          <div class="private-event-top">
+            <span class="private-event-label">Have an event code?</span>
+            <button class="private-event-btn" @click="router.push('/planner')">Open Plan Route →</button>
+          </div>
+          <p class="private-event-hint">
+            You can create a private activity to share with friends — go to <strong>Plan Route</strong>, select a route, then generate a code and share it with your group.
+          </p>
+        </div>
+      </section>
+
       <!-- FOOTER -->
       <footer class="footer">
         <h3>ActiveAgeing</h3>
@@ -382,6 +405,20 @@ onMounted(async () => {
       </footer>
 
     </div>
+
+    <!-- External link disclaimer -->
+    <Teleport to="body">
+      <div v-if="showDisclaimer" class="disclaimer-overlay" @click.self="showDisclaimer = false">
+        <div class="disclaimer-modal">
+          <h3 class="disclaimer-title">You're leaving ActiveAgeing</h3>
+          <p class="disclaimer-text">This link will take you to an external website. ActiveAgeing is not responsible for content on third-party sites.</p>
+          <div class="disclaimer-actions">
+            <button class="disclaimer-btn-cancel" @click="showDisclaimer = false">Cancel</button>
+            <button class="disclaimer-btn-confirm" @click="confirmExternal">Continue →</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -715,6 +752,48 @@ onMounted(async () => {
 
 .cta-btn.big:hover { background: #8b2d08; }
 
+/* PRIVATE EVENT SECTION */
+.private-event-section {
+  padding: 0 0 32px;
+}
+.private-event-box {
+  background: #f0f7f6;
+  border: 1.5px solid #c2dbd8;
+  border-radius: 14px;
+  padding: 20px 24px;
+}
+.private-event-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.private-event-label {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f3d35;
+}
+.private-event-btn {
+  background: #0b5d57;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.private-event-btn:hover { background: #0f3d35; }
+.private-event-hint {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+}
+
 /* FOOTER */
 .footer {
   text-align: center;
@@ -832,6 +911,37 @@ onMounted(async () => {
   text-underline-offset: 4px;
   background: transparent;
 }
+
+/* DISCLAIMER MODAL */
+.disclaimer-overlay {
+  position: fixed; inset: 0; z-index: 900;
+  background: rgba(0,0,0,0.45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.disclaimer-modal {
+  background: #fff; border-radius: 16px;
+  padding: 32px 28px; max-width: 400px; width: 100%;
+  text-align: center;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.2);
+  font-family: 'Poppins', sans-serif;
+}
+.disclaimer-icon { font-size: 36px; margin-bottom: 12px; }
+.disclaimer-title { font-size: 18px; font-weight: 700; color: #0b5d57; margin: 0 0 10px; }
+.disclaimer-text { font-size: 14px; color: #555; line-height: 1.6; margin: 0 0 24px; }
+.disclaimer-actions { display: flex; gap: 12px; }
+.disclaimer-btn-cancel {
+  flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 10px;
+  background: #fff; color: #555; font-family: 'Poppins', sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.disclaimer-btn-cancel:hover { background: #f5f5f5; }
+.disclaimer-btn-confirm {
+  flex: 1; padding: 12px; border: none; border-radius: 10px;
+  background: #0b5d57; color: #fff; font-family: 'Poppins', sans-serif;
+  font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+}
+.disclaimer-btn-confirm:hover { background: #084a45; }
 
 /* RESPONSIVE */
 @media (max-width: 768px) {

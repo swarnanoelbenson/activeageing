@@ -46,15 +46,15 @@ const LM = {
 // reversed: false → angle must go HIGH (threshA) then LOW (threshB) to count a rep
 // reversed: true  → angle must go LOW  (threshA) then HIGH (threshB) to count a rep
 const EXERCISE_POSE_CONFIG = {
-  'seated forward lean':    { a: LM.LEFT_SHOULDER, b: LM.LEFT_HIP,      c: LM.LEFT_KNEE,         threshA: 148, labelA: 'UPRIGHT',  threshB: 138, labelB: 'LEANING',  reversed: false },
-  'seated chest stretch':   { a: LM.LEFT_ELBOW,    b: LM.LEFT_SHOULDER, c: LM.RIGHT_SHOULDER,    threshA: 50,  labelA: 'CLOSED',   threshB: 100, labelB: 'OPEN',     reversed: true  },
-  'seated knee extensions': { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 100, labelA: 'BENT',     threshB: 150, labelB: 'EXTENDED', reversed: true  },
-  'brisk walking':          { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 160, labelA: 'PLANT',    threshB: 120, labelB: 'STEP',     reversed: false },
-  'sit-to-stand':           { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 100, labelA: 'SIT',      threshB: 160, labelB: 'STAND',    reversed: true  },
-  'arm raises':             { a: LM.LEFT_HIP,      b: LM.LEFT_SHOULDER, c: LM.LEFT_ELBOW,        threshA: 30,  labelA: 'DOWN',     threshB: 80,  labelB: 'RAISED',   reversed: true  },
-  'mini squats':            { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 165, labelA: 'STANDING', threshB: 145, labelB: 'SQUAT',    reversed: false },
-  'hold and balance':       { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 165, labelA: 'STANDING', threshB: 145, labelB: 'LIFTED',   reversed: false },
-  'standing balance hold':  { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 165, labelA: 'STANDING', threshB: 145, labelB: 'HOLDING',  reversed: false },
+  'seated forward lean':    { a: LM.LEFT_SHOULDER, b: LM.LEFT_HIP,      c: LM.LEFT_KNEE,         threshA: 152, labelA: 'UPRIGHT',  threshB: 143, labelB: 'LEANING',  reversed: false },
+  'seated chest stretch':   { a: LM.LEFT_ELBOW,    b: LM.LEFT_SHOULDER, c: LM.RIGHT_SHOULDER,    threshA: 50,  labelA: 'CLOSED',   threshB: 85,  labelB: 'OPEN',     reversed: true  },
+  'seated knee extensions': { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 110, labelA: 'BENT',     threshB: 140, labelB: 'EXTENDED', reversed: true  },
+  'brisk walking':          { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 160, labelA: 'PLANT',    threshB: 135, labelB: 'STEP',     reversed: false },
+  'sit-to-stand':           { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 100, labelA: 'SIT',      threshB: 155, labelB: 'STAND',    reversed: true  },
+  'arm raises':             { a: LM.LEFT_HIP,      b: LM.LEFT_SHOULDER, c: LM.LEFT_ELBOW,        threshA: 40,  labelA: 'DOWN',     threshB: 65,  labelB: 'RAISED',   reversed: true  },
+  'mini squats':            { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 165, labelA: 'STANDING', threshB: 155, labelB: 'SQUAT',    reversed: false },
+  'hold and balance':       { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 165, labelA: 'STANDING', threshB: 158, labelB: 'LIFTED',   reversed: false },
+  'standing balance hold':  { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 165, labelA: 'STANDING', threshB: 158, labelB: 'HOLDING',  reversed: false },
 }
 
 // ── Camera tips per exercise ──
@@ -340,12 +340,12 @@ onBeforeUnmount(() => {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           {{ timerDisplay }}
         </span>
-        <button class="session-interactive-btn" @click="startInteractiveMode" v-if="!interactiveMode">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-          Interactive Mode
-        </button>
-        <button class="session-interactive-btn session-interactive-exit" @click="stopInteractiveMode" v-else>
-          🖼 Alternative Mode
+        <button
+          class="session-interactive-btn"
+          :class="{ 'session-interactive-exit': interactiveMode }"
+          @click="interactiveMode ? stopInteractiveMode() : startInteractiveMode()"
+        >
+          {{ interactiveMode ? 'Alternative Mode' : 'Interactive Mode' }}
         </button>
         <button class="session-close" @click="handleClose">✕</button>
       </div>
@@ -450,7 +450,7 @@ onBeforeUnmount(() => {
   transition: background 0.2s; white-space: nowrap;
 }
 .session-interactive-btn:hover { background: #0f3d35; }
-.session-interactive-exit { background: #7a3a2a; margin-left: 0; }
+.session-interactive-exit { background: #7a3a2a; }
 .session-interactive-exit:hover { background: #5a2a1a; }
 .session-close {
   background: none; border: none; font-size: 18px;

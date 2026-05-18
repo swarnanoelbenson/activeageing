@@ -28,11 +28,21 @@
             <!-- Did You Know Button -->
             <button class="dyk-btn" @click="openDidYouKnow">💡 Did You Know?</button>
           </div>
+          <button class="btn-interactive-toggle" @click="showInteractive = !showInteractive">
+            {{ showInteractive ? 'Alternative Mode' : 'Interactive Mode' }}
+          </button>
         </div>
 
-        <!-- Row 2: pose estimation -->
+        <!-- Row 2: Step guide OR pose estimation -->
+        <div v-if="!showInteractive" class="steps-grid">
+          <div class="step-card" v-for="(step, i) in currentSteps" :key="i">
+            <div class="step-subtitle">{{ step.subtitle }}</div>
+            <img :src="step.image" :alt="step.subtitle" class="step-image" />
+            <p class="step-desc">{{ step.description }}</p>
+          </div>
+        </div>
         <ExerciseSessionModal
-          v-if="sessionExercise"
+          v-else-if="sessionExercise"
           :exercise="sessionExercise"
           inline
         />
@@ -45,16 +55,7 @@
           <button class="btn-primary" @click="nextExercise">
             {{ isLastExercise ? 'Finish Session →' : 'Next Exercise →' }}
           </button>
-          <button class="btn-pause" @click="showPauseModal = true">⏸ Pause</button>
-        </div>
-
-        <!-- Row 4: Step guide -->
-        <div class="steps-grid">
-          <div class="step-card" v-for="(step, i) in currentSteps" :key="i">
-            <div class="step-subtitle">{{ step.subtitle }}</div>
-            <img :src="step.image" :alt="step.subtitle" class="step-image" />
-            <p class="step-desc">{{ step.description }}</p>
-          </div>
+          <button class="btn-pause" @click="pauseSession">⏸ Pause</button>
         </div>
 
       </div>
@@ -110,7 +111,7 @@
           Ready to jump back in, or are you calling today a win?
         </p>
         <div class="modal-actions">
-          <button class="modal-btn-secondary" @click="showPauseModal = false">Back</button>
+          <button class="modal-btn-secondary" @click="showPauseModal = false; resumeTimer()">Resume</button>
           <button class="modal-btn-primary" @click="finishSession">Finish Session</button>
         </div>
       </div>
@@ -170,7 +171,8 @@ const currentIndex = ref(0)
 const exercises = ref([])
 const exercisesCompleted = ref(0)
 const sessionDone = ref(false)
-const showPauseModal = ref(false)
+const showPauseModal   = ref(false)
+const showInteractive  = ref(false)
 
 const timerSeconds = ref(0)
 let timerInterval = null
@@ -311,6 +313,19 @@ function startTimer() {
   }, 1000)
 }
 
+function pauseSession() {
+  clearInterval(timerInterval)
+  timerInterval = null
+  showPauseModal.value = true
+}
+
+function resumeTimer() {
+  if (timerInterval) return
+  timerInterval = setInterval(() => {
+    if (timerSeconds.value > 0) timerSeconds.value--
+  }, 1000)
+}
+
 const timerDisplay = computed(() => {
   const m = Math.floor(timerSeconds.value / 60)
   const s = timerSeconds.value % 60
@@ -437,7 +452,7 @@ function goToResults() {
 }
 
 watch(currentIndex, () => {
-
+  showInteractive.value = false
   startTimer()
 })
 
@@ -571,19 +586,39 @@ onMounted(() => {
 
 /* Did You Know button */
 .dyk-btn {
-  padding: 10px 16px;
-  background: #e8f5f3;
-  color: #0b5d57;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #0b5d57;
+  color: white;
   border: 1.5px solid #0b5d57;
   border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 20px;
   font-family: 'Poppins', sans-serif;
-  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
   white-space: nowrap;
 }
-.dyk-btn:hover { background: #0b5d57; color: white; }
+.dyk-btn:hover { background: #0f3d35; border-color: #0f3d35; }
+
+.btn-interactive-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #0b5d57;
+  color: white;
+  border: 1.5px solid #0b5d57;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 20px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-left: auto;
+}
+.btn-interactive-toggle:hover { background: #0f3d35; border-color: #0f3d35; }
 
 /* Interactive Mode button */
 .btn-interactive {
@@ -761,7 +796,7 @@ onMounted(() => {
   .exercise-title { font-size: 24px; }
   .steps-grid { flex-direction: column; padding: 20px; gap: 16px; }
   .btn-interactive { font-size: 13px; padding: 8px 12px; }
-  .dyk-btn { font-size: 14px; padding: 8px 12px; }
+  .dyk-btn, .btn-interactive-toggle { font-size: 14px; padding: 8px 12px; }
   .step-subtitle { font-size: 20px; }
   .card-body { flex-direction: column; }
   .card-gif { width: 100%; border-right: none; border-bottom: 1px solid #e0dbd2; padding: 20px; }
