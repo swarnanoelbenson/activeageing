@@ -840,11 +840,21 @@ onMounted(async () => {
   .cards { grid-template-columns: repeat(2, 1fr); }
   .show-me-row { flex-direction: column; align-items: flex-start; gap: 10px; }
   .tab-group { flex-wrap: wrap; }
-  .filters-bar { gap: 14px; }
+  .filters-bar { flex-direction: column; gap: 12px; }
+  .filter-group { min-width: 100%; }
+  .sort-group { width: 100%; }
+  .sort-select { width: 100%; }
+  .no-snapshot { padding: 40px 20px; }
+  .pagination { flex-wrap: wrap; gap: 4px; margin: 20px 0 4px; }
+  .page-btn { min-width: 36px; height: 36px; font-size: 14px; }
 }
 
 @media (max-width: 480px) {
   .cards { grid-template-columns: 1fr; }
   .tab-btn { font-size: 14px; padding: 9px 16px; }
+  .hero h1 { font-size: 22px; }
+  .desc { font-size: 14px; }
+  .card-content h2 { font-size: 15px; }
+  .snapshot-btn { width: 100%; }
 }
 </style>

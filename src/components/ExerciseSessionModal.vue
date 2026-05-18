@@ -603,9 +603,48 @@ onBeforeUnmount(() => {
 }
 .session-close-btn:hover { background: #0f3d35; }
 
-@media (max-width: 600px) {
-  .session-steps { flex-direction: column; padding: 16px; }
-  .session-header { padding: 16px; }
+@media (max-width: 768px) {
+  /* Modal: slide up from bottom, full width */
+  .session-overlay { padding: 0; align-items: flex-end; }
+  .session-modal { max-width: 100%; border-radius: 20px 20px 0 0; max-height: 95vh; }
+
+  /* Stack video and tips vertically, drop absolute positioning */
+  .webcam-with-tips,
+  .webcam-with-tips:not(.webcam-with-tips--inline),
+  .webcam-with-tips--inline {
+    flex-direction: column;
+    padding-right: 0 !important;
+    justify-content: flex-start;
+  }
+
+  .session-webcam-container { max-width: 100%; }
+
+  .exercise-tips-panel,
+  .exercise-tips-panel--inline {
+    position: static !important;
+    width: 100% !important;
+    border-radius: 12px;
+    margin-top: 12px;
+  }
+
+  /* Horizontal scrollable tips on narrow screens */
+  .tips-list { gap: 8px; }
+
+  .session-webcam-view { padding: 14px 16px; }
+  .session-header { padding: 16px; flex-wrap: wrap; }
+  .session-title { font-size: 18px; }
   .session-footer { padding: 12px 16px 20px; }
+  .session-steps { flex-direction: column; padding: 16px; }
+}
+
+@media (max-width: 480px) {
+  .session-header { padding: 12px 14px; gap: 8px; }
+  .session-title { font-size: 16px; }
+  .session-webcam-view { padding: 10px 12px; }
+  .tips-section-title { font-size: 12px; }
+  .tips-angle { font-size: 14px; }
+  .tips-list li { font-size: 12px; }
+  .tips-clothing-text { font-size: 12px; }
+  .session-interactive-btn { font-size: 12px; padding: 7px 10px; }
 }
 </style>
