@@ -115,7 +115,7 @@
               <span class="action-btn-label">Guided Exercise Session</span>
               <span class="action-btn-arrow">→</span>
             </div>
-            <div class="action-btn action-btn-light" @click="router.push('/events')">
+            <div class="action-btn action-btn-light" @click="router.push('/events?tab=personalized')">
               <span class="action-btn-icon">📅</span>
               <span class="action-btn-label action-btn-label-dark">Explore Events</span>
               <span class="action-btn-arrow action-btn-arrow-dark">→</span>

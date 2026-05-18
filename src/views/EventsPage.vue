@@ -1,10 +1,11 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import fallbackImg from '../assets/myphoto.png'
 import AppNavbar from '../components/AppNavbar.vue'
 
 const router = useRouter()
+const route  = useRoute()
 const imgFallback = fallbackImg
 
 const events   = ref([])
@@ -12,13 +13,12 @@ const loading  = ref(true)
 const apiError = ref(false)
 
 // Tab state: 'personalized' | 'browse'
-const activeTab = ref('browse')
+const activeTab = ref(route.query.tab === 'personalized' ? 'personalized' : 'browse')
 
 const hasSnapshot = computed(() => !!localStorage.getItem('surveyResult'))
 
 // Filter state
 const searchKeyword = ref('')
-const filterActivity = ref('')
 const filterDifficulty = ref('')
 
 // Sort
@@ -28,8 +28,28 @@ const sortOption = ref('date-asc')
 const PAGE_SIZE = 9
 const currentPage = ref(1)
 
-// Personalized events: just show the first 3 as "recommended"
-const personalizedEvents = computed(() => events.value.slice(0, 3))
+const CATEGORY_TO_DIFFICULTY = {
+  'Just Getting Started': 'Easy',
+  'Building Momentum':    'Medium',
+  'Thriving':             'Hard',
+}
+
+const userDifficulty = computed(() => {
+  try {
+    const result = JSON.parse(localStorage.getItem('surveyResult') ?? 'null')
+    return CATEGORY_TO_DIFFICULTY[result?.categoryName] ?? null
+  } catch {
+    return null
+  }
+})
+
+// Personalized events: earliest events matching the user's difficulty level
+const personalizedEvents = computed(() => {
+  if (!userDifficulty.value) return []
+  return events.value
+    .filter(e => e.difficulty === userDifficulty.value)
+    .slice(0, 3)
+})
 
 // Browse all events with filters applied (no page cap)
 const filteredEvents = computed(() => {
@@ -42,15 +62,8 @@ const filteredEvents = computed(() => {
       e.location?.toLowerCase().includes(kw)
     )
   }
-  if (filterActivity.value) {
-    list = list.filter(e =>
-      e.activity_type?.toLowerCase() === filterActivity.value.toLowerCase()
-    )
-  }
   if (filterDifficulty.value) {
-    list = list.filter(e =>
-      e.difficulty?.toLowerCase() === filterDifficulty.value.toLowerCase()
-    )
+    list = list.filter(e => e.difficulty === filterDifficulty.value)
   }
   list.sort((a, b) => {
     const da = new Date(a.time), db = new Date(b.time)
@@ -71,7 +84,7 @@ const pagedEvents = computed(() => {
 })
 
 // Reset to page 1 when filters change
-watch([searchKeyword, filterActivity, filterDifficulty, sortOption], () => { currentPage.value = 1 })
+watch([searchKeyword, filterDifficulty, sortOption], () => { currentPage.value = 1 })
 
 const fallbackEvents = [
   {
@@ -79,8 +92,7 @@ const fallbackEvents = [
     desc: 'A relaxed stroll through scenic parks and gardens',
     time: 'Mon, 10:00 AM',
     location: 'Green Park',
-    activity_type: 'Walking',
-    difficulty: 'Easy',
+    difficulty: 'Medium',
     interested: 12,
     img: fallbackImg, url: 'https://www.eventbrite.com.au', is_free: true,
   },
@@ -89,8 +101,7 @@ const fallbackEvents = [
     desc: 'Start your day with gentle stretches',
     time: 'Tue, 8:00 AM',
     location: 'Wellness Studio',
-    activity_type: 'Exercise',
-    difficulty: 'Easy',
+    difficulty: 'Medium',
     interested: 10,
     img: fallbackImg, url: 'https://www.eventbrite.com.au', is_free: true,
   },
@@ -99,7 +110,6 @@ const fallbackEvents = [
     desc: 'Energizing walk to start the day',
     time: 'Wed, 7:00 AM',
     location: 'Central Park',
-    activity_type: 'Walking',
     difficulty: 'Medium',
     interested: 11,
     img: fallbackImg, url: 'https://www.eventbrite.com.au', is_free: false,
@@ -109,8 +119,7 @@ const fallbackEvents = [
     desc: 'Gentle movements for balance and calm',
     time: 'Wed, 9:00 AM',
     location: 'Community Center',
-    activity_type: 'Exercise',
-    difficulty: 'Easy',
+    difficulty: null,
     interested: 8,
     img: fallbackImg, url: 'https://www.eventbrite.com.au', is_free: true,
   },
@@ -119,8 +128,7 @@ const fallbackEvents = [
     desc: 'A friendly circle to share patterns and stories',
     time: 'Fri, 2:00 PM',
     location: 'City Library',
-    activity_type: 'Social',
-    difficulty: 'Easy',
+    difficulty: null,
     interested: 15,
     img: fallbackImg, url: 'https://www.eventbrite.com.au', is_free: true,
   },
@@ -129,7 +137,6 @@ const fallbackEvents = [
     desc: 'Explore beautiful trails with a group',
     time: 'Thu, 10:30 AM',
     location: 'Riverside Trail',
-    activity_type: 'Walking',
     difficulty: 'Medium',
     interested: 14,
     img: fallbackImg, url: 'https://www.eventbrite.com.au', is_free: false,
@@ -139,8 +146,7 @@ const fallbackEvents = [
     desc: 'Meet new friends over morning coffee',
     time: 'Sat, 10:00 AM',
     location: 'Brook Cafe',
-    activity_type: 'Social',
-    difficulty: 'Easy',
+    difficulty: null,
     interested: 20,
     img: fallbackImg, url: 'https://www.eventbrite.com.au', is_free: false,
   },
@@ -149,8 +155,7 @@ const fallbackEvents = [
     desc: 'Gentle yoga exercises done from a chair',
     time: 'Mon, 2:00 PM',
     location: 'Senior Center',
-    activity_type: 'Exercise',
-    difficulty: 'Easy',
+    difficulty: 'Medium',
     interested: 9,
     img: fallbackImg, url: 'https://www.eventbrite.com.au', is_free: true,
   },
@@ -159,19 +164,18 @@ const fallbackEvents = [
     desc: "Discuss this month's selected book",
     time: 'Fri, 3:00 PM',
     location: 'Public Library',
-    activity_type: 'Social',
-    difficulty: 'Easy',
+    difficulty: null,
     interested: 16,
     img: fallbackImg, url: 'https://www.eventbrite.com.au', is_free: true,
   },
 ]
 
 const difficultyBadgeClass = (difficulty) => {
-  if (!difficulty) return ''
-  const d = difficulty.toLowerCase()
+  const d = (difficulty ?? '').toLowerCase()
   if (d === 'easy') return 'badge-easy'
   if (d === 'medium') return 'badge-medium'
-  return 'badge-hard'
+  if (d === 'hard') return 'badge-hard'
+  return ''
 }
 
 onMounted(async () => {
@@ -251,21 +255,12 @@ onMounted(async () => {
           />
         </div>
         <div class="filter-group">
-          <label>Activity type</label>
-          <select v-model="filterActivity" class="filter-select">
-            <option value="">All</option>
-            <option value="Walking">Walking</option>
-            <option value="Exercise">Exercise</option>
-            <option value="Social">Social</option>
-          </select>
-        </div>
-        <div class="filter-group">
           <label>Difficulty</label>
           <select v-model="filterDifficulty" class="filter-select">
             <option value="">All</option>
-            <option value="Easy">Easy</option>
-            <option value="Medium">Medium</option>
-            <option value="Hard">Hard</option>
+            <option value="Easy">Easy (Just Getting Started)</option>
+            <option value="Medium">Medium (Building Momentum)</option>
+            <option value="Hard">Hard (Thriving)</option>
           </select>
         </div>
       </div>

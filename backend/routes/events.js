@@ -99,20 +99,43 @@ router.get("/organiser", async (req, res) => {
 const MELBOURNE_ORGANISER_IDS = [
   "76900127983",  // Aged & Disability Expo
   "27859048737",  // Carers Victoria - Events
+  "77352683853",  // Over60 programs
 ];
 
+// Organisers where only events matching a title substring are included
+const ORGANISER_TITLE_FILTERS = {
+  "77352683853": "60",  // Over60 programs — only events with "60" in title
+};
+
+const DIFFICULTY_KEYWORDS = {
+  Easy:   ["tea", "lunch", "breakfast", "brekkie", "brunch", "dinner", "food"],
+  Medium: ["walk", "yoga"],
+  Hard:   ["dance", "run", "jog"],
+};
+
+function classifyDifficulty(title, desc) {
+  const text = `${title} ${desc}`.toLowerCase();
+  for (const [level, keywords] of Object.entries(DIFFICULTY_KEYWORDS)) {
+    if (keywords.some((kw) => text.includes(kw))) return level;
+  }
+  return null;
+}
+
 function mapEvent(e) {
+  const title = e.name?.text ?? "Untitled Event";
+  const desc  = (e.description?.text ?? "").slice(0, 150);
   return {
-    id:       e.id,
-    title:    e.name?.text ?? "Untitled Event",
-    desc:     (e.description?.text ?? "").slice(0, 150),
-    url:      e.url,
-    time:     e.start?.local
+    id:         e.id,
+    title,
+    desc,
+    url:        e.url,
+    time:       e.start?.local
       ? new Date(e.start.local).toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" })
       : "Date TBC",
-    location: e.venue?.address?.localized_address_display ?? e.venue?.name ?? "Melbourne",
-    img:      e.logo?.url ?? null,
-    is_free:  e.is_free,
+    location:   e.venue?.address?.localized_address_display ?? e.venue?.name ?? "Melbourne",
+    img:        e.logo?.url ?? null,
+    is_free:    e.is_free,
+    difficulty: classifyDifficulty(title, desc),
   };
 }
 
@@ -148,8 +171,16 @@ router.get("/", async (req, res) => {
     results.forEach((r, i) => {
       if (r.status === "fulfilled") {
         const { status, data } = r.value;
-        console.log(`[events] organiser ${MELBOURNE_ORGANISER_IDS[i]} → status ${status}, events: ${data.events?.length ?? 0}`);
-        if (data.events) allEvents.push(...data.events);
+        const organiserId = MELBOURNE_ORGANISER_IDS[i];
+        const titleFilter = ORGANISER_TITLE_FILTERS[organiserId];
+        let organiserEvents = data.events ?? [];
+        if (titleFilter) {
+          organiserEvents = organiserEvents.filter((e) =>
+            (e.name?.text ?? "").toLowerCase().includes(titleFilter.toLowerCase())
+          );
+        }
+        console.log(`[events] organiser ${organiserId} → status ${status}, events: ${organiserEvents.length}`);
+        allEvents.push(...organiserEvents);
       } else {
         console.error(`[events] organiser ${MELBOURNE_ORGANISER_IDS[i]} failed:`, r.reason?.message);
       }

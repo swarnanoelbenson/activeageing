@@ -57,6 +57,93 @@ const EXERCISE_POSE_CONFIG = {
   'standing balance hold':  { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 165, labelA: 'STANDING', threshB: 145, labelB: 'HOLDING',  reversed: false },
 }
 
+// ── Camera tips per exercise ──
+const EXERCISE_TIPS = {
+  'seated forward lean': {
+    angle: 'Left side profile',
+    instructions: [
+      'Sit sideways so your left side faces the camera',
+      'Ensure your shoulder, hip and knee are all visible',
+      'Keep your back straight at the start position',
+      'Camera should be at seat height',
+    ],
+  },
+  'seated chest stretch': {
+    angle: 'Front-facing',
+    instructions: [
+      'Face the camera directly',
+      'Both shoulders must be fully visible',
+      'Arms visible from shoulder to elbow',
+      'Sit about 1.5–2 m from the camera',
+    ],
+  },
+  'seated knee extensions': {
+    angle: 'Left side profile',
+    instructions: [
+      'Sit sideways so your left side faces the camera',
+      'Ensure your hip, knee and ankle are all visible',
+      'Camera should be at seat height',
+      'Keep your thigh still throughout the movement',
+    ],
+  },
+  'brisk walking': {
+    angle: 'Left side profile',
+    instructions: [
+      'Walk parallel to the camera — do not walk toward it',
+      'Keep your left side facing the camera',
+      'Ensure your full leg (hip to ankle) stays in frame',
+      'Camera should be at hip height',
+    ],
+  },
+  'sit-to-stand': {
+    angle: 'Left side profile',
+    instructions: [
+      'Position the chair sideways so your left side faces the camera',
+      'Ensure hip, knee and ankle are visible throughout',
+      'Camera should be at seat height',
+      'Make sure you have clear space to stand fully upright',
+    ],
+  },
+  'arm raises': {
+    angle: 'Front-facing',
+    instructions: [
+      'Face the camera directly',
+      'Arms must be fully visible from shoulder to elbow',
+      'Stand about 1.5–2 m from the camera',
+      'Camera should be at waist/hip height',
+    ],
+  },
+  'mini squats': {
+    angle: 'Left side profile',
+    instructions: [
+      'Stand sideways so your left side faces the camera',
+      'Feet shoulder-width apart',
+      'Ensure your full leg (hip to ankle) is visible',
+      'Camera should be at hip height',
+    ],
+  },
+  'hold and balance': {
+    angle: 'Front-facing',
+    instructions: [
+      'Face the camera directly',
+      'Ensure both legs are fully visible',
+      'Stand about 1.5–2 m from the camera',
+      'Camera should be at waist/hip height',
+    ],
+  },
+  'standing balance hold': {
+    angle: 'Front-facing',
+    instructions: [
+      'Face the camera directly',
+      'Ensure both legs are fully visible',
+      'Stand about 1.5–2 m from the camera',
+      'Camera should be at waist/hip height',
+    ],
+  },
+}
+
+const currentTips = computed(() => EXERCISE_TIPS[props.exercise.name.toLowerCase()] ?? null)
+
 // ── MediaPipe ──
 const interactiveMode = ref(false)
 const poseLoading     = ref(false)
@@ -201,22 +288,41 @@ onBeforeUnmount(() => {
       <button class="session-interactive-btn" @click="startInteractiveMode">Retry</button>
     </div>
     <div v-else class="session-webcam-view">
-      <div class="session-webcam-container">
-        <div class="session-webcam-wrap">
-          <video ref="videoEl" class="session-webcam-video" autoplay playsinline muted></video>
-          <canvas ref="canvasEl" class="session-webcam-canvas"></canvas>
-          <div v-if="poseLoading" class="session-webcam-loading">
-            <div class="session-webcam-spinner"></div>
-            <span>Loading pose model…</span>
+      <div class="webcam-with-tips">
+        <div class="session-webcam-container">
+          <div class="session-webcam-wrap">
+            <video ref="videoEl" class="session-webcam-video" autoplay playsinline muted></video>
+            <canvas ref="canvasEl" class="session-webcam-canvas"></canvas>
+            <div v-if="poseLoading" class="session-webcam-loading">
+              <div class="session-webcam-spinner"></div>
+              <span>Loading pose model…</span>
+            </div>
+          </div>
+          <div class="pose-counter" v-if="!poseLoading">
+            <div class="pose-overlay-label">REPS</div>
+            <div class="pose-overlay-value">{{ repCount }}</div>
+          </div>
+          <div class="pose-stage" v-if="!poseLoading">
+            <div class="pose-overlay-label">STAGE</div>
+            <div class="pose-overlay-value">{{ poseStage ?? '—' }}</div>
           </div>
         </div>
-        <div class="pose-counter" v-if="!poseLoading">
-          <div class="pose-overlay-label">REPS</div>
-          <div class="pose-overlay-value">{{ repCount }}</div>
-        </div>
-        <div class="pose-stage" v-if="!poseLoading">
-          <div class="pose-overlay-label">STAGE</div>
-          <div class="pose-overlay-value">{{ poseStage ?? '—' }}</div>
+
+        <div v-if="currentTips" class="exercise-tips-panel">
+          <div class="tips-section">
+            <div class="tips-section-title">Angle</div>
+            <p class="tips-angle">{{ currentTips.angle }}</p>
+          </div>
+          <div class="tips-section">
+            <div class="tips-section-title">Instructions</div>
+            <ul class="tips-list">
+              <li v-for="(tip, i) in currentTips.instructions" :key="i">{{ tip }}</li>
+            </ul>
+          </div>
+          <div class="tips-section tips-clothing">
+            <div class="tips-section-title">Best Results</div>
+            <p class="tips-clothing-text">Wear fitted clothing in a colour that contrasts with your background — e.g. dark top against a light wall — for the most accurate pose detection.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -350,8 +456,70 @@ onBeforeUnmount(() => {
 .session-step-desc { font-size: 13px; line-height: 1.55; color: #4a4a4a; padding: 10px 12px; margin: 0; }
 
 /* Webcam */
-.session-webcam-view { padding: 20px 28px; display: flex; justify-content: center; }
-.session-webcam-container { position: relative; width: 100%; max-width: 640px; }
+.session-webcam-view { padding: 20px 28px; }
+.webcam-with-tips {
+  position: relative;
+  display: flex;
+  justify-content: left;
+  padding-right: 240px;
+}
+.session-webcam-container { position: relative; width: 100%; max-width: 600px; }
+
+/* Tips panel — pinned to the right edge, no overlap with video */
+.exercise-tips-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 500px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.tips-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0b5d57;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 7px;
+}
+.tips-angle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0;
+  background: #e8f4f3;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+.tips-list {
+  margin: 0;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tips-list li {
+  font-size: 15px;
+  color: #444;
+  line-height: 1.5;
+}
+.tips-clothing-text {
+  font-size: 15px;
+  color: #444;
+  line-height: 1.55;
+  margin: 0;
+  background: #fff8e8;
+  border-left: 3px solid #e0a020;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
 .session-webcam-wrap {
   position: relative; width: 100%; border-radius: 12px;
   overflow: hidden; background: #000; aspect-ratio: 4/3;
