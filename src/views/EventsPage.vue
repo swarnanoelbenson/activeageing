@@ -275,6 +275,13 @@ onMounted(async () => {
             <option value="Hard">Hard (Thriving)</option>
           </select>
         </div>
+        <button
+          class="filter-clear-btn"
+          :disabled="!searchKeyword && !filterDifficulty"
+          @click="searchKeyword = ''; filterDifficulty = ''"
+        >
+          Clear
+        </button>
       </div>
 
       <!-- Loading -->
@@ -600,6 +607,23 @@ onMounted(async () => {
   outline: none;
   transition: border-color 0.2s;
 }
+
+.filter-clear-btn {
+  align-self: flex-end;
+  padding: 6px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #dc2626;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.filter-clear-btn:not(:disabled):hover { background: #b91c1c; }
+.filter-clear-btn:disabled { opacity: 0.4; cursor: default; }
 
 .filter-input::placeholder { color: #aaa; }
 
