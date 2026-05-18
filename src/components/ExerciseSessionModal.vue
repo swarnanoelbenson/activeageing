@@ -270,6 +270,7 @@ watch(() => props.exercise, () => {
     nextTick(() => startInteractiveMode())
   } else {
     startTimer()
+    nextTick(() => startInteractiveMode())
   }
 }, { immediate: true })
 
@@ -288,7 +289,7 @@ onBeforeUnmount(() => {
       <button class="session-interactive-btn" @click="startInteractiveMode">Retry</button>
     </div>
     <div v-else class="session-webcam-view">
-      <div class="webcam-with-tips">
+      <div class="webcam-with-tips webcam-with-tips--inline">
         <div class="session-webcam-container">
           <div class="session-webcam-wrap">
             <video ref="videoEl" class="session-webcam-video" autoplay playsinline muted></video>
@@ -308,7 +309,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
-        <div v-if="currentTips" class="exercise-tips-panel">
+        <div v-if="currentTips" class="exercise-tips-panel exercise-tips-panel--inline">
           <div class="tips-section">
             <div class="tips-section-title">Angle</div>
             <p class="tips-angle">{{ currentTips.angle }}</p>
@@ -344,7 +345,7 @@ onBeforeUnmount(() => {
           Interactive Mode
         </button>
         <button class="session-interactive-btn session-interactive-exit" @click="stopInteractiveMode" v-else>
-          ✕ Exit Camera
+          🖼 Alternative Mode
         </button>
         <button class="session-close" @click="handleClose">✕</button>
       </div>
@@ -365,22 +366,40 @@ onBeforeUnmount(() => {
           <p>{{ cameraError }}</p>
           <button class="session-interactive-btn" @click="stopInteractiveMode">Go back</button>
         </div>
-        <div v-else class="session-webcam-container">
-          <div class="session-webcam-wrap">
-            <video ref="videoEl" class="session-webcam-video" autoplay playsinline muted></video>
-            <canvas ref="canvasEl" class="session-webcam-canvas"></canvas>
-            <div v-if="poseLoading" class="session-webcam-loading">
-              <div class="session-webcam-spinner"></div>
-              <span>Loading pose model…</span>
+        <div v-else class="webcam-with-tips">
+          <div class="session-webcam-container">
+            <div class="session-webcam-wrap">
+              <video ref="videoEl" class="session-webcam-video" autoplay playsinline muted></video>
+              <canvas ref="canvasEl" class="session-webcam-canvas"></canvas>
+              <div v-if="poseLoading" class="session-webcam-loading">
+                <div class="session-webcam-spinner"></div>
+                <span>Loading pose model…</span>
+              </div>
+            </div>
+            <div class="pose-counter" v-if="!poseLoading">
+              <div class="pose-overlay-label">REPS</div>
+              <div class="pose-overlay-value">{{ repCount }}</div>
+            </div>
+            <div class="pose-stage" v-if="!poseLoading">
+              <div class="pose-overlay-label">STAGE</div>
+              <div class="pose-overlay-value">{{ poseStage ?? '—' }}</div>
             </div>
           </div>
-          <div class="pose-counter" v-if="!poseLoading">
-            <div class="pose-overlay-label">REPS</div>
-            <div class="pose-overlay-value">{{ repCount }}</div>
-          </div>
-          <div class="pose-stage" v-if="!poseLoading">
-            <div class="pose-overlay-label">STAGE</div>
-            <div class="pose-overlay-value">{{ poseStage ?? '—' }}</div>
+          <div v-if="currentTips" class="exercise-tips-panel">
+            <div class="tips-section">
+              <div class="tips-section-title">📐 Angle</div>
+              <p class="tips-angle">{{ currentTips.angle }}</p>
+            </div>
+            <div class="tips-section">
+              <div class="tips-section-title">📋 Instructions</div>
+              <ul class="tips-list">
+                <li v-for="(tip, i) in currentTips.instructions.slice(0, 3)" :key="i">{{ tip }}</li>
+              </ul>
+            </div>
+            <div class="tips-section">
+              <div class="tips-section-title">👕 Best Results</div>
+              <p class="tips-clothing-text">Wear fitted clothing in a colour that contrasts with your background for the most accurate pose detection.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -403,7 +422,7 @@ onBeforeUnmount(() => {
 }
 .session-modal {
   background: #ede9e1; border-radius: 20px;
-  width: 100%; max-width: 860px; max-height: 90vh;
+  width: 100%; max-width: 960px; max-height: 90vh;
   overflow-y: auto; display: flex; flex-direction: column;
   box-shadow: 0 24px 64px rgba(0,0,0,0.25);
   font-family: 'Poppins', sans-serif;
@@ -457,13 +476,21 @@ onBeforeUnmount(() => {
 
 /* Webcam */
 .session-webcam-view { padding: 20px 28px; }
+
+/* Shared wrapper */
 .webcam-with-tips {
   position: relative;
   display: flex;
-  justify-content: left;
-  padding-right: 240px;
+  justify-content: center;
 }
-.session-webcam-container { position: relative; width: 100%; max-width: 600px; }
+
+/* Modal: 280px panel → reserve 296px on the right, video aligned left */
+.webcam-with-tips:not(.webcam-with-tips--inline) { padding-right: 296px; justify-content: flex-start; }
+
+/* Inline (ExerciseSession): 500px panel → reserve 516px on the right */
+.webcam-with-tips--inline { padding-right: 516px; }
+
+.session-webcam-container { position: relative; width: 100%; max-width: 560px; }
 
 /* Tips panel — pinned to the right edge, no overlap with video */
 .exercise-tips-panel {
@@ -471,7 +498,6 @@ onBeforeUnmount(() => {
   right: 0;
   top: 0;
   bottom: 0;
-  width: 500px;
   background: #fff;
   border-radius: 14px;
   padding: 18px 16px;
@@ -480,7 +506,11 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 300px; /* modal default */
 }
+
+/* Inline: wider panel */
+.exercise-tips-panel--inline { width: 500px; }
 .tips-section-title {
   font-size: 15px;
   font-weight: 700;
