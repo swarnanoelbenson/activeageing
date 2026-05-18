@@ -858,6 +858,9 @@ onBeforeUnmount(() => {
           </button>
         </div>
         <p v-if="codeError" class="code-entry-error">{{ codeError }}</p>
+        <p class="code-entry-hint">
+          Don't have a code yet? Select a route below, then use <strong>Schedule &amp; Invite</strong> to generate a code and share it with your group.
+        </p>
       </div>
 
       <!-- Loading -->
@@ -1218,6 +1221,7 @@ h1 { font-size: 42px; color: #0b5d57; }
 .code-entry-btn:hover:not(:disabled) { background: #084a45; }
 .code-entry-btn:disabled { opacity: 0.55; cursor: default; }
 .code-entry-error { margin: 8px 0 0; font-size: 20px; color: #c0392b; }
+.code-entry-hint { margin: 10px 0 0; font-size: 20px; color: #666; line-height: 1.6; }
 
 /* Loading / error */
 .status-box {
@@ -1262,7 +1266,7 @@ h1 { font-size: 42px; color: #0b5d57; }
   display: inline-block; padding: 5px 10px; border-radius: 10px; font-size: 20px;
 }
 
-.meta { color: #0b5d57; margin-bottom: 20px; }
+.meta { color: #0b5d57; margin-bottom: 20px; font-size: 20px;}
 .info p { font-size: 20px; color: #555; }
 
 .btn {

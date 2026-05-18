@@ -378,19 +378,6 @@ onMounted(async () => {
 
 
 
-      <!-- PRIVATE EVENT CODE ENTRY -->
-      <section class="private-event-section">
-        <div class="private-event-box">
-          <div class="private-event-top">
-            <span class="private-event-label">Have an event code?</span>
-            <button class="private-event-btn" @click="router.push('/planner')">Open Plan Route →</button>
-          </div>
-          <p class="private-event-hint">
-            You can create a private activity to share with friends — go to <strong>Plan Route</strong>, select a route, then generate a code and share it with your group.
-          </p>
-        </div>
-      </section>
-
       <!-- FOOTER -->
       <footer class="footer">
         <h3>ActiveAgeing</h3>
@@ -751,48 +738,6 @@ onMounted(async () => {
 }
 
 .cta-btn.big:hover { background: #8b2d08; }
-
-/* PRIVATE EVENT SECTION */
-.private-event-section {
-  padding: 0 0 32px;
-}
-.private-event-box {
-  background: #f0f7f6;
-  border: 1.5px solid #c2dbd8;
-  border-radius: 14px;
-  padding: 20px 24px;
-}
-.private-event-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-.private-event-label {
-  font-size: 18px;
-  font-weight: 700;
-  color: #0f3d35;
-}
-.private-event-btn {
-  background: #0b5d57;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 9px 18px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.private-event-btn:hover { background: #0f3d35; }
-.private-event-hint {
-  margin: 10px 0 0;
-  font-size: 14px;
-  color: #555;
-  line-height: 1.6;
-}
 
 /* FOOTER */
 .footer {

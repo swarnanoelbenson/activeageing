@@ -157,10 +157,28 @@
       </div>
     </footer>
   </div>
+
+  <!-- Page Tour -->
+  <Teleport to="body">
+    <div v-if="tourActive" class="tour-overlay">
+      <div class="tour-spotlight" :style="spotlightStyle"></div>
+      <div class="tour-tooltip" :style="tooltipStyle">
+        <div class="tour-step-num">{{ tourStep + 1 }} / {{ TOUR_STEPS.length }}</div>
+        <h3 class="tour-title">{{ TOUR_STEPS[tourStep].title }}</h3>
+        <p class="tour-desc">{{ TOUR_STEPS[tourStep].desc }}</p>
+        <div class="tour-actions">
+          <button class="tour-skip" @click="endTour">Skip tour</button>
+          <button class="tour-next" @click="nextTourStep">
+            {{ tourStep < TOUR_STEPS.length - 1 ? 'Next →' : 'Get Started!' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
 import ExerciseSessionModal from '../components/ExerciseSessionModal.vue'
@@ -461,6 +479,71 @@ onBeforeUnmount(() => {
 
 })
 
+// ── Page Tour ─────────────────────────────────────────────
+const TOUR_STEPS = [
+  { selector: '.steps-grid',           position: 'bottom', title: 'Step-by-Step Guide',    desc: 'Each exercise comes with 3 illustrated steps. Follow along at your own pace.' },
+  { selector: '.tag',                  position: 'bottom', title: 'Exercise Timer',         desc: 'This counts down your exercise time. Try to keep moving until it reaches zero!' },
+  { selector: '.dyk-btn',             position: 'bottom', title: 'Did You Know?',           desc: 'Tap this for a science-backed health fact about the current exercise.' },
+  { selector: '.btn-interactive-toggle', position: 'bottom', title: 'Interactive Mode',    desc: 'Switch to live pose estimation — your camera will automatically count your reps as you move!' },
+  { selector: '.card-footer',          position: 'top',    title: 'Session Controls',       desc: 'Move to the next or previous exercise, or pause the session whenever you need a break.' },
+]
+
+const tourActive  = ref(false)
+const tourStep    = ref(0)
+const tourRect    = ref(null)
+
+const spotlightStyle = computed(() => {
+  if (!tourRect.value) return {}
+  const pad = 10
+  return {
+    left:   `${tourRect.value.left   - pad}px`,
+    top:    `${tourRect.value.top    - pad}px`,
+    width:  `${tourRect.value.width  + pad * 2}px`,
+    height: `${tourRect.value.height + pad * 2}px`,
+  }
+})
+
+const tooltipStyle = computed(() => {
+  if (!tourRect.value) return {}
+  const step = TOUR_STEPS[tourStep.value]
+  const pad  = 10
+  const w    = Math.min(320, window.innerWidth - 32)
+  let left   = tourRect.value.left + tourRect.value.width / 2 - w / 2
+  left = Math.max(16, Math.min(left, window.innerWidth - w - 16))
+  if (step.position === 'bottom') {
+    return { top: `${tourRect.value.bottom + pad + 14}px`, left: `${left}px`, width: `${w}px` }
+  } else {
+    return { bottom: `${window.innerHeight - tourRect.value.top + pad + 14}px`, left: `${left}px`, width: `${w}px` }
+  }
+})
+
+function updateTourRect() {
+  const step = TOUR_STEPS[tourStep.value]
+  if (!step) return
+  const el = document.querySelector(step.selector)
+  if (el) tourRect.value = el.getBoundingClientRect()
+}
+
+function startTour() {
+  tourStep.value  = 0
+  tourActive.value = true
+  nextTick(updateTourRect)
+}
+
+function nextTourStep() {
+  if (tourStep.value < TOUR_STEPS.length - 1) {
+    tourStep.value++
+    nextTick(updateTourRect)
+  } else {
+    endTour()
+  }
+}
+
+function endTour() {
+  tourActive.value = false
+  localStorage.setItem('exerciseTourSeen', '1')
+}
+
 onMounted(() => {
   setTimeout(() => { visible.value = true }, 80)
 
@@ -470,6 +553,7 @@ onMounted(() => {
     if (result.exercises && result.exercises.length > 0) {
       exercises.value = result.exercises.slice(0, 3)
       startTimer()
+      if (!localStorage.getItem('exerciseTourSeen')) setTimeout(startTour, 600)
       return
     }
   }
@@ -480,6 +564,10 @@ onMounted(() => {
     { exercise_name: 'Seated Knee Extensions', duration_minutes: 5 },
   ]
   startTimer()
+
+  if (!localStorage.getItem('exerciseTourSeen')) {
+    setTimeout(startTour, 600)
+  }
 })
 </script>
 
@@ -818,4 +906,78 @@ onMounted(() => {
   .card-gif { padding: 16px; }
   .step-cards { gap: 8px; padding: 0 16px 16px; }
 }
+
+/* ── Page Tour ── */
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  pointer-events: none;
+}
+.tour-spotlight {
+  position: fixed;
+  border-radius: 10px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.62);
+  pointer-events: none;
+  transition: left 0.3s ease, top 0.3s ease, width 0.3s ease, height 0.3s ease;
+  z-index: 9001;
+}
+.tour-tooltip {
+  position: fixed;
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 20px 22px 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+  z-index: 9002;
+  pointer-events: all;
+  transition: left 0.3s ease, top 0.3s ease, bottom 0.3s ease;
+}
+.tour-step-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0b5d57;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.tour-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f3d35;
+  margin: 0 0 8px;
+}
+.tour-desc {
+  font-size: 14px;
+  color: #444;
+  line-height: 1.55;
+  margin: 0 0 16px;
+}
+.tour-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.tour-skip {
+  background: none;
+  border: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  padding: 0;
+}
+.tour-skip:hover { color: #333; }
+.tour-next {
+  background: #0b5d57;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 18px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tour-next:hover { background: #0f3d35; }
 </style>
