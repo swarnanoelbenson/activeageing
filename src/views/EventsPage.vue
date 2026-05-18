@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import fallbackImg from '../assets/myphoto.png'
 import AppNavbar from '../components/AppNavbar.vue'
@@ -10,26 +10,30 @@ const imgFallback = fallbackImg
 const events   = ref([])
 const loading  = ref(true)
 const apiError = ref(false)
-const maxEvents = ref(12)
 
 // Tab state: 'personalized' | 'browse'
-const activeTab = ref('personalized')
+const activeTab = ref('browse')
+
+const hasSnapshot = computed(() => !!localStorage.getItem('surveyResult'))
 
 // Filter state
 const searchKeyword = ref('')
 const filterActivity = ref('')
 const filterDifficulty = ref('')
 
-const displayedEvents = computed(() =>
-  maxEvents.value === null ? events.value : events.value.slice(0, maxEvents.value)
-)
+// Sort
+const sortOption = ref('date-asc')
+
+// Pagination
+const PAGE_SIZE = 9
+const currentPage = ref(1)
 
 // Personalized events: just show the first 3 as "recommended"
 const personalizedEvents = computed(() => events.value.slice(0, 3))
 
-// Browse all events with filters applied
+// Browse all events with filters applied (no page cap)
 const filteredEvents = computed(() => {
-  let list = maxEvents.value === null ? events.value : events.value.slice(0, maxEvents.value)
+  let list = [...events.value]
   if (searchKeyword.value.trim()) {
     const kw = searchKeyword.value.toLowerCase()
     list = list.filter(e =>
@@ -48,8 +52,26 @@ const filteredEvents = computed(() => {
       e.difficulty?.toLowerCase() === filterDifficulty.value.toLowerCase()
     )
   }
+  list.sort((a, b) => {
+    const da = new Date(a.time), db = new Date(b.time)
+    const validA = !isNaN(da), validB = !isNaN(db)
+    if (!validA && !validB) return 0
+    if (!validA) return 1
+    if (!validB) return -1
+    return sortOption.value === 'date-desc' ? db - da : da - db
+  })
   return list
 })
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredEvents.value.length / PAGE_SIZE)))
+
+const pagedEvents = computed(() => {
+  const start = (currentPage.value - 1) * PAGE_SIZE
+  return filteredEvents.value.slice(start, start + PAGE_SIZE)
+})
+
+// Reset to page 1 when filters change
+watch([searchKeyword, filterActivity, filterDifficulty, sortOption], () => { currentPage.value = 1 })
 
 const fallbackEvents = [
   {
@@ -183,7 +205,6 @@ onMounted(async () => {
 
       <!-- HERO -->
       <section class="hero">
-        <p class="badge">Category: Building Momentum</p>
         <h1>Curated Events for <span>Active Connections</span></h1>
         <p class="desc">
           Discover a selection of activities specifically matched to your current pace. No pressure, just progress.
@@ -208,6 +229,13 @@ onMounted(async () => {
           >
             Browse All Events
           </button>
+        </div>
+        <div class="sort-group">
+          <label class="sort-label">Sort by:</label>
+          <select v-model="sortOption" class="sort-select">
+            <option value="date-asc">Date (earliest first)</option>
+            <option value="date-desc">Date (latest first)</option>
+          </select>
         </div>
       </div>
 
@@ -250,7 +278,15 @@ onMounted(async () => {
       <!-- EVENT CARDS -->
       <section v-else class="cards">
         <template v-if="activeTab === 'personalized'">
+          <!-- No snapshot state -->
+          <div v-if="!hasSnapshot" class="no-snapshot">
+            <div class="no-snapshot-icon">📋</div>
+            <h2>No snapshot yet</h2>
+            <p>Take a quick 5-minute check-in to see how you're tracking against the Australian benchmark for adults 65 and over. You'll get a personalised wellness category and exercise suggestions.</p>
+            <button class="snapshot-btn" @click="router.push('/survey')">Take the Check-in Survey</button>
+          </div>
           <div
+            v-else
             class="card"
             v-for="(event, index) in personalizedEvents"
             :key="'p-' + (event.id ?? index)"
@@ -270,17 +306,13 @@ onMounted(async () => {
               <p class="card-desc">{{ event.desc }}</p>
               <div class="info">
                 <div class="info-row">
-                  <span class="info-icon">🕒</span>
-                  <span>{{ event.location }} · {{ event.time }}</span>
+                  <span><strong>{{ event.location }} <br>{{ event.time }}</strong></span>
                 </div>
                 <div v-if="event.activity_type" class="info-row">
                   <span class="info-icon">🏃</span>
                   <span>{{ event.activity_type }}</span>
                 </div>
-                <div v-if="event.interested" class="info-row">
-                  <span class="info-icon">👥</span>
-                  <span>{{ event.interested }} interested</span>
-                </div>
+
               </div>
               <a v-if="event.url" :href="event.url" target="_blank" rel="noopener" class="btn">View</a>
               <button v-else class="btn">Interested</button>
@@ -291,13 +323,12 @@ onMounted(async () => {
         <template v-else>
           <div
             class="card"
-            v-for="(event, index) in filteredEvents"
+            v-for="(event, index) in pagedEvents"
             :key="'b-' + (event.id ?? index)"
           >
             <div class="card-img-wrap">
               <img
                 :src="event.img ?? imgFallback"
-                class="card-img"
                 @error="e => e.target.src = imgFallback"
               />
               <span v-if="event.difficulty" class="difficulty-badge" :class="difficultyBadgeClass(event.difficulty)">
@@ -309,17 +340,13 @@ onMounted(async () => {
               <p class="card-desc">{{ event.desc }}</p>
               <div class="info">
                 <div class="info-row">
-                  <span class="info-icon">🕒</span>
-                  <span>{{ event.location }} · {{ event.time }}</span>
+                  <span><strong>{{ event.location }} <br>{{ event.time }}</strong></span>
                 </div>
                 <div v-if="event.activity_type" class="info-row">
                   <span class="info-icon">🏃</span>
                   <span>{{ event.activity_type }}</span>
                 </div>
-                <div v-if="event.interested" class="info-row">
-                  <span class="info-icon">👥</span>
-                  <span>{{ event.interested }} interested</span>
-                </div>
+
               </div>
               <a v-if="event.url" :href="event.url" target="_blank" rel="noopener" class="btn">View</a>
               <button v-else class="btn">Interested</button>
@@ -331,12 +358,20 @@ onMounted(async () => {
         </template>
       </section>
 
-      <!-- CTA -->
-      <section class="cta-box">
-        <button class="cta-btn big" @click="router.push('/results')">
-          ← Back to My Wellness Snapshot
+      <!-- PAGINATION (browse tab only) -->
+      <div v-if="activeTab === 'browse' && !loading && totalPages > 1" class="pagination">
+        <button
+          v-for="page in totalPages"
+          :key="page"
+          class="page-btn"
+          :class="{ active: page === currentPage }"
+          @click="currentPage = page; $nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' }))"
+        >
+          {{ page }}
         </button>
-      </section>
+      </div>
+
+
 
       <!-- FOOTER -->
       <footer class="footer">
@@ -376,7 +411,7 @@ onMounted(async () => {
 /* BACK LINK */
 .back-link {
   margin-top: 24px;
-  font-size: 15px;
+  font-size: 20px;
   color: #444;
   cursor: pointer;
   display: inline-flex;
@@ -396,7 +431,7 @@ onMounted(async () => {
   display: inline-block;
   padding: 6px 14px;
   border-radius: 20px;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   margin: 0 0 14px 0;
 }
@@ -412,7 +447,7 @@ onMounted(async () => {
 .hero h1 span { color: #b45309; }
 
 .desc {
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1.6;
   color: #4a4a4a;
   margin: 0;
@@ -422,12 +457,43 @@ onMounted(async () => {
 .show-me-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   margin-top: 32px;
+  justify-content: space-between;
 }
 
+.sort-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.sort-label {
+  font-size: 20px;
+  font-weight: 500;
+  color: #444;
+  white-space: nowrap;
+}
+
+.sort-select {
+  padding: 15px 22px;
+  border: 2px solid #0b5d57;
+  border-radius: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: #0b5d57;
+  background: white;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sort-select:focus { background: #e8f4f3; }
+
 .show-me-label {
-  font-size: 15px;
+  font-size: 20px;
   color: #444;
   font-weight: 500;
   white-space: nowrap;
@@ -443,7 +509,7 @@ onMounted(async () => {
   border-radius: 8px;
   border: 2px solid #0b5d57;
   font-family: 'Poppins', sans-serif;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 500;
   cursor: pointer;
   background: white;
@@ -481,18 +547,18 @@ onMounted(async () => {
 }
 
 .filter-group label {
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 600;
   color: #555;
 }
 
 .filter-input,
 .filter-select {
-  padding: 9px 14px;
+  padding: 2px 15px;
   border: 1.5px solid #ddd;
   border-radius: 8px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   color: #333;
   background: white;
   outline: none;
@@ -565,14 +631,14 @@ onMounted(async () => {
 }
 
 .card-content h2 {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   color: #0b5d57;
   margin: 0 0 8px 0;
 }
 
 .card-desc {
-  font-size: 14px;
+  font-size: 18px;
   color: #555;
   line-height: 1.5;
   margin: 0 0 12px 0;
@@ -589,7 +655,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 18px;
   color: #555;
 }
 
@@ -688,6 +754,88 @@ onMounted(async () => {
   color: #888;
   margin: 6px 0 0 0;
   font-size: 13px;
+}
+
+/* NO SNAPSHOT */
+.no-snapshot {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 40px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.no-snapshot-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.no-snapshot h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0b5d57;
+  margin: 0 0 12px;
+}
+
+.no-snapshot p {
+  font-size: 15px;
+  color: #555;
+  line-height: 1.6;
+  max-width: 520px;
+  margin: 0 auto 24px;
+}
+
+.snapshot-btn {
+  padding: 13px 32px;
+  background: #0b5d57;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.snapshot-btn:hover { background: #084a45; }
+
+/* PAGINATION */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 32px 0 8px;
+}
+
+.page-btn {
+  min-width: 40px;
+  height: 40px;
+  padding: 0 12px;
+  border: none;
+  background: transparent;
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  color: #444;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+
+.page-btn:hover:not(.active) {
+  color: #0b5d57;
+  background: #e8f4f3;
+}
+
+.page-btn.active {
+  color: #0b5d57;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  background: transparent;
 }
 
 /* RESPONSIVE */

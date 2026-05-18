@@ -98,6 +98,7 @@ router.get("/organiser", async (req, res) => {
 // eventbrite.com.au/o/{organiser-name}-XXXXXXX  ← the number is the ID
 const MELBOURNE_ORGANISER_IDS = [
   "76900127983",  // Aged & Disability Expo
+  "27859048737",  // Carers Victoria - Events
 ];
 
 function mapEvent(e) {
@@ -163,7 +164,7 @@ router.get("/", async (req, res) => {
       return isUpcoming && isMelbourne;
     });
     filtered.sort((a, b) => new Date(a.start?.local) - new Date(b.start?.local));
-    const events = filtered.slice(0, 9).map(mapEvent);
+    const events = filtered.slice(0, 50).map(mapEvent);
 
     console.log(`[events] Total events returned: ${events.length}`);
 

@@ -6,7 +6,11 @@ const props = defineProps({
     type: Object,
     required: true,
     // { name: String, durationMinutes: Number, steps: [{title, image, desc}] }
-  }
+  },
+  inline: {
+    type: Boolean,
+    default: false,
+  },
 })
 const emit = defineEmits(['close'])
 
@@ -172,10 +176,14 @@ function handleClose() {
   emit('close')
 }
 
-// Start timer when exercise changes
+// Start timer / camera when exercise changes
 watch(() => props.exercise, () => {
   stopInteractiveMode()
-  startTimer()
+  if (props.inline) {
+    nextTick(() => startInteractiveMode())
+  } else {
+    startTimer()
+  }
 }, { immediate: true })
 
 onBeforeUnmount(() => {
@@ -185,7 +193,37 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="session-overlay" @click.self="handleClose">
+  <!-- ── Inline mode: webcam + step panel side by side ── -->
+  <template v-if="inline">
+    <div v-if="cameraError" class="session-camera-error">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <p>{{ cameraError }}</p>
+      <button class="session-interactive-btn" @click="startInteractiveMode">Retry</button>
+    </div>
+    <div v-else class="session-webcam-view">
+      <div class="session-webcam-container">
+        <div class="session-webcam-wrap">
+          <video ref="videoEl" class="session-webcam-video" autoplay playsinline muted></video>
+          <canvas ref="canvasEl" class="session-webcam-canvas"></canvas>
+          <div v-if="poseLoading" class="session-webcam-loading">
+            <div class="session-webcam-spinner"></div>
+            <span>Loading pose model…</span>
+          </div>
+        </div>
+        <div class="pose-counter" v-if="!poseLoading">
+          <div class="pose-overlay-label">REPS</div>
+          <div class="pose-overlay-value">{{ repCount }}</div>
+        </div>
+        <div class="pose-stage" v-if="!poseLoading">
+          <div class="pose-overlay-label">STAGE</div>
+          <div class="pose-overlay-value">{{ poseStage ?? '—' }}</div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- ── Modal mode: full overlay popup (used by Home.vue) ── -->
+  <div v-else class="session-overlay" @click.self="handleClose">
     <div class="session-modal">
 
       <!-- Header -->
@@ -308,7 +346,7 @@ onBeforeUnmount(() => {
   font-weight: 700; font-size: 14px;
   text-align: center; padding: 10px 8px;
 }
-.session-step-image { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
+.session-step-image { width: 100%; aspect-ratio: 4/3; object-fit: contain; background: #ffffff; display: block; }
 .session-step-desc { font-size: 13px; line-height: 1.55; color: #4a4a4a; padding: 10px 12px; margin: 0; }
 
 /* Webcam */
@@ -347,6 +385,7 @@ onBeforeUnmount(() => {
 }
 .pose-overlay-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: rgba(255,255,255,0.8); text-transform: uppercase; }
 .pose-overlay-value { font-size: 24px; font-weight: 700; color: #fff; line-height: 1.1; }
+
 
 .session-camera-error {
   display: flex; flex-direction: column; align-items: center;

@@ -28,26 +28,13 @@
             <!-- Did You Know Button -->
             <button class="dyk-btn" @click="openDidYouKnow">💡 Did You Know?</button>
           </div>
-          <button class="btn-interactive" @click="showInteractiveModal = true">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-            Interactive Mode
-          </button>
         </div>
 
-        <!-- Row 2: 3-step image grid -->
-        <div class="steps-grid">
-          <div class="step-card" v-for="(step, i) in currentSteps" :key="i">
-            <div class="step-subtitle">{{ step.subtitle }}</div>
-            <img :src="step.image" :alt="step.subtitle" class="step-image" />
-            <p class="step-desc">{{ step.description }}</p>
-          </div>
-        </div>
-
-        <!-- Interactive Mode modal -->
+        <!-- Row 2: pose estimation -->
         <ExerciseSessionModal
-          v-if="showInteractiveModal && sessionExercise"
+          v-if="sessionExercise"
           :exercise="sessionExercise"
-          @close="showInteractiveModal = false"
+          inline
         />
 
         <!-- Row 3: Actions -->
@@ -59,6 +46,15 @@
             {{ isLastExercise ? 'Finish Session →' : 'Next Exercise →' }}
           </button>
           <button class="btn-pause" @click="showPauseModal = true">⏸ Pause</button>
+        </div>
+
+        <!-- Row 4: Step guide -->
+        <div class="steps-grid">
+          <div class="step-card" v-for="(step, i) in currentSteps" :key="i">
+            <div class="step-subtitle">{{ step.subtitle }}</div>
+            <img :src="step.image" :alt="step.subtitle" class="step-image" />
+            <p class="step-desc">{{ step.description }}</p>
+          </div>
         </div>
 
       </div>
@@ -80,26 +76,25 @@
 
         <template v-else-if="exercisesCompleted === 1">
           <div class="cel-emoji">💪</div>
-          <h1 class="cel-title">Back to your 40's!</h1>
+          <h1 class="cel-title">Small Steps At A Time!</h1>
           <p class="cel-subtitle">1 of 3 exercises done &#8208; every rep counts!</p>
         </template>
 
         <template v-else-if="exercisesCompleted === 2">
           <div class="cel-emoji">🔥</div>
-          <h1 class="cel-title">Back to your 30's!</h1>
+          <h1 class="cel-title">Halfway There!</h1>
           <p class="cel-subtitle">2 of 3 exercises done &#8208; every rep counts!</p>
         </template>
 
         <template v-else>
           <div class="cel-emoji">🎉</div>
           <h1 class="cel-title">You Actually Did It!</h1>
-          <div class="cel-age-banner">Back to 21 years old!</div>
           <p class="cel-subtitle">Full session complete &#8208; your body is officially younger than when you started.</p>
         </template>
 
         <template v-if="exercisesCompleted > 0">
           <button class="btn-celebrate" @click="goToResults">
-            ← Back to Check-In
+            ← Back to My Snapshot
           </button>
         </template>
       </div>
@@ -176,7 +171,6 @@ const exercises = ref([])
 const exercisesCompleted = ref(0)
 const sessionDone = ref(false)
 const showPauseModal = ref(false)
-const showInteractiveModal = ref(false)
 
 const timerSeconds = ref(0)
 let timerInterval = null
@@ -325,14 +319,14 @@ const timerDisplay = computed(() => {
 
 const EXERCISE_CONTENT = {
   'seated forward lean': [
-    { subtitle: 'Start Position', image: '/Images/seated_forward_lean_1.jpeg', description: 'Sit upright on a chair with your feet flat on the floor and hands resting on your thighs.' },
-    { subtitle: 'Lean Forward',   image: '/Images/seated_forward_lean_2.jpeg', description: 'Slowly lean your upper body forward, sliding your hands down toward your knees. Keep your back straight.' },
-    { subtitle: 'Return Upright', image: '/Images/seated_forward_lean_3.jpeg', description: 'Gently return to the upright position and repeat the movement in a slow, controlled rhythm.' },
+    { subtitle: 'Start Position', image: '/Images/seated_forward_lean_1.jpeg', description: 'Sit upright near the front of the chair with both feet flat on the floor.' },
+    { subtitle: 'Lean Forward',   image: '/Images/seated_forward_lean_2.jpeg', description: 'Slowly bend forward from your hips and reach toward your feet while keeping movements comfortable.' },
+    { subtitle: 'Return to Start', image: '/Images/seated_forward_lean_3.jpeg', description: 'Gently sit back upright and relax before repeating.' },
   ],
   'seated knee extensions': [
-    { subtitle: 'Start Position',   image: '/Images/seated_knee_ext_1.jpeg', description: 'Sit upright on a chair with your feet flat on the floor and hands resting on your thighs.' },
-    { subtitle: 'Extend Leg',       image: '/Images/seated_knee_ext_2.jpeg', description: 'Slowly straighten one leg until it is parallel to the floor, hold for a moment.' },
-    { subtitle: 'Lower and Switch', image: '/Images/seated_knee_ext_3.jpeg', description: 'Gently lower your foot back to the floor and repeat with the other leg.' },
+    { subtitle: 'Start Position',  image: '/Images/seated_knee_extension_1.jpeg', description: 'Sit upright with both feet flat on the floor and your hands resting comfortably on your lap.' },
+    { subtitle: 'Lift and Extend', image: '/Images/seated_knee_extension_2.jpeg', description: 'Slowly raise one leg forward while keeping your back straight and arms steady.' },
+    { subtitle: 'Lower and Repeat', image: '/Images/seated_knee_extension_3.jpeg', description: 'Gently lower your leg back down and repeat on the other side.' },
   ],
   'seated chest stretch': [
     { subtitle: 'Start Position', image: '/Images/seated_chest_stretch_1.jpeg', description: 'Sit upright on a chair with your back straight and shoulders relaxed.' },
@@ -345,9 +339,9 @@ const EXERCISE_CONTENT = {
     { subtitle: 'Extend Duration',  image: '/Images/brisk_walking_3.jpeg', description: 'Continue walking for a longer time at a comfortable pace, maintaining a steady rhythm.' },
   ],
   'arm raises': [
-    { subtitle: 'Start Position', image: '/Images/arm_raises_1.jpeg', description: 'Stand or sit upright with your arms relaxed at your sides and shoulders down.' },
-    { subtitle: 'Raise Arms',     image: '/Images/arm_raises_2.jpeg', description: 'Slowly raise both arms out to the sides until they reach shoulder height, keeping them straight.' },
-    { subtitle: 'Lower Down',     image: '/Images/arm_raises_3.jpeg', description: 'Gently lower your arms back to your sides in a controlled movement and repeat.' },
+    { subtitle: 'Start Position', image: '/Images/arm_raises_1.jpeg', description: 'Sit upright in the chair with your feet flat and arms relaxed by your sides.' },
+    { subtitle: 'Raise Arms',     image: '/Images/arm_raises_2.jpeg', description: 'Slowly lift both arms upward in a controlled motion until comfortable.' },
+    { subtitle: 'Lower Arms',     image: '/Images/arm_raises_3.jpeg', description: 'Gently lower your arms back down to the starting position.' },
   ],
   'sit-to-stand': [
     { subtitle: 'Start Position', image: '/Images/sit_to_stand_1.jpeg', description: 'Sit upright on a chair with your feet flat on the ground.' },
@@ -443,13 +437,13 @@ function goToResults() {
 }
 
 watch(currentIndex, () => {
-  showInteractiveModal.value = false
+
   startTimer()
 })
 
 onBeforeUnmount(() => {
   clearInterval(timerInterval)
-  showInteractiveModal.value = false
+
 })
 
 onMounted(() => {
@@ -637,7 +631,7 @@ onMounted(() => {
 .steps-grid { display: flex; gap: 20px; padding: 28px 40px; }
 .step-card { flex: 1; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; background: #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
 .step-subtitle { background: #1a5c52; color: #ffffff; font-weight: 700; font-size: 20px; text-align: center; padding: 14px 12px; }
-.step-image { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+.step-image { width: 100%; aspect-ratio: 4 / 3; object-fit: contain; background: #ffffff; display: block; }
 .step-desc { font-size: 20px; line-height: 1.6; color: #4a4a4a; text-align: left; padding: 14px 16px; margin: 0; }
 
 .card-footer { padding: 24px 40px; border-top: 1px solid #e0dbd2; display: flex; gap: 16px; background: #ede9e1; }
