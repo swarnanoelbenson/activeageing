@@ -17,6 +17,9 @@ const routes      = ref([])
 const survey      = ref(null)
 const activeRoute = ref(0)
 
+const ROUTE_NAMES = ['Sunrise Trail', 'Forest Walk', 'River Bend', 'Meadow Path', 'Ocean Breeze', 'Mountain Stream']
+const ORDINAL_TAGS = ['1st Recommendation', '2nd Recommendation', '3rd Recommendation', '4th Recommendation', '5th Recommendation', '6th Recommendation']
+
 const activityLabel   = { walking: 'Walking', jogging: 'Light Jogging', cycling: 'Cycling' }
 const difficultyLabel = { easy: 'Easy', moderate: 'Moderate', brisk: 'Challenging' }
 
@@ -935,6 +938,12 @@ onBeforeUnmount(() => {
               </button>
             </div>
 
+            <!-- S / F marker note -->
+            <div class="map-marker-note">
+              <span class="marker-chip marker-s">S</span> Starting point &nbsp;·&nbsp;
+              <span class="marker-chip marker-f">F</span> Finishing point
+            </div>
+
             <!-- Stop-point legend with checkboxes -->
             <div class="stop-legend">
               <div
@@ -958,9 +967,9 @@ onBeforeUnmount(() => {
 
           <!-- RIGHT PANEL -->
           <div class="side-card">
-            <div class="tag">RECOMMENDED</div>
+            <div class="tag">{{ ORDINAL_TAGS[activeRoute] ?? (activeRoute + 1 + 'th Recommendation') }}</div>
 
-            <h2>Route {{ activeRoute + 1 }}</h2>
+            <h2>{{ ROUTE_NAMES[activeRoute] ?? 'Route ' + (activeRoute + 1) }}</h2>
             <p class="meta">📍 {{ routes[activeRoute]?.distance_label }} &nbsp; ⏱ {{ routes[activeRoute]?.duration_label }}</p>
 
             <div class="info">
@@ -1011,7 +1020,7 @@ onBeforeUnmount(() => {
             >
               <div :id="`map-t${i}`" class="suggest-map"></div>
               <div class="suggest-info">
-                <h4>Route {{ i + 1 }}</h4>
+                <h4>{{ ROUTE_NAMES[i] ?? 'Route ' + (i + 1) }}</h4>
                 <p>{{ route.duration_label }}</p>
               </div>
               <div class="suggest-actions">
@@ -1278,6 +1287,20 @@ h1 { font-size: 42px; color: #0b5d57; }
   transition: opacity 0.2s, transform 0.15s;
 }
 .btn:hover { opacity: 0.92; transform: translateY(-1px); }
+
+/* S/F marker note */
+.map-marker-note {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 8px 16px; border-top: 1px solid #f0f0f0;
+  font-size: 13px; color: #555; background: white;
+}
+.marker-chip {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 50%;
+  font-size: 11px; font-weight: 800; color: white; flex-shrink: 0;
+}
+.marker-s { background: #16a34a; }
+.marker-f { background: #dc2626; }
 
 /* Stop-point legend with checkboxes */
 .stop-legend {

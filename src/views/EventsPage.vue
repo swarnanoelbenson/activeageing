@@ -287,10 +287,27 @@ onMounted(async () => {
         <template v-if="activeTab === 'personalized'">
           <!-- No snapshot state -->
           <div v-if="!hasSnapshot" class="no-snapshot">
-            <div class="no-snapshot-icon">📋</div>
-            <h2>No snapshot yet</h2>
-            <p>Take a quick 5-minute check-in to see how you're tracking against the Australian benchmark for adults 65 and over. You'll get a personalised wellness category and exercise suggestions.</p>
-            <button class="snapshot-btn" @click="router.push('/survey')">Take the Check-in Survey</button>
+            <div class="checkin-empty-icon">📋</div>
+            <h2 class="checkin-empty-title">No snapshot yet</h2>
+            <p class="checkin-empty-desc">
+              Take a quick 5-minute check-in to see how you're tracking against the Australian benchmark
+              for adults 65 and over. You'll get a personalised wellness category and exercise suggestions.
+            </p>
+            <div class="checkin-empty-steps">
+              <div class="checkin-step">
+                <div class="checkin-step-num">1</div>
+                <span>Answer a few questions about your activity, sleep, and wellbeing</span>
+              </div>
+              <div class="checkin-step">
+                <div class="checkin-step-num">2</div>
+                <span>Get your wellness category scored against the 65+ benchmark</span>
+              </div>
+              <div class="checkin-step">
+                <div class="checkin-step-num">3</div>
+                <span>See personalised exercises and events matched to your level</span>
+              </div>
+            </div>
+            <button class="snapshot-btn" @click="router.push('/survey')">Start Check-in →</button>
           </div>
           <div
             v-else
@@ -496,7 +513,7 @@ onMounted(async () => {
 }
 
 .sort-select {
-  padding: 15px 22px;
+  padding: 10px 22px;
   border: 2px solid #0b5d57;
   border-radius: 8px;
   font-family: 'Poppins', sans-serif;
@@ -778,47 +795,81 @@ onMounted(async () => {
 /* NO SNAPSHOT */
 .no-snapshot {
   grid-column: 1 / -1;
+  max-width: 560px;
+  margin: 0 auto 48px;
+  background: #f9f7f3;
+  border-radius: 24px;
+  padding: 48px 40px;
   text-align: center;
-  padding: 60px 40px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  border: 1.5px solid #e4dfd5;
 }
 
-.no-snapshot-icon {
+.checkin-empty-icon {
   font-size: 48px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
-.no-snapshot h2 {
-  font-size: 22px;
+.checkin-empty-title {
+  font-size: 26px;
   font-weight: 700;
-  color: #0b5d57;
-  margin: 0 0 12px;
+  color: #0f3d35;
+  margin-bottom: 14px;
 }
 
-.no-snapshot p {
+.checkin-empty-desc {
+  font-size: 16px;
+  color: #5a6b67;
+  line-height: 1.7;
+  margin-bottom: 28px;
+}
+
+.checkin-empty-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  margin-bottom: 32px;
+}
+
+.checkin-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
   font-size: 15px;
-  color: #555;
-  line-height: 1.6;
-  max-width: 520px;
-  margin: 0 auto 24px;
+  color: #3a5a55;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.checkin-step-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #e0ede9;
+  color: #0b5d57;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .snapshot-btn {
-  padding: 13px 32px;
   background: #0b5d57;
-  color: white;
+  color: #fff;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
+  padding: 15px 36px;
   font-family: 'Poppins', sans-serif;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.15s;
 }
 
-.snapshot-btn:hover { background: #084a45; }
+.snapshot-btn:hover { background: #0f3d35; transform: translateY(-1px); }
 
 /* PAGINATION */
 .pagination {
@@ -899,7 +950,8 @@ onMounted(async () => {
   .filter-group { min-width: 100%; }
   .sort-group { width: 100%; }
   .sort-select { width: 100%; }
-  .no-snapshot { padding: 40px 20px; }
+  .no-snapshot { padding: 32px 20px; }
+  .checkin-empty-title { font-size: 22px; }
   .pagination { flex-wrap: wrap; gap: 4px; margin: 20px 0 4px; }
   .page-btn { min-width: 36px; height: 36px; font-size: 14px; }
 }

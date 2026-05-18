@@ -450,8 +450,8 @@ onBeforeUnmount(() => {
   transition: background 0.2s; white-space: nowrap;
 }
 .session-interactive-btn:hover { background: #0f3d35; }
-.session-interactive-exit { background: #7a3a2a; }
-.session-interactive-exit:hover { background: #5a2a1a; }
+.session-interactive-exit { background: #0b5d57; }
+.session-interactive-exit:hover { background: #0f3d35; }
 .session-close {
   background: none; border: none; font-size: 18px;
   cursor: pointer; color: #666; padding: 4px 8px;
