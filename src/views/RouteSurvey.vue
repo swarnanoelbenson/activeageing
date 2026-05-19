@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import AppNavbar from '../components/AppNavbar.vue'
 
 const router = useRouter()
@@ -147,7 +147,13 @@ async function findMyRoute() {
   submitted.value = true
   const { q1, q2, q3, q4, q5 } = answers.value
   const locationMissing = !startLat.value && !startAddress.value.trim()
-  if (!q1 || !q2 || !q3 || !q4 || !q5 || locationMissing) return
+  if (!q1 || !q2 || !q3 || !q4 || !q5 || locationMissing) {
+    nextTick(() => {
+      const first = document.querySelector('.q-error')
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+    return
+  }
 
   const payload = {
     activity_type:    q1,
@@ -182,10 +188,10 @@ async function findMyRoute() {
 
     <AppNavbar active="routeplan" />
 
-    <div class="survey-outer" style="padding-top: 80px;">
+    <div class="survey-outer">
       <div class="survey-container">
 
-        <h1 class="page-title">Plan My Activity</h1>
+        <h1 class="page-title">Plan A Walk</h1>
         <p class="page-sub">
           Select your preferences below to create a personalized<br />
           activity path designed just for you.
@@ -399,7 +405,7 @@ async function findMyRoute() {
   flex: 1;
   display: flex;
   justify-content: center;
-  padding: 8px 15px 48px;
+  padding: calc(var(--navbar-h, 70px) + 16px) 15px 48px;
 }
 
 .survey-container {
@@ -742,7 +748,7 @@ async function findMyRoute() {
 .footer-copy { font-size: 20px; color: rgba(255,255,255,0.45); }
 
 @media (max-width: 768px) {
-  .survey-outer { padding: 8px 16px 40px; }
+  .survey-outer { padding: calc(var(--navbar-h, 60px) + 16px) 16px 40px; }
   .page-title { font-size: 32px; }
   .cols-3 { grid-template-columns: repeat(2, 1fr); }
   .cols-4 { grid-template-columns: repeat(2, 1fr); }
@@ -753,7 +759,7 @@ async function findMyRoute() {
 }
 
 @media (max-width: 480px) {
-  .survey-outer { padding: 8px 12px 32px; }
+  .survey-outer { padding: calc(var(--navbar-h, 60px) + 12px) 12px 32px; }
   .page-title { font-size: 26px; }
   .page-sub br { display: none; }
   .cols-3 { grid-template-columns: 1fr; }

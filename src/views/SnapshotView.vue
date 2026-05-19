@@ -116,7 +116,7 @@ function getSnapshot() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 40px 60px;
+  padding: calc(var(--navbar-h, 70px) + 20px) 40px 60px;
 }
 
 /* Header */
@@ -247,7 +247,7 @@ function getSnapshot() {
 
 /* Responsive */
 @media (max-width: 768px) {
-  .snap-page { padding: 100px 20px 40px; }
+  .snap-page { padding: calc(var(--navbar-h, 70px) + 20px) 20px 40px; }
   .snap-card { flex-direction: column; gap: 24px; padding: 24px 20px; }
   .snap-header h1 { font-size: 28px; }
   .snap-sub br { display: none; }
@@ -255,7 +255,7 @@ function getSnapshot() {
 }
 
 @media (max-width: 480px) {
-  .snap-page { padding: 72px 14px 32px; }
+  .snap-page { padding: calc(var(--navbar-h, 70px) + 10px) 14px 32px; }
   .snap-header h1 { font-size: 24px; }
 }
 </style>

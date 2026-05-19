@@ -230,7 +230,7 @@ nav a.active {
   max-width: 1100px;
   width: 100%;
   margin: 0 auto;
-  padding: 80px 48px 48px;
+  padding: calc(var(--navbar-h, 70px) + 16px) 48px 48px;
 }
 
 /* ── Progress ── */
@@ -440,7 +440,7 @@ nav a.active {
 @media (max-width: 768px) {
   .page-wrapper { overflow-x: hidden; width: 100%; }
   .options-grid { grid-template-columns: 1fr; }
-  .survey-container { max-width: 100%; margin: 0; padding: 16px 20px 40px; }
+  .survey-container { max-width: 100%; margin: 0; padding: calc(var(--navbar-h, 60px) + 16px) 20px 40px; }
   .navbar { max-width: 100%; margin: 0; padding: 16px 20px; }
   .logo { font-size: 20px; }
   nav a { font-size: 20px; margin-left: 16px; }
@@ -451,7 +451,7 @@ nav a.active {
 }
 
 @media (max-width: 480px) {
-  .survey-container { padding: 12px 14px 32px; }
+  .survey-container { padding: calc(var(--navbar-h, 60px) + 12px) 14px 32px; }
   .question-title { font-size: 20px; }
 }
 </style>

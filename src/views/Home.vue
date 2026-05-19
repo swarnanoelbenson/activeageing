@@ -93,10 +93,8 @@ const allExercises = [
 ]
 
 function getStarted() {
-  localStorage.removeItem('surveyAnswers')
-  localStorage.removeItem('surveyResult')
-  localStorage.removeItem('sessionCompleted')
-  router.push('/survey')
+  const el = document.getElementById('snapshot-section')
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 function exploreFeatures() { router.push('/routesurvey') }
@@ -144,12 +142,12 @@ function goToEvents()      { router.push('/events') }
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <span class="stat-num">50+</span>
+          <span class="stat-num">20+</span>
           <span class="stat-label">Weekly events</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
-          <span class="stat-num">10</span>
+          <span class="stat-num">9</span>
           <span class="stat-label">Guided exercises</span>
         </div>
         <div class="stat-divider"></div>
@@ -158,76 +156,9 @@ function goToEvents()      { router.push('/events') }
           <span class="stat-label">Wellness Check-In</span>
         </div>
       </section>
-
-      <!-- ── PLAN MY PATH SECTION ── -->
-      <section class="plan-section">
-        <div class="plan-card">
-          <div class="plan-left">
-            <div class="featured-pill">★ Featured</div>
-            <h2 class="plan-title">Plan my path</h2>
-            <p class="plan-desc">
-              Design a walking route that suits your pace, time, and comfort.
-              Walk solo, or turn it into a private event and invite friends along.
-            </p>
-            <ul class="plan-list">
-              <li><span class="check-icon">✓</span> Choose your pace and walking time</li>
-              <li><span class="check-icon">✓</span> Pick scenic parks or quiet streets</li>
-              <li><span class="check-icon">✓</span> Keep it private or invite others to join</li>
-            </ul>
-            <button class="btn-primary" @click="exploreFeatures">Plan route</button>
-          </div>
-          <div class="plan-right">
-            <div class="map-preview">
-              <svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" class="map-svg">
-                <defs>
-                  <filter id="mshadow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.12"/>
-                  </filter>
-                </defs>
-
-                <!-- Background -->
-                <rect width="260" height="220" fill="#f2f6f4" rx="14"/>
-
-                <!-- Decorative soft circles (like the screenshot) -->
-                <circle cx="48" cy="52" r="30" fill="#ddeee8" opacity="0.7"/>
-                <circle cx="192" cy="168" r="24" fill="#ddeee8" opacity="0.6"/>
-
-                <!-- Curved dashed path from bottom-left to top-right -->
-                <path d="M 36 178 C 60 155, 80 148, 100 130 C 120 112, 128 98, 152 80 C 168 68, 188 54, 210 36"
-                  fill="none" stroke="#0b5d57" stroke-width="2.5"
-                  stroke-dasharray="6 4" stroke-linecap="round" stroke-linejoin="round"/>
-
-                <!-- START: filled dark circle + label -->
-                <circle cx="36" cy="178" r="9" fill="#0b5d57"/>
-                <text x="52" y="182" font-size="11" fill="#0b5d57" font-weight="700" font-family="Poppins,sans-serif">Start</text>
-
-                <!-- Waypoint 1: Bench stop — hollow circle -->
-                <circle cx="100" cy="130" r="5.5" fill="white" stroke="#0b5d57" stroke-width="2"/>
-                <text x="110" y="134" font-size="9" fill="#888" font-family="Poppins,sans-serif">Bench stop</text>
-
-                <!-- Waypoint 2: Park view — hollow circle -->
-                <circle cx="152" cy="80" r="5.5" fill="white" stroke="#0b5d57" stroke-width="2"/>
-                <text x="162" y="84" font-size="9" fill="#888" font-family="Poppins,sans-serif">Park view</text>
-
-                <!-- END: orange rounded square with star -->
-                <rect x="198" y="24" width="24" height="24" rx="6" fill="#c9541a"/>
-                <text x="210" y="40" text-anchor="middle" font-size="13" fill="white" font-weight="700" font-family="Poppins,sans-serif">★</text>
-
-                <!-- Route badge card -->
-                <rect x="142" y="150" width="96" height="44" rx="10" fill="white" filter="url(#mshadow)"/>
-                <text x="160" y="165" font-size="7.5" fill="#aaa" font-family="Poppins,sans-serif">YOUR ROUTE</text>
-                <!-- small tick -->
-                <circle cx="155" cy="179" r="6" fill="#e8f4f0"/>
-                <text x="155" y="182" text-anchor="middle" font-size="7" fill="#0b5d57" font-weight="700" font-family="Poppins,sans-serif">✓</text>
-                <text x="166" y="183" font-size="11" fill="#0b5d57" font-weight="700" font-family="Poppins,sans-serif">25 min · Easy</text>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      
       <!-- ── WELLNESS SNAPSHOT ── -->
-      <section class="snap-section">
+      <section class="snap-section" id="snapshot-section">
         <div class="snap-header">
           <div class="start-pill">Start here</div>
           <h2 class="snap-title">Wellness snapshot</h2>
@@ -289,6 +220,75 @@ function goToEvents()      { router.push('/events') }
         </div>
       </section>
 
+      <!-- ── PLAN MY WALK SECTION ── -->
+      <section class="plan-section">
+        <div class="plan-card">
+          <div class="plan-left">
+            <div class="featured-pill">★ Featured</div>
+            <h2 class="plan-title">Plan My Walk</h2>
+            <p class="plan-desc">
+              Design a walking route that suits your pace, time, and comfort.
+              Walk solo, or turn it into a private event and invite friends along.
+            </p>
+            <ul class="plan-list">
+              <li><span class="check-icon">✓</span> Choose your pace and walking time</li>
+              <li><span class="check-icon">✓</span> Pick scenic parks or quiet streets</li>
+              <li><span class="check-icon">✓</span> Keep it private or invite others to join</li>
+            </ul>
+            <button class="btn-primary" @click="exploreFeatures">Plan Route</button>
+          </div>
+          <div class="plan-right">
+            <div class="map-preview">
+              <svg viewBox="0 0 260 220" xmlns="http://www.w3.org/2000/svg" class="map-svg">
+                <defs>
+                  <filter id="mshadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.12"/>
+                  </filter>
+                </defs>
+
+                <!-- Background -->
+                <rect width="260" height="220" fill="#f2f6f4" rx="14"/>
+
+                <!-- Decorative soft circles (like the screenshot) -->
+                <circle cx="48" cy="52" r="30" fill="#ddeee8" opacity="0.7"/>
+                <circle cx="192" cy="168" r="24" fill="#ddeee8" opacity="0.6"/>
+
+                <!-- Curved dashed path from bottom-left to top-right -->
+                <path d="M 36 178 C 60 155, 80 148, 100 130 C 120 112, 128 98, 152 80 C 168 68, 188 54, 210 36"
+                  fill="none" stroke="#0b5d57" stroke-width="2.5"
+                  stroke-dasharray="6 4" stroke-linecap="round" stroke-linejoin="round"/>
+
+                <!-- START: filled dark circle + label -->
+                <circle cx="36" cy="178" r="9" fill="#0b5d57"/>
+                <text x="52" y="182" font-size="11" fill="#0b5d57" font-weight="700" font-family="Poppins,sans-serif">Start</text>
+
+                <!-- Waypoint 1: Bench stop — hollow circle -->
+                <circle cx="100" cy="130" r="5.5" fill="white" stroke="#0b5d57" stroke-width="2"/>
+                <text x="110" y="134" font-size="9" fill="#888" font-family="Poppins,sans-serif">Bench stop</text>
+
+                <!-- Waypoint 2: Park view — hollow circle -->
+                <circle cx="152" cy="80" r="5.5" fill="white" stroke="#0b5d57" stroke-width="2"/>
+                <text x="162" y="84" font-size="9" fill="#888" font-family="Poppins,sans-serif">Park view</text>
+
+                <!-- END: orange rounded square with star -->
+                <rect x="198" y="24" width="24" height="24" rx="6" fill="#c9541a"/>
+                <text x="210" y="40" text-anchor="middle" font-size="13" fill="white" font-weight="700" font-family="Poppins,sans-serif">★</text>
+
+                <!-- Route badge card -->
+                <rect x="142" y="150" width="96" height="44" rx="10" fill="white" filter="url(#mshadow)"/>
+                <text x="160" y="165" font-size="7.5" fill="#aaa" font-family="Poppins,sans-serif">YOUR ROUTE</text>
+                <!-- small tick -->
+                <circle cx="155" cy="179" r="6" fill="#e8f4f0"/>
+                <text x="155" y="182" text-anchor="middle" font-size="7" fill="#0b5d57" font-weight="700" font-family="Poppins,sans-serif">✓</text>
+                <text x="166" y="183" font-size="11" fill="#0b5d57" font-weight="700" font-family="Poppins,sans-serif">25 min · Easy</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      
+
       <!-- ── STAY ACTIVE SECTION ── -->
       <section class="explore-section">
         <div class="explore-label-pill">More to explore</div>
@@ -332,7 +332,7 @@ function goToEvents()      { router.push('/events') }
       <section class="cta-banner">
         <h2>Ready to start your journey?</h2>
         <p>Take the snapshot, plan a walk, invite a friend. All at your own pace.</p>
-        <button class="btn-white" @click="exploreFeatures">Plan my route</button>
+        <button class="btn-white" @click="goToSurvey">Get My Snapshot</button>
       </section>
 
     </main>
@@ -485,7 +485,7 @@ function goToEvents()      { router.push('/events') }
 /* ── HERO ── */
 .hero-section {
   background: #ffffff;
-  padding: 130px 3vw 60px;
+  padding: calc(var(--navbar-h, 70px) + 60px) 3vw 60px;
 }
 
 .hero-inner {
@@ -1055,7 +1055,7 @@ function goToEvents()      { router.push('/events') }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {
-  .hero-section { padding: 90px 5vw 24px; }
+  .hero-section { padding: calc(var(--navbar-h, 60px) + 24px) 5vw 24px; }
   .hero-inner { flex-direction: column; gap: 28px; }
   .hero-image-box { width: 100%; min-width: unset; }
   .hero-desc { max-width: 100%; }

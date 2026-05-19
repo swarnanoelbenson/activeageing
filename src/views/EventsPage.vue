@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import fallbackImg from '../assets/myphoto.png'
 import AppNavbar from '../components/AppNavbar.vue'
@@ -205,8 +205,112 @@ onMounted(async () => {
     apiError.value = true
   } finally {
     loading.value = false
+    if (!localStorage.getItem('eventsTourSeen')) {
+      setTimeout(startTour, 600)
+    }
+  }
+
+  window.addEventListener('resize', measureTourRect)
+  window.addEventListener('scroll', measureTourRect, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', measureTourRect)
+  window.removeEventListener('scroll', measureTourRect)
+})
+
+// ── Page Tour ─────────────────────────────────────────────
+const TOUR_STEPS = [
+  { selector: '.tab-group',   position: 'bottom', title: 'Switch Views',      desc: 'Toggle between personalised recommendations (matched to your wellness level) and browsing all available events.' },
+  { selector: '.sort-group',  position: 'bottom', title: 'Sort Events',       desc: 'Choose whether to see the earliest upcoming events first, or the latest ones at the top.' },
+  { selector: '.filters-bar', position: 'bottom', title: 'Filter & Search',   desc: 'Search by keyword or filter by activity category to find events that suit you. Hit Clear to reset.' },
+  { selector: '.cards',       position: 'top',    title: 'Event Cards',       desc: 'Each card shows the event name, location, time, and a link to register. Tap View to learn more.' },
+]
+
+const tourActive = ref(false)
+const tourStep   = ref(0)
+const tourRect   = ref(null)
+
+const TOOLTIP_H = 210
+
+const spotlightStyle = computed(() => {
+  if (!tourRect.value) return {}
+  const pad = 10
+  return {
+    left:   `${tourRect.value.left   - pad}px`,
+    top:    `${tourRect.value.top    - pad}px`,
+    width:  `${tourRect.value.width  + pad * 2}px`,
+    height: `${tourRect.value.height + pad * 2}px`,
   }
 })
+
+const tooltipStyle = computed(() => {
+  if (!tourRect.value) return {}
+  const step = TOUR_STEPS[tourStep.value]
+  const pad  = 10
+  const gap  = 14
+  const vw   = window.innerWidth
+  const vh   = window.innerHeight
+  const w    = Math.min(320, vw - 32)
+
+  let left = tourRect.value.left + tourRect.value.width / 2 - w / 2
+  left = Math.max(16, Math.min(left, vw - w - 16))
+
+  const spaceBelow = vh - tourRect.value.bottom - pad - gap
+  const spaceAbove = tourRect.value.top - pad - gap
+
+  let top
+  if (step.position === 'bottom' && spaceBelow >= TOOLTIP_H) {
+    top = tourRect.value.bottom + pad + gap
+  } else if (spaceAbove >= TOOLTIP_H) {
+    top = tourRect.value.top - pad - gap - TOOLTIP_H
+  } else {
+    top = spaceBelow >= spaceAbove
+      ? tourRect.value.bottom + pad + gap
+      : tourRect.value.top - pad - gap - TOOLTIP_H
+  }
+
+  top = Math.max(8, Math.min(top, vh - TOOLTIP_H - 8))
+  return { top: `${top}px`, left: `${left}px`, width: `${w}px` }
+})
+
+function measureTourRect() {
+  const step = TOUR_STEPS[tourStep.value]
+  if (!step) return
+  const el = document.querySelector(step.selector)
+  if (el) tourRect.value = el.getBoundingClientRect()
+}
+
+function updateTourRect() {
+  const step = TOUR_STEPS[tourStep.value]
+  if (!step) return
+  const el = document.querySelector(step.selector)
+  if (!el) return
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  setTimeout(measureTourRect, 320)
+}
+
+function startTour() {
+  // Make sure we're on browse tab so filters-bar and cards are visible
+  activeTab.value = 'browse'
+  tourStep.value   = 0
+  tourActive.value = true
+  nextTick(updateTourRect)
+}
+
+function nextTourStep() {
+  if (tourStep.value < TOUR_STEPS.length - 1) {
+    tourStep.value++
+    nextTick(updateTourRect)
+  } else {
+    endTour()
+  }
+}
+
+function endTour() {
+  tourActive.value = false
+  localStorage.setItem('eventsTourSeen', '1')
+}
 </script>
 
 <template>
@@ -214,10 +318,7 @@ onMounted(async () => {
     <AppNavbar active="events" />
     <div class="container">
 
-      <!-- BACK LINK -->
-      <div class="back-link" @click="router.push('/')">
-        ‹ Back to home
-      </div>
+
 
       <!-- HERO -->
       <section class="hero">
@@ -267,12 +368,12 @@ onMounted(async () => {
           />
         </div>
         <div class="filter-group">
-          <label>Difficulty</label>
+          <label>Category</label>
           <select v-model="filterDifficulty" class="filter-select">
             <option value="">All</option>
-            <option value="Easy">Easy (Just Getting Started)</option>
-            <option value="Medium">Medium (Building Momentum)</option>
-            <option value="Hard">Hard (Thriving)</option>
+            <option value="Easy">Just Getting Started</option>
+            <option value="Medium">Building Momentum</option>
+            <option value="Hard">Thriving</option>
           </select>
         </div>
         <button
@@ -417,6 +518,24 @@ onMounted(async () => {
 
     </div>
 
+    <!-- Page Tour -->
+    <Teleport to="body">
+      <div v-if="tourActive" class="tour-overlay">
+        <div class="tour-spotlight" :style="spotlightStyle"></div>
+        <div class="tour-tooltip" :style="tooltipStyle">
+          <div class="tour-step-num">{{ tourStep + 1 }} / {{ TOUR_STEPS.length }}</div>
+          <h3 class="tour-title">{{ TOUR_STEPS[tourStep].title }}</h3>
+          <p class="tour-desc">{{ TOUR_STEPS[tourStep].desc }}</p>
+          <div class="tour-actions">
+            <button class="tour-skip" @click="endTour">Skip tour</button>
+            <button class="tour-next" @click="nextTourStep">
+              {{ tourStep < TOUR_STEPS.length - 1 ? 'Next →' : 'Get Started!' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
     <!-- External link disclaimer -->
     <Teleport to="body">
       <div v-if="showDisclaimer" class="disclaimer-overlay" @click.self="showDisclaimer = false">
@@ -448,6 +567,7 @@ onMounted(async () => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 40px;
+  padding-top: var(--navbar-h, 70px);
   box-sizing: border-box;
 }
 
@@ -965,7 +1085,7 @@ onMounted(async () => {
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
-  .container { padding: 0 20px; }
+  .container { padding: 0 20px; padding-top: var(--navbar-h, 70px); }
   .hero h1 { font-size: 26px; }
   .cards { grid-template-columns: repeat(2, 1fr); }
   .show-me-row { flex-direction: column; align-items: flex-start; gap: 10px; }
@@ -988,4 +1108,91 @@ onMounted(async () => {
   .card-content h2 { font-size: 15px; }
   .snapshot-btn { width: 100%; }
 }
+
+/* ── Tour overlay ── */
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.tour-spotlight {
+  position: fixed;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  background: transparent;
+  pointer-events: none;
+  transition: top 0.25s, left 0.25s, width 0.25s, height 0.25s;
+}
+
+.tour-tooltip {
+  position: fixed;
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px 22px 18px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.22);
+  pointer-events: all;
+  font-family: 'Poppins', sans-serif;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  transition: top 0.25s, left 0.25s;
+}
+
+.tour-step-num {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0b5d57;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.tour-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f3d35;
+  margin: 0 0 8px;
+}
+
+.tour-desc {
+  font-size: 14px;
+  color: #4a5e5a;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.tour-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tour-skip {
+  background: none;
+  border: none;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  color: #888;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tour-skip:hover { color: #333; }
+
+.tour-next {
+  background: #0b5d57;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 20px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tour-next:hover { background: #084a45; }
 </style>

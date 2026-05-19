@@ -120,6 +120,11 @@
               <span class="action-btn-label action-btn-label-dark">Explore Events</span>
               <span class="action-btn-arrow action-btn-arrow-dark">→</span>
             </div>
+            <div class="action-btn action-btn-light" @click="router.push('/routesurvey')">
+              <span class="action-btn-icon">🗺️</span>
+              <span class="action-btn-label action-btn-label-dark">Plan a Walk</span>
+              <span class="action-btn-arrow action-btn-arrow-dark">→</span>
+            </div>
           </div>
 
         </div>
@@ -266,7 +271,7 @@ onMounted(() => {
 .main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 80px 40px 80px;
+  padding: calc(var(--navbar-h, 70px) + 16px) 40px 80px;
 }
 
 /* FACT BOX */
@@ -787,7 +792,7 @@ onMounted(() => {
   .nav-links { gap: 20px; font-size: 20px; }
   .logo { font-size: 20px; }
 
-  .main { max-width: 100%; margin: 0; padding: 24px 20px 48px; }
+  .main { max-width: 100%; margin: 0; padding: calc(var(--navbar-h, 60px) + 16px) 20px 48px; }
 
   .title { font-size: 25px; }
   .subtitle { font-size: 20px; }

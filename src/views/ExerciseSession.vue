@@ -476,7 +476,8 @@ watch(currentIndex, () => {
 
 onBeforeUnmount(() => {
   clearInterval(timerInterval)
-
+  window.removeEventListener('resize', measureTourRect)
+  window.removeEventListener('scroll', measureTourRect)
 })
 
 // ── Page Tour ─────────────────────────────────────────────
@@ -492,6 +493,8 @@ const tourActive  = ref(false)
 const tourStep    = ref(0)
 const tourRect    = ref(null)
 
+const TOOLTIP_H = 210  // estimated tooltip height in px
+
 const spotlightStyle = computed(() => {
   if (!tourRect.value) return {}
   const pad = 10
@@ -505,27 +508,57 @@ const spotlightStyle = computed(() => {
 
 const tooltipStyle = computed(() => {
   if (!tourRect.value) return {}
-  const step = TOUR_STEPS[tourStep.value]
-  const pad  = 10
-  const w    = Math.min(320, window.innerWidth - 32)
-  let left   = tourRect.value.left + tourRect.value.width / 2 - w / 2
-  left = Math.max(16, Math.min(left, window.innerWidth - w - 16))
-  if (step.position === 'bottom') {
-    return { top: `${tourRect.value.bottom + pad + 14}px`, left: `${left}px`, width: `${w}px` }
+  const step  = TOUR_STEPS[tourStep.value]
+  const pad   = 10
+  const gap   = 14
+  const vw    = window.innerWidth
+  const vh    = window.innerHeight
+  const w     = Math.min(320, vw - 32)
+
+  // Horizontal: centre on the target, then clamp inside viewport
+  let left = tourRect.value.left + tourRect.value.width / 2 - w / 2
+  left = Math.max(16, Math.min(left, vw - w - 16))
+
+  // Vertical: prefer the declared position, flip if not enough room, then clamp
+  const spaceBelow = vh - tourRect.value.bottom - pad - gap
+  const spaceAbove = tourRect.value.top - pad - gap
+
+  let top
+  if (step.position === 'bottom' && spaceBelow >= TOOLTIP_H) {
+    top = tourRect.value.bottom + pad + gap
+  } else if (spaceAbove >= TOOLTIP_H) {
+    top = tourRect.value.top - pad - gap - TOOLTIP_H
   } else {
-    return { bottom: `${window.innerHeight - tourRect.value.top + pad + 14}px`, left: `${left}px`, width: `${w}px` }
+    // Not enough room either way — pick whichever side has more space
+    top = spaceBelow >= spaceAbove
+      ? tourRect.value.bottom + pad + gap
+      : tourRect.value.top - pad - gap - TOOLTIP_H
   }
+
+  // Final clamp so the tooltip never leaves the viewport
+  top = Math.max(8, Math.min(top, vh - TOOLTIP_H - 8))
+
+  return { top: `${top}px`, left: `${left}px`, width: `${w}px` }
 })
 
-function updateTourRect() {
+function measureTourRect() {
   const step = TOUR_STEPS[tourStep.value]
   if (!step) return
   const el = document.querySelector(step.selector)
   if (el) tourRect.value = el.getBoundingClientRect()
 }
 
+function updateTourRect() {
+  const step = TOUR_STEPS[tourStep.value]
+  if (!step) return
+  const el = document.querySelector(step.selector)
+  if (!el) return
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  setTimeout(measureTourRect, 320)
+}
+
 function startTour() {
-  tourStep.value  = 0
+  tourStep.value   = 0
   tourActive.value = true
   nextTick(updateTourRect)
 }
@@ -546,6 +579,17 @@ function endTour() {
 
 onMounted(() => {
   setTimeout(() => { visible.value = true }, 80)
+  window.addEventListener('resize', measureTourRect)
+  window.addEventListener('scroll', measureTourRect, { passive: true })
+
+  const customEx = localStorage.getItem('customExercises')
+  if (customEx) {
+    exercises.value = JSON.parse(customEx)
+    localStorage.removeItem('customExercises')
+    startTimer()
+    if (!localStorage.getItem('exerciseTourSeen')) setTimeout(startTour, 600)
+    return
+  }
 
   const stored = localStorage.getItem('surveyResult')
   if (stored) {
@@ -930,7 +974,10 @@ onMounted(() => {
   box-shadow: 0 8px 32px rgba(0,0,0,0.22);
   z-index: 9002;
   pointer-events: all;
-  transition: left 0.3s ease, top 0.3s ease, bottom 0.3s ease;
+  transition: left 0.3s ease, top 0.3s ease;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 .tour-step-num {
   font-size: 12px;

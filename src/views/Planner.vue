@@ -1195,7 +1195,7 @@ onBeforeUnmount(() => {
 .container {
   max-width: 1100px;
   margin: auto;
-  padding: 100px 20px 20px;
+  padding: calc(var(--navbar-h, 70px) + 20px) 20px 20px;
 }
 
 h1 { font-size: 42px; color: #0b5d57; }
@@ -1656,7 +1656,7 @@ h1 { font-size: 42px; color: #0b5d57; }
 @media (max-width: 768px) {
   h1 { font-size: 28px; }
   .subtitle { font-size: 20px; }
-  .container { padding: 100px 16px 20px; }
+  .container { padding: calc(var(--navbar-h, 70px) + 16px) 16px 20px; }
 
   .code-entry-inner { flex-direction: column; align-items: stretch; }
   .code-entry-input { min-width: 0; width: 100%; }

@@ -14,6 +14,7 @@ import RoutePlan from '../views/RoutePlan.vue'
 import SnapshotView from '../views/SnapshotView.vue'
 import RouteSurvey from '../views/RouteSurvey.vue'
 import Planner from '../views/Planner.vue'
+import AllExercisesPage from '../views/AllExercisesPage.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -30,12 +31,16 @@ const routes = [
   { path: '/routeplan', name: 'routeplan', component: RoutePlan},
   { path: '/snapshot', name: 'Snapshot', component: SnapshotView},
   { path: '/routesurvey', name: 'RouteSurvey', component: RouteSurvey},
-  { path: '/planner', name: 'Planner', component: Planner}
+  { path: '/planner', name: 'Planner', component: Planner},
+  { path: '/exercises', name: 'AllExercises', component: AllExercisesPage }
 ]
 
 const router = createRouter({
   history: createWebHistory(),
-  routes
+  routes,
+  scrollBehavior() {
+    return { top: 0, behavior: 'instant' }
+  }
 })
 
 export default router
