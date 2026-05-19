@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import fallbackImg from '../assets/myphoto.png'
 import AppNavbar from '../components/AppNavbar.vue'
+import AppFooter from '../components/AppFooter.vue'
 
 const router = useRouter()
 const route  = useRoute()
@@ -12,10 +13,12 @@ const events   = ref([])
 const loading  = ref(true)
 const apiError = ref(false)
 
-// Tab state: 'personalized' | 'browse'
+// Initial tab is driven by the URL query so that other pages can deep-link
+// directly to the personalised tab — e.g. router.push('/events?tab=personalized').
 const activeTab = ref(route.query.tab === 'personalized' ? 'personalized' : 'browse')
 
-// External link disclaimer
+// External links open in a new tab via window.open after the user confirms
+// the disclaimer. We never navigate away directly so the user stays in-app.
 const disclaimerUrl  = ref('')
 const showDisclaimer = ref(false)
 function openExternal(url) {
@@ -27,19 +30,19 @@ function confirmExternal() {
   showDisclaimer.value = false
 }
 
+// True when the user has completed the wellness check-in and has saved results
+// we can match against. Controls which state the personalised tab renders.
 const hasSnapshot = computed(() => !!localStorage.getItem('surveyResult'))
 
-// Filter state
-const searchKeyword = ref('')
+const searchKeyword    = ref('')
 const filterDifficulty = ref('')
+const sortOption       = ref('date-asc')
 
-// Sort
-const sortOption = ref('date-asc')
-
-// Pagination
-const PAGE_SIZE = 9
+const PAGE_SIZE   = 9
 const currentPage = ref(1)
 
+// Maps the survey category name (used in Results.vue) to the difficulty
+// label used on event cards so personalisation can filter by difficulty.
 const CATEGORY_TO_DIFFICULTY = {
   'Just Getting Started': 'Easy',
   'Building Momentum':    'Medium',
@@ -55,7 +58,8 @@ const userDifficulty = computed(() => {
   }
 })
 
-// Personalized events: earliest events matching the user's difficulty level
+// Shows up to 3 events that match the user's difficulty level, sorted by the
+// current sortOption. Returns empty when the user hasn't done the check-in.
 const personalizedEvents = computed(() => {
   if (!userDifficulty.value) return []
   return events.value
@@ -63,7 +67,16 @@ const personalizedEvents = computed(() => {
     .slice(0, 3)
 })
 
-// Browse all events with filters applied (no page cap)
+// Fallback: shown below the "no matches" message when the check-in is done
+// but no events match the user's level right now.
+const similarEvents = computed(() => {
+  if (personalizedEvents.value.length > 0) return []
+  return events.value.slice(0, 3)
+})
+
+// Full filtered + sorted list for the Browse tab. Invalid dates are pushed
+// to the end rather than causing a crash — fallback events have string times
+// like "Mon, 10:00 AM" which don't parse as valid Date objects.
 const filteredEvents = computed(() => {
   let list = [...events.value]
   if (searchKeyword.value.trim()) {
@@ -95,9 +108,10 @@ const pagedEvents = computed(() => {
   return filteredEvents.value.slice(start, start + PAGE_SIZE)
 })
 
-// Reset to page 1 when filters change
 watch([searchKeyword, filterDifficulty, sortOption], () => { currentPage.value = 1 })
 
+// Static fallback data shown when the API fetch fails (network error or empty
+// response). Keeps the page usable offline or during a backend outage.
 const fallbackEvents = [
   {
     title: 'Gentle Park Walk',
@@ -197,6 +211,8 @@ onMounted(async () => {
     if (data.events && data.events.length > 0) {
       events.value = data.events
     } else {
+      // API returned successfully but with no events — use fallback to avoid
+      // showing an empty page.
       events.value = fallbackEvents
       apiError.value = true
     }
@@ -205,11 +221,15 @@ onMounted(async () => {
     apiError.value = true
   } finally {
     loading.value = false
+    // Tour fires 600ms after load so the page has time to paint before the
+    // first spotlight highlight is measured.
     if (!localStorage.getItem('eventsTourSeen')) {
       setTimeout(startTour, 600)
     }
   }
 
+  // Resize and scroll listeners keep the tour spotlight in the right position
+  // while the user's viewport changes mid-tour.
   window.addEventListener('resize', measureTourRect)
   window.addEventListener('scroll', measureTourRect, { passive: true })
 })
@@ -219,7 +239,11 @@ onBeforeUnmount(() => {
   window.removeEventListener('scroll', measureTourRect)
 })
 
-// ── Page Tour ─────────────────────────────────────────────
+// ── Page Tour ─────────────────────────────────────────────────────────────
+// Tour auto-starts on first visit (checked via localStorage 'eventsTourSeen').
+// It switches the tab to 'browse' before starting so filters-bar and cards
+// are visible when the spotlight highlights them — they don't exist on the
+// personalised tab.
 const TOUR_STEPS = [
   { selector: '.tab-group',   position: 'bottom', title: 'Switch Views',      desc: 'Toggle between personalised recommendations (matched to your wellness level) and browsing all available events.' },
   { selector: '.sort-group',  position: 'bottom', title: 'Sort Events',       desc: 'Choose whether to see the earliest upcoming events first, or the latest ones at the top.' },
@@ -231,7 +255,7 @@ const tourActive = ref(false)
 const tourStep   = ref(0)
 const tourRect   = ref(null)
 
-const TOOLTIP_H = 210
+const TOOLTIP_H = 210  // estimated tooltip height used for above/below placement logic
 
 const spotlightStyle = computed(() => {
   if (!tourRect.value) return {}
@@ -314,13 +338,17 @@ function endTour() {
 </script>
 
 <template>
-  <div>
+  <div class="page-wrapper">
     <AppNavbar active="events" />
     <div class="container">
 
 
 
-      <!-- HERO -->
+      <!--
+        PAGE HEADER
+        A short headline and one-line description that sets the tone for the
+        whole events page — curated, accessible, and matched to the user's pace.
+      -->
       <section class="hero">
         <h1>Curated Events for <span>Active Connections</span></h1>
         <p class="desc">
@@ -328,7 +356,12 @@ function endTour() {
         </p>
       </section>
 
-      <!-- TAB TOGGLE -->
+      <!--
+        TAB TOGGLE + SORT
+        Two tabs let users switch between their personalised recommendations
+        and the full event catalogue. The sort dropdown sits on the same row
+        and controls the order of whichever tab is currently active.
+      -->
       <div class="show-me-row">
         <span class="show-me-label">Show me:</span>
         <div class="tab-group">
@@ -356,7 +389,13 @@ function endTour() {
         </div>
       </div>
 
-      <!-- BROWSE FILTERS (only shown when browse tab is active) -->
+      <!--
+        BROWSE FILTERS
+        Only visible when the "Browse All Events" tab is active. A keyword
+        search and a category dropdown let users narrow down a large list to
+        only the events they care about. The "Clear" button resets both filters
+        in one click.
+      -->
       <div v-if="activeTab === 'browse'" class="filters-bar">
         <div class="filter-group">
           <label>Search by keyword</label>
@@ -390,35 +429,56 @@ function endTour() {
         <p>Loading events…</p>
       </section>
 
-      <!-- EVENT CARDS -->
-      <section v-else class="cards">
-        <template v-if="activeTab === 'personalized'">
-          <!-- No snapshot state -->
-          <div v-if="!hasSnapshot" class="no-snapshot">
-            <div class="checkin-empty-icon">📋</div>
-            <h2 class="checkin-empty-title">No snapshot yet</h2>
-            <p class="checkin-empty-desc">
-              Take a quick 5-minute check-in to see how you're tracking against the Australian benchmark
-              for adults 65 and over. You'll get a personalised wellness category and exercise suggestions.
-            </p>
-            <div class="checkin-empty-steps">
-              <div class="checkin-step">
-                <div class="checkin-step-num">1</div>
-                <span>Answer a few questions about your activity, sleep, and wellbeing</span>
-              </div>
-              <div class="checkin-step">
-                <div class="checkin-step-num">2</div>
-                <span>Get your wellness category scored against the 65+ benchmark</span>
-              </div>
-              <div class="checkin-step">
-                <div class="checkin-step-num">3</div>
-                <span>See personalised exercises and events matched to your level</span>
-              </div>
+      <!--
+        PERSONALIZED SECTION
+        Only shown when the "Personalised Recommendations" tab is active.
+        Handles three distinct situations:
+          1. User hasn't done the wellness check-in yet — show a prompt to
+             complete it so we have something to match against.
+          2. Check-in is done but no events match their level right now —
+             show a polite sorry message and display similar events below.
+          3. Matching events exist — show them as cards.
+      -->
+      <section v-if="!loading && activeTab === 'personalized'" class="personalized-section">
+
+        <!-- Case 1: No snapshot yet -->
+        <div v-if="!hasSnapshot" class="no-snapshot">
+          <div class="checkin-empty-icon">📋</div>
+          <h2 class="checkin-empty-title">No snapshot yet</h2>
+          <p class="checkin-empty-desc">
+            Take a quick 5-minute check-in to see how you're tracking against the Australian benchmark
+            for adults 65 and over. You'll get a personalised wellness category and exercise suggestions.
+          </p>
+          <div class="checkin-empty-steps">
+            <div class="checkin-step">
+              <div class="checkin-step-num">1</div>
+              <span>Answer a few questions about your activity, sleep, and wellbeing</span>
             </div>
-            <button class="snapshot-btn" @click="router.push('/survey')">Start Check-in →</button>
+            <div class="checkin-step">
+              <div class="checkin-step-num">2</div>
+              <span>Get your wellness category scored against the 65+ benchmark</span>
+            </div>
+            <div class="checkin-step">
+              <div class="checkin-step-num">3</div>
+              <span>See personalised exercises and events matched to your level</span>
+            </div>
           </div>
+          <button class="snapshot-btn" @click="router.push('/survey')">Start Check-in →</button>
+        </div>
+
+        <!-- Case 2: Snapshot exists but no matching events -->
+        <div v-else-if="personalizedEvents.length === 0" class="sorry-box">
+          <div class="sorry-icon">🔍</div>
+          <h2 class="sorry-title">No events for your level right now</h2>
+          <p class="sorry-desc">
+            We couldn't find upcoming events that match your wellness level at the moment.
+            Check back soon — new events are added regularly. In the meantime, have a look at some similar activities below.
+          </p>
+        </div>
+
+        <!-- Case 3: Personalized events found -->
+        <div v-else class="cards">
           <div
-            v-else
             class="card"
             v-for="(event, index) in personalizedEvents"
             :key="'p-' + (event.id ?? index)"
@@ -444,22 +504,81 @@ function endTour() {
                   <span class="info-icon">🏃</span>
                   <span>{{ event.activity_type }}</span>
                 </div>
-
               </div>
               <button class="btn" @click="event.url ? openExternal(event.url) : null">View</button>
             </div>
           </div>
-        </template>
+        </div>
 
-        <template v-else>
+      </section>
+
+      <!--
+        BROWSE CARDS
+        The full event grid, visible only on the "Browse All Events" tab.
+        Each card shows an image, difficulty badge, title, description,
+        location, time, and a "View" button that opens the event externally
+        (with a disclaimer modal shown first).
+      -->
+      <section v-if="!loading && activeTab === 'browse'" class="cards">
+        <div
+          class="card"
+          v-for="(event, index) in pagedEvents"
+          :key="'b-' + (event.id ?? index)"
+        >
+          <div class="card-img-wrap">
+            <img
+              :src="event.img ?? imgFallback"
+              @error="e => e.target.src = imgFallback"
+            />
+            <span v-if="event.difficulty" class="difficulty-badge" :class="difficultyBadgeClass(event.difficulty)">
+              {{ event.difficulty }}
+            </span>
+          </div>
+          <div class="card-content">
+            <h2>{{ event.title }}</h2>
+            <p class="card-desc">{{ event.desc }}</p>
+            <div class="info">
+              <div class="info-row">
+                <span><strong>{{ event.location }} <br>{{ event.time }}</strong></span>
+              </div>
+              <div v-if="event.activity_type" class="info-row">
+                <span class="info-icon">🏃</span>
+                <span>{{ event.activity_type }}</span>
+              </div>
+            </div>
+            <button class="btn" @click="event.url ? openExternal(event.url) : null">View</button>
+          </div>
+        </div>
+        <div v-if="filteredEvents.length === 0" class="no-results">
+          No events match your filters. Try adjusting your search.
+        </div>
+      </section>
+
+      <!--
+        SIMILAR EVENTS
+        Shown below the "no matches" sorry message on the personalised tab.
+        Displays three general events so the user always has something to
+        look at even when nothing matches their exact level. A "View more"
+        button at the bottom switches them to the full Browse tab.
+      -->
+      <section
+        v-if="!loading && activeTab === 'personalized' && hasSnapshot && similarEvents.length > 0"
+        class="similar-section"
+      >
+        <div class="similar-header">
+          <h2 class="similar-title">Similar Events</h2>
+          <p class="similar-desc">We couldn't find events that exactly match your wellness level right now — but you might enjoy these nearby activities.</p>
+        </div>
+        <div class="similar-cards">
           <div
             class="card"
-            v-for="(event, index) in pagedEvents"
-            :key="'b-' + (event.id ?? index)"
+            v-for="(event, index) in similarEvents"
+            :key="'s-' + (event.id ?? index)"
           >
             <div class="card-img-wrap">
               <img
                 :src="event.img ?? imgFallback"
+                class="card-img"
                 @error="e => e.target.src = imgFallback"
               />
               <span v-if="event.difficulty" class="difficulty-badge" :class="difficultyBadgeClass(event.difficulty)">
@@ -477,18 +596,22 @@ function endTour() {
                   <span class="info-icon">🏃</span>
                   <span>{{ event.activity_type }}</span>
                 </div>
-
               </div>
               <button class="btn" @click="event.url ? openExternal(event.url) : null">View</button>
             </div>
           </div>
-          <div v-if="filteredEvents.length === 0" class="no-results">
-            No events match your filters. Try adjusting your search.
-          </div>
-        </template>
+        </div>
+        <div class="similar-footer">
+          <button class="similar-more-btn" @click="activeTab = 'browse'">View more events →</button>
+        </div>
       </section>
 
-      <!-- PAGINATION (browse tab only) -->
+      <!--
+        PAGINATION
+        Only shown on the Browse tab when there are more events than fit on
+        one page. Each page number is a button; clicking one scrolls back to
+        the top automatically so the user doesn't have to.
+      -->
       <div v-if="activeTab === 'browse' && !loading && totalPages > 1" class="pagination">
         <button
           v-for="page in totalPages"
@@ -503,21 +626,17 @@ function endTour() {
 
 
 
-      <!-- FOOTER -->
-      <footer class="footer">
-        <h3>ActiveAgeing</h3>
-        <div class="links">
-          <a>Privacy Policy</a>
-          <a>·</a>
-          <a>Terms of Service</a>
-          <a>·</a>
-          <a>Contact Support</a>
-        </div>
-        <p class="footer-copy">© 2026 ActiveAgeing Australia. Your journey to wellness, certified.</p>
-      </footer>
-
     </div>
 
+    <AppFooter />
+
+    <!--
+      GUIDED PAGE TOUR
+      A step-by-step spotlight overlay that auto-starts the first time a user
+      visits this page. It highlights the tab toggle, sort controls, filter
+      bar, and event cards in sequence so new users understand the layout
+      without having to figure it out on their own.
+    -->
     <!-- Page Tour -->
     <Teleport to="body">
       <div v-if="tourActive" class="tour-overlay">
@@ -536,6 +655,12 @@ function endTour() {
       </div>
     </Teleport>
 
+    <!--
+      EXTERNAL LINK DISCLAIMER
+      A small confirmation modal that appears before sending a user to an
+      external event website. It makes clear that the destination is outside
+      ActiveAgeing and gives them the option to cancel or continue.
+    -->
     <!-- External link disclaimer -->
     <Teleport to="body">
       <div v-if="showDisclaimer" class="disclaimer-overlay" @click.self="showDisclaimer = false">
@@ -555,7 +680,10 @@ function endTour() {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-/* GLOBAL */
+/* ── Global reset ──────────────────────────────────────────────────────────
+   :global(body) is needed because the body sits outside this component's
+   scoped boundary. Sets the base background and font so the page matches
+   even in areas outside the component root. */
 :global(body) {
   margin: 0;
   font-family: 'Poppins', 'Arial', sans-serif;
@@ -563,7 +691,15 @@ function endTour() {
   color: #333;
 }
 
+.page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f6f6f6;
+}
+
 .container {
+  flex: 1;
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 40px;
@@ -616,7 +752,10 @@ function endTour() {
   margin: 0;
 }
 
-/* TAB TOGGLE */
+/* ── Tab toggle + sort row ─────────────────────────────────────────────────
+   justify-content: space-between pushes the sort group to the far right.
+   The sort-group uses margin-left: auto as an additional push for when the
+   tab group wraps on narrow screens. */
 .show-me-row {
   display: flex;
   align-items: center;
@@ -689,7 +828,9 @@ function endTour() {
   background: #e8f4f3;
 }
 
-/* FILTERS BAR */
+/* ── Filters bar ───────────────────────────────────────────────────────────
+   White card that wraps the keyword input, category dropdown, and clear
+   button. flex-wrap allows it to reflow into two rows on narrow screens. */
 .filters-bar {
   display: flex;
   gap: 20px;
@@ -735,7 +876,7 @@ function endTour() {
   border-radius: 8px;
   background: #dc2626;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 500;
   color: white;
   cursor: pointer;
@@ -752,7 +893,10 @@ function endTour() {
   border-color: #0b5d57;
 }
 
-/* CARDS */
+/* ── Event cards grid ──────────────────────────────────────────────────────
+   Three-column grid on desktop, drops to two on 768px and one on 480px.
+   flex-direction: column on each card lets margin-top: auto on the button
+   push it to the bottom regardless of card height. */
 .cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -793,7 +937,7 @@ function endTour() {
   right: 10px;
   padding: 3px 12px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   background: white;
   color: #333;
@@ -839,13 +983,13 @@ function endTour() {
   color: #555;
 }
 
-.info-icon { font-size: 14px; }
+.info-icon { font-size: 20px; }
 
 .loading-box {
   text-align: center;
   padding: 60px 0;
   color: #5a6b67;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 .no-results {
@@ -853,7 +997,7 @@ function endTour() {
   text-align: center;
   padding: 60px 0;
   color: #888;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 /* BUTTON */
@@ -870,7 +1014,7 @@ function endTour() {
   text-decoration: none;
   box-sizing: border-box;
   font-family: 'Poppins', sans-serif;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 500;
   margin-top: auto;
   transition: background 0.2s;
@@ -891,7 +1035,7 @@ function endTour() {
   padding: 16px 30px;
   border-radius: 10px;
   color: white;
-  font-size: 16px;
+  font-size: 20px;
   font-family: 'Poppins', sans-serif;
   font-weight: 500;
   cursor: pointer;
@@ -900,41 +1044,6 @@ function endTour() {
 
 .cta-btn.big:hover { background: #8b2d08; }
 
-/* FOOTER */
-.footer {
-  text-align: center;
-  padding: 40px 0;
-  font-size: 14px;
-  color: #555;
-  border-top: 1px solid #e5e5e5;
-}
-
-.footer h3 {
-  color: #0b5d57;
-  margin-bottom: 10px;
-  font-size: 18px;
-}
-
-.links {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.links a {
-  text-decoration: none;
-  color: #555;
-  cursor: pointer;
-}
-
-.links a:hover { color: #0b5d57; }
-
-.footer-copy {
-  color: #888;
-  margin: 6px 0 0 0;
-  font-size: 13px;
-}
 
 /* NO SNAPSHOT */
 .no-snapshot {
@@ -961,7 +1070,7 @@ function endTour() {
 }
 
 .checkin-empty-desc {
-  font-size: 16px;
+  font-size: 20px;
   color: #5a6b67;
   line-height: 1.7;
   margin-bottom: 28px;
@@ -979,7 +1088,7 @@ function endTour() {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font-size: 15px;
+  font-size: 20px;
   color: #3a5a55;
   font-weight: 500;
   line-height: 1.5;
@@ -991,7 +1100,7 @@ function endTour() {
   border-radius: 50%;
   background: #e0ede9;
   color: #0b5d57;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -1007,7 +1116,7 @@ function endTour() {
   border-radius: 12px;
   padding: 15px 36px;
   font-family: 'Poppins', sans-serif;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, transform 0.15s;
@@ -1015,7 +1124,9 @@ function endTour() {
 
 .snapshot-btn:hover { background: #0f3d35; transform: translateY(-1px); }
 
-/* PAGINATION */
+/* ── Pagination ────────────────────────────────────────────────────────────
+   Active page is underlined (not boxed) to keep it subtle. Clicking a page
+   number also triggers a smooth scroll-to-top via $nextTick in the template. */
 .pagination {
   display: flex;
   justify-content: center;
@@ -1031,7 +1142,7 @@ function endTour() {
   border: none;
   background: transparent;
   font-family: 'Poppins', sans-serif;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 500;
   color: #444;
   cursor: pointer;
@@ -1052,7 +1163,9 @@ function endTour() {
   background: transparent;
 }
 
-/* DISCLAIMER MODAL */
+/* ── External link disclaimer modal ────────────────────────────────────────
+   z-index: 900 sits above the page content but below the tour (1000).
+   @click.self on the overlay closes it by clicking the dark backdrop. */
 .disclaimer-overlay {
   position: fixed; inset: 0; z-index: 900;
   background: rgba(0,0,0,0.45);
@@ -1067,23 +1180,25 @@ function endTour() {
   font-family: 'Poppins', sans-serif;
 }
 .disclaimer-icon { font-size: 36px; margin-bottom: 12px; }
-.disclaimer-title { font-size: 18px; font-weight: 700; color: #0b5d57; margin: 0 0 10px; }
-.disclaimer-text { font-size: 14px; color: #555; line-height: 1.6; margin: 0 0 24px; }
+.disclaimer-title { font-size: 20px; font-weight: 700; color: #0b5d57; margin: 0 0 10px; }
+.disclaimer-text { font-size: 20px; color: #555; line-height: 1.6; margin: 0 0 24px; }
 .disclaimer-actions { display: flex; gap: 12px; }
 .disclaimer-btn-cancel {
   flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 10px;
   background: #fff; color: #555; font-family: 'Poppins', sans-serif;
-  font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+  font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s;
 }
 .disclaimer-btn-cancel:hover { background: #f5f5f5; }
 .disclaimer-btn-confirm {
   flex: 1; padding: 12px; border: none; border-radius: 10px;
   background: #0b5d57; color: #fff; font-family: 'Poppins', sans-serif;
-  font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s;
+  font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s;
 }
 .disclaimer-btn-confirm:hover { background: #084a45; }
 
-/* RESPONSIVE */
+/* ── Responsive ────────────────────────────────────────────────────────────
+   Cards go to 2-column at 768px and 1-column at 480px. The tab/sort row
+   stacks vertically on mobile so it doesn't overflow horizontally. */
 @media (max-width: 768px) {
   .container { padding: 0 20px; padding-top: var(--navbar-h, 70px); }
   .hero h1 { font-size: 26px; }
@@ -1097,19 +1212,21 @@ function endTour() {
   .no-snapshot { padding: 32px 20px; }
   .checkin-empty-title { font-size: 22px; }
   .pagination { flex-wrap: wrap; gap: 4px; margin: 20px 0 4px; }
-  .page-btn { min-width: 36px; height: 36px; font-size: 14px; }
+  .page-btn { min-width: 36px; height: 36px; font-size: 20px; }
 }
 
 @media (max-width: 480px) {
   .cards { grid-template-columns: 1fr; }
-  .tab-btn { font-size: 14px; padding: 9px 16px; }
+  .tab-btn { font-size: 20px; padding: 9px 16px; }
   .hero h1 { font-size: 22px; }
-  .desc { font-size: 14px; }
-  .card-content h2 { font-size: 15px; }
+  .desc { font-size: 20px; }
+  .card-content h2 { font-size: 20px; }
   .snapshot-btn { width: 100%; }
 }
 
-/* ── Tour overlay ── */
+/* ── Tour overlay ──────────────────────────────────────────────────────────
+   pointer-events: none on the overlay itself so scroll and click pass through
+   to the page — only the tooltip has pointer-events: all so buttons work. */
 .tour-overlay {
   position: fixed;
   inset: 0;
@@ -1121,6 +1238,8 @@ function endTour() {
 .tour-spotlight {
   position: fixed;
   border-radius: 12px;
+  /* 9999px outward box-shadow dims everything outside the spotlight without
+     needing a separate overlay element — the transparent box acts as the cutout. */
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
   background: transparent;
   pointer-events: none;
@@ -1141,7 +1260,7 @@ function endTour() {
 }
 
 .tour-step-num {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: #0b5d57;
   text-transform: uppercase;
@@ -1150,14 +1269,14 @@ function endTour() {
 }
 
 .tour-title {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   color: #0f3d35;
   margin: 0 0 8px;
 }
 
 .tour-desc {
-  font-size: 14px;
+  font-size: 20px;
   color: #4a5e5a;
   line-height: 1.6;
   margin: 0 0 16px;
@@ -1173,7 +1292,7 @@ function endTour() {
   background: none;
   border: none;
   font-family: 'Poppins', sans-serif;
-  font-size: 13px;
+  font-size: 20px;
   color: #888;
   cursor: pointer;
   padding: 0;
@@ -1188,11 +1307,106 @@ function endTour() {
   border-radius: 8px;
   padding: 9px 20px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .tour-next:hover { background: #084a45; }
+
+/* ── Personalized section wrapper ── */
+.personalized-section {
+  margin-top: 24px;
+}
+
+/* Sorry state (snapshot exists, no matches) */
+.sorry-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 48px 40px;
+  text-align: center;
+  border: 1.5px solid #e4dfd5;
+}
+
+.sorry-icon {
+  font-size: 44px;
+  margin-bottom: 16px;
+}
+
+.sorry-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f3d35;
+  margin: 0 0 12px;
+}
+
+.sorry-desc {
+  font-size: 20px;
+  color: #5a6b67;
+  line-height: 1.7;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ── Similar Events section ── */
+.similar-section {
+  margin-top: 40px;
+}
+
+.similar-header {
+  margin-bottom: 20px;
+}
+
+.similar-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0b5d57;
+  margin: 0 0 8px;
+}
+
+.similar-desc {
+  font-size: 20px;
+  color: #5a6b67;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.similar-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.similar-footer {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.similar-more-btn {
+  background: none;
+  border: 2px solid #0b5d57;
+  border-radius: 10px;
+  padding: 12px 32px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #0b5d57;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.similar-more-btn:hover {
+  background: #0b5d57;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .similar-cards { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+  .similar-cards { grid-template-columns: 1fr; }
+  .similar-title { font-size: 20px; }
+}
 </style>

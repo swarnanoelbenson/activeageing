@@ -1,4 +1,7 @@
 <script setup>
+// Default Vite + Vue scaffold component — not used in the production app.
+// Kept here as-is so the project's git history stays clean; safe to delete
+// once the scaffold is no longer needed for tooling reference.
 import { ref } from 'vue'
 import viteLogo from '../assets/vite.svg'
 import heroImg from '../assets/hero.png'

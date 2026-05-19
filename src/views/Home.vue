@@ -3,19 +3,24 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
 import ExerciseSessionModal from '../components/ExerciseSessionModal.vue'
+import AppFooter from '../components/AppFooter.vue'
 
 const router = useRouter()
 
-const showExerciseGrid  = ref(false)
-const selectedExercise  = ref(null)
-const playingExercise   = ref(null)
+const showExerciseGrid  = ref(false)  // controls the full-screen exercise list overlay
+const selectedExercise  = ref(null)   // which exercise's detail popup is open
+const playingExercise   = ref(null)   // which exercise is loaded into ExerciseSessionModal
 
+// Closes the detail popup before handing off to the session modal so both
+// overlays are never visible at the same time.
 function openSession(exercise) {
   playingExercise.value  = exercise
   selectedExercise.value = null
 }
 
-// Normalize the home exercise shape to what ExerciseSessionModal expects
+// ExerciseSessionModal expects { name, durationMinutes, steps } but the home
+// exercise objects have { name, duration: '5 min', steps }. This computed
+// normalises the shape so the modal doesn't need to know the home format.
 const sessionExercise = computed(() => {
   const ex = playingExercise.value
   if (!ex) return null
@@ -92,6 +97,8 @@ const allExercises = [
     ]},
 ]
 
+// Smooth-scrolls to the wellness snapshot section by its anchor ID so the
+// "Get started" hero button acts as an in-page navigation shortcut.
 function getStarted() {
   const el = document.getElementById('snapshot-section')
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -108,15 +115,30 @@ function goToEvents()      { router.push('/events') }
 
     <main class="main-content">
 
-      <!-- ── HERO SECTION ── -->
+      <!--
+        HERO SECTION
+        The very first thing a visitor sees. It introduces the platform with a
+        headline, a short description, and a "Get started" button alongside a
+        warm photo of an elderly couple. The animated chevron at the bottom
+        gently nudges people to keep scrolling down.
+      -->
       <section class="hero-section">
+        <!-- Scroll indicator — pinned to bottom of hero viewport -->
+        <div class="scroll-hint" @click="getStarted" aria-label="Scroll down">
+          <span class="scroll-hint-label">Scroll to explore</span>
+          <div class="scroll-hint-arrow">
+            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </div>
+        </div>
+
         <div class="hero-inner">
           <div class="hero-left">
             <div class="welcome-pill">Welcome</div>
             <h1 class="hero-title">
               Active Ageing,<br />
-              Rediscovering
-              Memories
+              Rediscovering Memories
             </h1>
             <p class="hero-desc">
               Staying connected and active can bring a wonderful boost to our wellbeing.
@@ -134,7 +156,13 @@ function goToEvents()      { router.push('/events') }
         </div>
       </section>
 
-      <!-- ── STATS BAR ── -->
+      <!--
+        STATS BAR
+        A short row of four numbers — walking routes, weekly events, guided
+        exercises, and the 5-minute check-in — displayed right below the hero.
+        The purpose is to quickly show the breadth of what's on offer and build
+        confidence before the user scrolls further.
+      -->
       <section class="stats-bar">
         <div class="stat-item">
           <span class="stat-num">100+</span>
@@ -157,7 +185,14 @@ function goToEvents()      { router.push('/events') }
         </div>
       </section>
       
-      <!-- ── WELLNESS SNAPSHOT ── -->
+      <!--
+        WELLNESS SNAPSHOT SECTION
+        Introduces the 5-minute check-in questionnaire. The left side previews
+        the three possible results a user can land in (Thriving, Building
+        Momentum, Just Getting Started), and the right side walks through the
+        three steps of the process. The big button sends the user to the Survey
+        page to complete their check-in.
+      -->
       <section class="snap-section" id="snapshot-section">
         <div class="snap-header">
           <div class="start-pill">Start here</div>
@@ -220,7 +255,13 @@ function goToEvents()      { router.push('/events') }
         </div>
       </section>
 
-      <!-- ── PLAN MY WALK SECTION ── -->
+      <!--
+        PLAN MY WALK SECTION
+        A featured card that highlights the route planning feature. It lists the
+        key selling points (choose your pace, pick scenic spots, invite friends)
+        and shows a small animated-style map preview on the right so users can
+        visualise what a planned walk looks like before they commit to trying it.
+      -->
       <section class="plan-section">
         <div class="plan-card">
           <div class="plan-left">
@@ -289,7 +330,13 @@ function goToEvents()      { router.push('/events') }
 
       
 
-      <!-- ── STAY ACTIVE SECTION ── -->
+      <!--
+        STAY ACTIVE SECTION
+        Two side-by-side cards pointing to the other two main features — Events
+        and Exercises. Users who aren't ready to plan a route can jump straight
+        to finding a local event or browsing guided exercises from here. Clicking
+        "View all" on the exercises card opens the exercise grid overlay inline.
+      -->
       <section class="explore-section">
         <div class="explore-label-pill">More to explore</div>
         <h2 class="explore-title">Stay active, stay connected</h2>
@@ -328,7 +375,13 @@ function goToEvents()      { router.push('/events') }
         </div>
       </section>
 
-      <!-- ── CTA FOOTER BANNER ── -->
+      <!--
+        CALL-TO-ACTION BANNER
+        A full-width teal banner at the very bottom of the page content.
+        It's a final nudge for anyone who scrolled all the way through without
+        clicking anything yet — summarises the three core actions in one line
+        and offers a direct button to start the wellness check-in.
+      -->
       <section class="cta-banner">
         <h2>Ready to start your journey?</h2>
         <p>Take the snapshot, plan a walk, invite a friend. All at your own pace.</p>
@@ -337,18 +390,15 @@ function goToEvents()      { router.push('/events') }
 
     </main>
 
-    <!-- FOOTER -->
-    <footer class="footer">
-      <h3>ActiveAgeing</h3>
+    <AppFooter />
 
-      <div class="links">
-        <a>Privacy Policy</a>
-        <a>Terms of Service</a>
-      </div>
-
-    </footer>
-
-    <!-- Exercise grid overlay -->
+    <!--
+      EXERCISE GRID OVERLAY
+      A full-screen panel that slides in when the user clicks "View all" in the
+      Stay Active section. It shows all nine exercises as small cards — emoji,
+      category, name, and duration. Clicking "View" on any card opens the
+      exercise preview popup below without leaving the home page.
+    -->
     <Transition name="fade">
       <div v-if="showExerciseGrid" class="ex-overlay" @click.self="showExerciseGrid = false">
         <div class="ex-panel">
@@ -371,7 +421,12 @@ function goToEvents()      { router.push('/events') }
       </div>
     </Transition>
 
-    <!-- Exercise preview popup -->
+    <!--
+      EXERCISE PREVIEW POPUP
+      A focused detail panel that appears when the user picks a specific exercise
+      from the grid overlay. It shows the description, a step-by-step photo guide,
+      and a "Play" button that hands the exercise off to the full session page.
+    -->
     <Transition name="fade">
       <div v-if="selectedExercise" class="ex-preview-overlay" @click.self="selectedExercise = null">
         <div class="ex-preview">
@@ -433,7 +488,10 @@ function goToEvents()      { router.push('/events') }
   padding-top: 15px; /* navbar height */
 }
 
-/* ── Shared Buttons ── */
+/* ── Shared buttons ────────────────────────────────────────────────────────
+   Three button variants used across sections — primary (teal fill), outline
+   (teal border), and white (used on the dark CTA banner). All share the same
+   font and hover micro-lift so they feel consistent. */
 .btn-primary {
   background: #0b5d57;
   color: white;
@@ -482,10 +540,54 @@ function goToEvents()      { router.push('/events') }
 }
 .btn-white:hover { opacity: 0.9; transform: translateY(-1px); }
 
-/* ── HERO ── */
+/* ── Hero ──────────────────────────────────────────────────────────────────
+   Full-viewport height so it fills the screen on first load. Top padding
+   uses var(--navbar-h) set by AppNavbar so content is never hidden behind
+   the fixed bar. The animated chevron is absolute within this section. */
 .hero-section {
   background: #ffffff;
-  padding: calc(var(--navbar-h, 70px) + 60px) 3vw 60px;
+  padding: calc(var(--navbar-h, 70px) + 60px) 3vw 80px;
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.scroll-hint {
+  position: absolute;
+  bottom: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  color: #0b5d57;
+  opacity: 0.65;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.scroll-hint:hover { opacity: 1; }
+
+.scroll-hint-label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.scroll-hint-arrow {
+  animation: bounce-down 1.6s ease-in-out infinite;
+}
+
+@keyframes bounce-down {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(6px); }
 }
 
 .hero-inner {
@@ -529,7 +631,7 @@ function goToEvents()      { router.push('/events') }
 .hero-right { flex-shrink: 0; }
 
 .hero-image-box {
-  width: clamp(320px, 40vw, 520px);
+  width: clamp(280px, 35vw, 460px);
   border-radius: 16px;
   overflow: hidden;
   flex-shrink: 0;
@@ -542,7 +644,11 @@ function goToEvents()      { router.push('/events') }
   object-fit: contain;
 }
 
-/* ── STATS BAR ── */
+/* ── Stats bar ─────────────────────────────────────────────────────────────
+   The four figures (walking routes, events, exercises, check-in time) are
+   social-proof signals meant to build confidence before the user scrolls.
+   The "5 min" stat is orange to draw the eye toward the action we most
+   want first-time visitors to take — the wellness check-in. */
 .stats-bar {
   background: #ece9e2;
   padding: 24px 3vw;
@@ -584,7 +690,10 @@ function goToEvents()      { router.push('/events') }
   flex-shrink: 0;
 }
 
-/* ── PLAN MY PATH ── */
+/* ── Plan My Path section ──────────────────────────────────────────────────
+   Two-column card — copy left, SVG illustration right. The SVG is a hand-
+   crafted route map (not a live map API) so the section loads instantly and
+   works without any external dependency. */
 .plan-section {
   padding: 48px 3vw;
   background: #faf8f3;
@@ -673,7 +782,10 @@ function goToEvents()      { router.push('/events') }
 
 .map-svg { width: 100%; height: 100%; }
 
-/* ── WELLNESS SNAPSHOT ── */
+/* ── Wellness snapshot section ─────────────────────────────────────────────
+   The three category cards (Thriving, Building Momentum, Just Getting
+   Started) use coloured left-border accents to communicate the warmth/urgency
+   of each tier without using alarming language. */
 .snap-section {
   padding: 56px 3vw;
   background: #ffffff;
@@ -791,7 +903,10 @@ function goToEvents()      { router.push('/events') }
 .step-title { font-size: 20px; font-weight: 700; color: #0b5d57; margin-bottom: 2px; }
 .step-desc  { font-size: 20px; color: #7a9490; line-height: 1.5; }
 
-/* ── EXPLORE SECTION ── */
+/* ── Explore section ───────────────────────────────────────────────────────
+   Two side-by-side cards for Events and Exercises. The exercise card opens
+   the inline grid overlay (z-index: 500) rather than navigating away, so
+   users can preview exercises without losing their scroll position on Home. */
 .explore-section {
   padding: 56px 3vw;
   background: #ffffff;
@@ -876,7 +991,10 @@ function goToEvents()      { router.push('/events') }
   display: block;
 }
 
-/* ── CTA BANNER ── */
+/* ── CTA banner ────────────────────────────────────────────────────────────
+   Full-width teal panel at the very bottom of the main content. It's the
+   last conversion opportunity for visitors who scrolled past everything else
+   without clicking — btn-white inverts the colour scheme for contrast. */
 .cta-banner {
   background: #0b5d57;
   color: white;
@@ -897,41 +1015,11 @@ function goToEvents()      { router.push('/events') }
   line-height: 1.6;
 }
 
-/* ── FOOTER ── */
-.footer {
-  background: #f0ede6;
-  color: #3a5a55;
-  padding: 32px 5vw;
-  text-align: center;
-  border-top: 1px solid #e0ddd6;
-}
 
-.footer h3 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #0b5d57;
-  margin-bottom: 12px;
-}
-
-.links {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-}
-
-.links a {
-  font-size: 16px;
-  color: #5a6a66;
-  cursor: pointer;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.links a:hover {
-  color: #0b5d57;
-}
-
-/* ── EXERCISE GRID OVERLAY ── */
+/* ── Exercise grid overlay ─────────────────────────────────────────────────
+   z-index: 500 keeps this below the exercise preview popup (600) and the
+   session modal (700). Both overlays are shown via Vue <Transition name="fade">
+   so they cross-fade rather than appearing abruptly. */
 .ex-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.55);
@@ -986,7 +1074,10 @@ function goToEvents()      { router.push('/events') }
 }
 .ex-view-btn:hover { background: #084a45; }
 
-/* ── EXERCISE PREVIEW POPUP ── */
+/* ── Exercise preview popup ────────────────────────────────────────────────
+   z-index: 600 sits above the grid overlay (500) so it layers on top when
+   the user clicks "View" on a card. The Play button here opens the session
+   modal (700) while closing this preview popup first via openSession(). */
 .ex-preview-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.6);
@@ -1036,7 +1127,7 @@ function goToEvents()      { router.push('/events') }
   background: #0b5d57; color: #fff;
   border: none; border-radius: 10px;
   padding: 12px 24px; font-family: 'Poppins', sans-serif;
-  font-size: 17px; font-weight: 600; cursor: pointer;
+  font-size: 20px; font-weight: 600; cursor: pointer;
   transition: background 0.2s; white-space: nowrap; margin-left: auto;
 }
 .ex-play-btn:hover { background: #084a45; }
@@ -1053,11 +1144,16 @@ function goToEvents()      { router.push('/events') }
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
 .fade-enter-from,  .fade-leave-to      { opacity: 0; }
 
-/* ── Responsive ── */
+/* ── Responsive ────────────────────────────────────────────────────────────
+   Hero stacks image below text on mobile. Plan card stacks vertically.
+   Stats bar wraps and hides dividers. Exercise grid drops from 3 to 2
+   columns, then 1 column below 480px. */
 @media (max-width: 768px) {
-  .hero-section { padding: calc(var(--navbar-h, 60px) + 24px) 5vw 24px; }
-  .hero-inner { flex-direction: column; gap: 28px; }
+  .hero-section { padding: calc(var(--navbar-h, 60px) + 24px) 5vw 32px; min-height: 100vh; justify-content: flex-start; }
+  .hero-inner { flex-direction: column; gap: 28px; order: 1; }
   .hero-image-box { width: 100%; min-width: unset; }
+  /* On mobile, pull scroll-hint out of absolute flow so it sits below the image */
+  .scroll-hint { position: static; transform: none; order: 2; align-self: center; margin-top: 24px; margin-bottom: 16px; }
   .hero-desc { max-width: 100%; }
   .plan-card { flex-direction: column; padding: 28px 24px; gap: 24px; }
   .map-preview { width: 100%; }

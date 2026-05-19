@@ -1,6 +1,11 @@
 <template>
   <div class="page">
-    <!-- Navigation -->
+    <!--
+      NAVIGATION
+      This is a standalone static navbar used only on this prototype page —
+      it doesn't use AppNavbar. Kept separate so the PlanPage layout can be
+      evaluated independently without pulling in the rest of the app's chrome.
+    -->
     <nav class="navbar">
       <div class="nav-inner">
         <span class="brand">ActiveAgeing</span>
@@ -12,7 +17,13 @@
       </div>
     </nav>
 
-    <!-- Hero Section -->
+    <!--
+      HERO SECTION
+      First thing users see — a warm welcome badge, the app's tagline, and a
+      short description of what staying active can do for wellbeing. The right
+      column is a placeholder for a real photo of an elderly couple laughing,
+      which should replace the teal box before going live.
+    -->
     <section class="hero">
       <div class="hero-inner">
         <div class="hero-text">
@@ -31,7 +42,14 @@
       </div>
     </section>
 
-    <!-- Stats Bar -->
+    <!--
+      STATS BAR
+      Four quick numbers that build trust at a glance — routes, events,
+      exercises, and the privacy promise. The "100% private" stat is
+      highlighted in orange to make the data-safety message stand out,
+      which matters a lot for older users who are cautious about apps
+      tracking them.
+    -->
     <section class="stats-bar">
       <div class="stats-inner">
         <div class="stat">
@@ -53,7 +71,14 @@
       </div>
     </section>
 
-    <!-- Plan My Path -->
+    <!--
+      PLAN MY PATH — FEATURED CARD
+      The headline feature of the app, given extra visual weight with a card
+      layout and a "Featured" badge. The SVG map on the right is an inline
+      illustration of a sample walking route (start dot, bench stop, red
+      destination marker, 25 min / Easy badge) — not a live map, just a
+      preview to communicate what the route planner looks like.
+    -->
     <section class="feature-card-section">
       <div class="feature-card">
         <div class="feature-label">⭐ Featured</div>
@@ -111,7 +136,15 @@
       </div>
     </section>
 
-    <!-- Wellness Snapshot -->
+    <!--
+      WELLNESS SNAPSHOT
+      Explains the check-in survey and what users get out of it. Left side
+      shows the three possible outcome categories (Thriving, Building
+      momentum, Just getting started) so users know what they're working
+      towards. Right side is a numbered "How it works" walkthrough — keeps
+      things approachable for users who might feel nervous about being
+      assessed or judged.
+    -->
     <section class="wellness-section">
       <div class="wellness-inner">
         <p class="section-tag">Start here</p>
@@ -177,7 +210,14 @@
       </div>
     </section>
 
-    <!-- Explore Section -->
+    <!--
+      EXPLORE SECTION
+      Two side-by-side cards pointing to the rest of the app — Events and
+      Exercises. Each card has a small SVG icon (calendar for events, barbell
+      for exercises) to make them feel friendly rather than text-heavy. This
+      sits below the main features so users who are curious can naturally
+      discover more without feeling overwhelmed upfront.
+    -->
     <section class="explore-section">
       <div class="explore-inner">
         <p class="section-tag">More to explore</p>
@@ -236,7 +276,13 @@
       </div>
     </section>
 
-    <!-- CTA Footer -->
+    <!--
+      CTA FOOTER BANNER
+      A full-width teal call-to-action that closes the page on an encouraging
+      note. Note: this is NOT the site footer — it's a content section. The
+      copy is intentionally gentle ("at your own pace") to avoid pressure,
+      since the audience may feel hesitant about starting something new.
+    -->
     <section class="cta-footer">
       <div class="cta-inner">
         <h2>Ready to start your journey?</h2>
@@ -248,11 +294,15 @@
 </template>
 
 <script setup>
-// No logic needed for static page
+// No logic needed — this is a static prototype/marketing page.
+// All navigation links are plain <a href="#"> anchors; they will be
+// wired up to router-links when this page replaces the live Home page.
 </script>
 
 <style scoped>
-/* ---- Tokens ---- */
+/* ── Tokens ──────── CSS custom properties defined here so all colours and
+   fonts come from a single source of truth, making the design easy to
+   theme without searching through every rule. */
 :root {
   --teal: #1a7a6e;
   --teal-light: #e8f5f4;
@@ -266,7 +316,7 @@
   --font-body: 'DM Sans', 'Helvetica Neue', sans-serif;
 }
 
-/* ---- Reset ---- */
+/* ── Reset ──────── scoped to this component only */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 a { text-decoration: none; }
 ul { list-style: none; }
@@ -278,7 +328,8 @@ ul { list-style: none; }
   min-height: 100vh;
 }
 
-/* ---- Navbar ---- */
+/* ── Navbar ──────── sticky so the brand stays visible while scrolling
+   through the long marketing page; z-index: 100 keeps it above sections. */
 .navbar {
   position: sticky;
   top: 0;
@@ -320,7 +371,8 @@ ul { list-style: none; }
   border-bottom-color: var(--teal);
 }
 
-/* ---- Hero ---- */
+/* ── Hero ──────── two-column grid with the image placeholder on the right;
+   light teal background differentiates the hero from the white body. */
 .hero {
   background: #f7faf9;
   padding: 64px 24px 60px;
@@ -375,7 +427,9 @@ ul { list-style: none; }
   font-style: italic;
 }
 
-/* ---- Buttons ---- */
+/* ── Buttons ──────── three variants — primary (filled teal), outline, and
+   white (for use on the teal CTA footer). All share the same base sizing
+   so they can be swapped without layout shift. */
 .btn-primary {
   display: inline-block;
   background: var(--teal);
@@ -419,7 +473,9 @@ ul { list-style: none; }
   transform: translateY(-1px);
 }
 
-/* ---- Stats ---- */
+/* ── Stats bar ──────── four-column grid of trust signals; the "100% Private"
+   stat uses var(--orange) to make the privacy promise visually distinct from
+   the other three teal stats — important for older users wary of data tracking. */
 .stats-bar {
   background: #f0f6f5;
   border-top: 1px solid var(--border);
@@ -451,7 +507,9 @@ ul { list-style: none; }
   color: var(--orange);
 }
 
-/* ---- Feature Card ---- */
+/* ── Feature card ──────── two-column grid inside a card; right side holds
+   the inline SVG map illustration (not a live map — just a preview to
+   communicate what the route planner output will look like). */
 .feature-card-section {
   padding: 48px 24px;
 }
@@ -529,7 +587,9 @@ ul { list-style: none; }
   height: auto;
 }
 
-/* ---- Wellness ---- */
+/* ── Wellness section ──────── centred header + two-column content; the
+   "Just getting started" category uses active-cat orange highlight to
+   hint that many users will land in this tier, making it feel welcoming. */
 .wellness-section {
   background: #f7faf9;
   padding: 64px 24px;
@@ -652,7 +712,8 @@ ul { list-style: none; }
   line-height: 1.5;
 }
 
-/* ---- Explore ---- */
+/* ── Explore section ──────── two cards for Events and Exercises; SVG icons
+   rather than photos keep the weight down and avoid stock-image feel. */
 .explore-section {
   padding: 64px 24px;
   text-align: center;
@@ -702,7 +763,9 @@ ul { list-style: none; }
   flex-shrink: 0;
 }
 
-/* ---- CTA Footer ---- */
+/* ── CTA footer banner ──────── full-width teal block that closes the page
+   on an encouraging note; btn-white stands out against the teal background
+   without needing a border. This is a content section, NOT the site footer. */
 .cta-footer {
   background: var(--teal);
   padding: 72px 24px;
@@ -727,7 +790,8 @@ ul { list-style: none; }
   line-height: 1.65;
 }
 
-/* ---- Responsive ---- */
+/* ── Responsive ──────── all multi-column grids collapse to single column
+   below 700px; stats bar drops to 2×2 grid to keep numbers readable. */
 @media (max-width: 700px) {
   .hero-inner,
   .feature-content,

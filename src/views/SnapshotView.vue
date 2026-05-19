@@ -1,9 +1,13 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
+import AppFooter from '../components/AppFooter.vue'
 
 const router = useRouter()
 
+// Clear any previously stored answers and results so the survey always
+// starts fresh — without this, returning users would see stale results
+// from a prior session instead of being prompted to re-assess.
 function getSnapshot() {
   localStorage.removeItem('surveyAnswers')
   localStorage.removeItem('surveyResult')
@@ -17,7 +21,13 @@ function getSnapshot() {
     <AppNavbar active="checkin" />
 
     <div class="snap-page">
-      <!-- Header -->
+      <!--
+        PAGE HEADER
+        Sets the scene for what the wellness snapshot is — a quick benchmark
+        check, not a medical assessment. The "Start here" orange pill and the
+        subtitle both aim to make the process feel approachable and low-stakes
+        before the user clicks through to the survey.
+      -->
       <div class="snap-header">
         <div class="start-pill">Start here</div>
         <h1>Wellness snapshot</h1>
@@ -27,7 +37,15 @@ function getSnapshot() {
         </p>
       </div>
 
-      <!-- Card body -->
+      <!--
+        MAIN CARD
+        Split into two columns. Left shows the three possible outcome
+        categories (Thriving, Building momentum, Just getting started) with
+        colour-coded borders so users know upfront what they might receive —
+        no surprises. Right side is a numbered "How it works" walkthrough
+        with a CTA button. Clearing previous localStorage results before
+        pushing to /survey ensures a fresh start each time.
+      -->
       <div class="snap-card">
         <!-- Left: Category cards -->
         <div class="snap-categories">
@@ -86,14 +104,7 @@ function getSnapshot() {
       </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <h3>ActiveAgeing</h3>
-      <div class="links">
-        <a @click="router.push('/privacy')" style="cursor:pointer">Privacy Policy</a>
-        <a @click="router.push('/terms')" style="cursor:pointer">Terms of Service</a>
-      </div>
-    </footer>
+    <AppFooter />
   </div>
 </template>
 
@@ -102,6 +113,9 @@ function getSnapshot() {
 
 * { box-sizing: border-box; }
 
+/* ── Page shell ──────── flex-column so AppFooter sits at the bottom;
+   justify-content: center on .snap-page vertically centres the card
+   on tall screens so it doesn't crowd the top. */
 .page-wrapper {
   min-height: 100vh;
   background: #faf8f3;
@@ -110,6 +124,8 @@ function getSnapshot() {
   flex-direction: column;
 }
 
+/* ── Content ──────── calc(var(--navbar-h)) offsets for the fixed navbar;
+   flex + center alignment keeps the card visually centred. */
 .snap-page {
   flex: 1;
   display: flex;
@@ -119,7 +135,8 @@ function getSnapshot() {
   padding: calc(var(--navbar-h, 70px) + 20px) 40px 60px;
 }
 
-/* Header */
+/* ── Header ──────── centred pill + heading; Playfair Display for the h1
+   gives it editorial weight without being heavy on mobile. */
 .snap-header { text-align: center; margin-bottom: 40px; }
 
 .start-pill {
@@ -149,7 +166,8 @@ function getSnapshot() {
   margin: 0;
 }
 
-/* Main card */
+/* ── Main card ──────── two-column flex: categories left, how-it-works
+   right; 860px cap keeps reading width comfortable on wide monitors. */
 .snap-card {
   display: flex;
   gap: 60px;
@@ -162,7 +180,8 @@ function getSnapshot() {
   width: 100%;
 }
 
-/* Category cards */
+/* ── Category cards ──────── left-border colour encodes the tier so users
+   understand the three outcome levels at a glance before they start. */
 .snap-categories { display: flex; flex-direction: column; gap: 12px; flex: 1; }
 
 .cat-card {
@@ -194,7 +213,8 @@ function getSnapshot() {
 .cat-orange-text { color: #c06030; }
 .cat-sub   { font-size: 20px; color: #7a9490; margin-top: 3px; }
 
-/* How it works */
+/* ── How it works ──────── numbered steps give nervous users a preview of
+   the process so there are no surprises once they click the CTA. */
 .snap-how { flex: 1; }
 
 .how-label {
@@ -239,13 +259,8 @@ function getSnapshot() {
 }
 .snap-btn:hover { background: #084a45; transform: translateY(-2px); }
 
-/* Footer */
-.footer { text-align: center; padding: 36px 0; font-size: 20px; color: #777; background: #faf8f3; }
-.footer h3 { font-family: 'Playfair Display', Georgia, serif; color: #0b5d57; margin-bottom: 10px; }
-.links a { margin: 0 10px; text-decoration: none; color: #777; transition: color 0.2s; cursor: pointer; }
-.links a:hover { color: #0b5d57; }
-
-/* Responsive */
+/* ── Responsive ──────── stacks columns on mobile; removes the <br> from
+   the subtitle so it reflows naturally on narrow screens. */
 @media (max-width: 768px) {
   .snap-page { padding: calc(var(--navbar-h, 70px) + 20px) 20px 40px; }
   .snap-card { flex-direction: column; gap: 24px; padding: 24px 20px; }

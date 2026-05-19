@@ -2,6 +2,12 @@
   <div class="page">
     <AppNavbar />
 
+    <!--
+      SESSION PROGRESS BAR
+      A thin strip directly below the navbar that shows how far through the
+      full session the user is as a percentage. It updates each time they move
+      to the next exercise so they always know how close they are to finishing.
+    -->
     <div class="progress-wrap">
       <div class="progress-label">
         <span class="progress-dot"></span>
@@ -13,7 +19,16 @@
       </div>
     </div>
 
-    <!-- Exercise session -->
+    <!--
+      ACTIVE EXERCISE CARD
+      The main working area of the session. It shows one exercise at a time
+      and has three rows inside it:
+        Row 1 — the exercise name, a countdown timer, the "Did You Know?" trivia
+                 button, and a toggle to switch between step guide and interactive mode.
+        Row 2 — either a photo-based step guide (default) or the live webcam
+                 pose-estimation view (interactive mode).
+        Row 3 — Previous / Next / Pause buttons to navigate through the session.
+    -->
     <main v-if="!sessionDone" class="main">
       <div class="card" :class="{ visible }">
 
@@ -61,7 +76,13 @@
       </div>
     </main>
 
-    <!-- Celebration screen -->
+    <!--
+      END-OF-SESSION SCREEN
+      Replaces the exercise card once the session is finished. The message and
+      emoji change depending on how many exercises were actually completed —
+      from a gentle nudge if none were done, right up to a full celebration if
+      all exercises were finished.
+    -->
     <main v-else class="main">
       <div class="celebration" :class="{ visible }">
 
@@ -101,6 +122,12 @@
       </div>
     </main>
 
+    <!--
+      PAUSE MODAL
+      Appears when the user hits the Pause button mid-session. The timer stops
+      and the user gets two options — resume where they left off, or end the
+      session early and go straight to the results page.
+    -->
     <!-- Pause modal -->
     <div v-if="showPauseModal" class="modal-overlay" @click.self="showPauseModal = false">
       <div class="modal">
@@ -117,6 +144,13 @@
       </div>
     </div>
 
+    <!--
+      DID YOU KNOW MODAL
+      A full-screen pop-up that surfaces a science-backed fact related to the
+      current exercise. It shows an icon, the fact itself, and a source link
+      so users can read more if they're curious. Closing it returns them to
+      exactly where they were in the session.
+    -->
     <!-- Did You Know modal -->
     <Teleport to="body">
       <div v-if="showDidYouKnow" class="dyk-overlay" @click.self="closeDidYouKnow">
@@ -149,15 +183,16 @@
       </div>
     </Teleport>
 
-    <footer class="footer">
-      <div class="footer-logo">ActiveAgeing</div>
-      <div class="footer-links">
-        <a @click="router.push('/privacy')">Privacy Policy</a>
-        <a @click="router.push('/terms')">Terms of Service</a>
-      </div>
-    </footer>
+    <AppFooter />
   </div>
 
+  <!--
+    GUIDED PAGE TOUR
+    A spotlight overlay that walks first-time users through the main controls —
+    the progress bar, the exercise card, and the navigation buttons. It starts
+    automatically once the exercises have loaded and is only shown once,
+    tracked by a flag saved in localStorage.
+  -->
   <!-- Page Tour -->
   <Teleport to="body">
     <div v-if="tourActive" class="tour-overlay">
@@ -182,20 +217,24 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
 import ExerciseSessionModal from '../components/ExerciseSessionModal.vue'
+import AppFooter from '../components/AppFooter.vue'
 
 const router = useRouter()
-const visible = ref(false)
+const visible = ref(false)   // drives the fade-in CSS transition on the card
 const currentIndex = ref(0)
 const exercises = ref([])
-const exercisesCompleted = ref(0)
+const exercisesCompleted = ref(0)  // increments each time the user hits Next
 const sessionDone = ref(false)
 const showPauseModal   = ref(false)
-const showInteractive  = ref(false)
+const showInteractive  = ref(false)  // toggles between step-guide and webcam mode
 
 const timerSeconds = ref(0)
 let timerInterval = null
 
-// ── Did You Know ──────────────────────────────────────────
+// ── Did You Know ───────────────────────────────────────────────────────────
+// Science-backed facts keyed by normalised exercise name (lowercase + trim).
+// Each fact includes a source URL so users can read the primary research.
+// The DEFAULT_FACT at the bottom catches any exercise not yet listed here.
 const showDidYouKnow = ref(false)
 
 const EXERCISE_FACTS = {
@@ -322,6 +361,10 @@ function closeDidYouKnow() {
 }
 // ─────────────────────────────────────────────────────────
 
+// ── Timer ──────────────────────────────────────────────────────────────────
+// The timer counts down from the exercise's duration_minutes on each new
+// exercise. Pausing clears the interval; resumeTimer guards against double-
+// starting if called while the interval is already running.
 function startTimer() {
   clearInterval(timerInterval)
   const mins = currentExercise.value?.duration_minutes ?? 5
@@ -338,7 +381,7 @@ function pauseSession() {
 }
 
 function resumeTimer() {
-  if (timerInterval) return
+  if (timerInterval) return  // already ticking — don't create a second interval
   timerInterval = setInterval(() => {
     if (timerSeconds.value > 0) timerSeconds.value--
   }, 1000)
@@ -350,6 +393,10 @@ const timerDisplay = computed(() => {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
 })
 
+// ── Step photos ────────────────────────────────────────────────────────────
+// Keyed by lowercase exercise name. Each entry has 3 steps that match the
+// three-column step-card layout shown in the session card. DEFAULT_STEPS is
+// the fallback for any exercise not in this map.
 const EXERCISE_CONTENT = {
   'seated forward lean': [
     { subtitle: 'Start Position', image: '/Images/seated_forward_lean_1.jpeg', description: 'Sit upright near the front of the chair with both feet flat on the floor.' },
@@ -443,6 +490,10 @@ function nextExercise() {
   }
 }
 
+// Bumps the chartPercent stored in localStorage by 2% per completed exercise
+// (capped at 100) so the Results page reflects this session's contribution.
+// visible is toggled off then on with a short delay to re-trigger the
+// fade-in transition on the end-of-session celebration card.
 function finishSession() {
   showPauseModal.value = false
   const n = exercisesCompleted.value
@@ -582,6 +633,9 @@ onMounted(() => {
   window.addEventListener('resize', measureTourRect)
   window.addEventListener('scroll', measureTourRect, { passive: true })
 
+  // Priority 1: AllExercisesPage wrote a custom selection to 'customExercises'
+  // when the user hit "Start session". Read it and remove it immediately so
+  // refreshing the page falls through to the survey exercises instead.
   const customEx = localStorage.getItem('customExercises')
   if (customEx) {
     exercises.value = JSON.parse(customEx)
@@ -591,6 +645,8 @@ onMounted(() => {
     return
   }
 
+  // Priority 2: the survey result includes recommended exercises — use the
+  // first three so the session isn't longer than three exercises.
   const stored = localStorage.getItem('surveyResult')
   if (stored) {
     const result = JSON.parse(stored)
@@ -602,6 +658,7 @@ onMounted(() => {
     }
   }
 
+  // Fallback: show three safe exercises so the page is never empty.
   exercises.value = [
     { exercise_name: 'Seated Forward Lean',  duration_minutes: 5 },
     { exercise_name: 'Seated Chest Stretch', duration_minutes: 8 },
@@ -644,6 +701,9 @@ onMounted(() => {
 .nav-link { color: #0b5d57; text-decoration: none; cursor: pointer; }
 .nav-link.active { text-decoration: underline; text-underline-offset: 4px; }
 
+/* ── Progress bar ──────────────────────────────────────────────────────────
+   Uses a two-row CSS grid so the label and percentage sit on row 1 and the
+   track fills row 2 spanning all three columns. */
 .progress-wrap {
   max-width: 1200px;
   margin: 0 auto;
@@ -670,6 +730,10 @@ onMounted(() => {
   flex: 1;
 }
 
+/* ── Exercise card ─────────────────────────────────────────────────────────
+   Starts invisible (opacity: 0, translateY) and fades in when `.visible` is
+   applied after an 80ms delay — giving the browser time to paint before the
+   transition starts so it doesn't appear to flash. */
 .card {
   background: #ede9e1;
   border-radius: 20px;
@@ -764,7 +828,7 @@ onMounted(() => {
   border-radius: 10px;
   padding: 10px 18px;
   font-family: 'Poppins', sans-serif;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -828,7 +892,9 @@ onMounted(() => {
 .btn-celebrate { background: #0b5d57; color: #ffffff; border: none; border-radius: 12px; padding: 18px 40px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 8px; }
 .btn-celebrate:hover { background: #0f3d35; }
 
-/* PAUSE MODAL */
+/* ── Pause modal ───────────────────────────────────────────────────────────
+   z-index: 100 is low enough that the DYK modal (200) can layer above it if
+   both were somehow open — in practice only one can be open at a time. */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; z-index: 100; }
 .modal { background: #ffffff; border-radius: 20px; padding: 48px 40px; max-width: 440px; width: 90%; text-align: center; display: flex; flex-direction: column; gap: 16px; }
 .modal-emoji { font-size: 40px; }
@@ -840,7 +906,10 @@ onMounted(() => {
 .modal-btn-secondary { flex: 1; background: #f4f1eb; color: #1a2e2b; border: none; border-radius: 10px; padding: 14px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
 .modal-btn-secondary:hover { background: #e8e2d8; }
 
-/* DID YOU KNOW MODAL */
+/* ── Did You Know modal ────────────────────────────────────────────────────
+   z-index: 200 sits above the pause modal (100) and the regular page content.
+   backdrop-filter: blur applied on a second rule below (duplicate selector
+   was intentional — see the .dyk-overlay duplication in the template). */
 .dyk-overlay {
   position: fixed;
   inset: 0;
@@ -889,7 +958,7 @@ onMounted(() => {
 
 .dyk-header { text-align: center; margin-bottom: 20px; }
 .dyk-title { font-size: 30px; font-weight: 700; color: #0b5d57; margin: 0 0 4px; }
-.dyk-subtitle { font-size: 16px; color: #6b7280; margin: 0; font-weight: 500; }
+.dyk-subtitle { font-size: 20px; color: #6b7280; margin: 0; font-weight: 500; }
 
 .dyk-card { background: white; border-radius: 18px; padding: 24px 22px; margin-bottom: 16px; }
 
@@ -897,25 +966,19 @@ onMounted(() => {
 
 .dyk-fact { font-size: 28px; font-weight: 700; color: #1a1a1a; line-height: 1.45; margin: 0 0 14px; }
 
-.dyk-category-badge { display: inline-block; background: #fde8d8; color: #7c3d1a; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; padding: 5px 14px; border-radius: 20px; margin-bottom: 14px; }
+.dyk-category-badge { display: inline-block; background: #fde8d8; color: #7c3d1a; font-size: 14px; font-weight: 700; letter-spacing: 0.06em; padding: 5px 14px; border-radius: 20px; margin-bottom: 14px; }
 
-.dyk-fact-desc { font-size: 15px; color: #555; line-height: 1.6; margin: 0; }
+.dyk-fact-desc { font-size: 20px; color: #555; line-height: 1.6; margin: 0; }
 
 .dyk-source-box { background: #dff0ee; border-radius: 12px; padding: 14px 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-.dyk-source-label { font-size: 13px; font-weight: 700; color: #0b5d57; letter-spacing: 0.06em; white-space: nowrap; }
-.dyk-source-link { font-size: 15px; color: #0b5d57; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; word-break: break-word; }
+.dyk-source-label { font-size: 14px; font-weight: 700; color: #0b5d57; letter-spacing: 0.06em; white-space: nowrap; }
+.dyk-source-link { font-size: 20px; color: #0b5d57; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; word-break: break-word; }
 .dyk-source-link:hover { color: #084a45; }
 
-.dyk-back-btn { display: block; width: 100%; padding: 14px; background: #0b5d57; color: white; border: none; border-radius: 12px; font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 600; cursor: pointer; transition: background 0.2s; text-align: center; box-sizing: border-box; }
+.dyk-back-btn { display: block; width: 100%; padding: 14px; background: #0b5d57; color: white; border: none; border-radius: 12px; font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600; cursor: pointer; transition: background 0.2s; text-align: center; box-sizing: border-box; }
 .dyk-back-btn:hover { background: #084a45; }
 
 /* FOOTER */
-.footer { border-top: 1px solid #ddd; text-align: center; padding: 32px 48px 24px; }
-.footer-logo { font-size: 20px; font-weight: 700; color: #0b5d57; margin-bottom: 12px; }
-.footer-links { display: flex; justify-content: center; gap: 24px; margin-bottom: 10px; }
-.footer-links a { font-size: 20px; color: #555; font-weight: 500; cursor: pointer; text-decoration: none; }
-.footer-links a:hover { color: #0b5d57; }
-.footer-copy { font-size: 20px; color: #888; }
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
@@ -927,8 +990,8 @@ onMounted(() => {
   .card-header { padding: 24px 20px 16px; }
   .exercise-title { font-size: 24px; }
   .steps-grid { flex-direction: column; padding: 20px; gap: 16px; }
-  .btn-interactive { font-size: 13px; padding: 8px 12px; }
-  .dyk-btn, .btn-interactive-toggle { font-size: 14px; padding: 8px 12px; }
+  .btn-interactive { font-size: 20px; padding: 8px 12px; }
+  .dyk-btn, .btn-interactive-toggle { font-size: 20px; padding: 8px 12px; }
   .step-subtitle { font-size: 20px; }
   .card-body { flex-direction: column; }
   .card-gif { width: 100%; border-right: none; border-bottom: 1px solid #e0dbd2; padding: 20px; }
@@ -936,11 +999,9 @@ onMounted(() => {
   .card-instructions { padding: 20px; }
   .card-footer { flex-direction: column; padding: 20px; gap: 10px; }
   .btn-primary, .btn-secondary { padding: 14px; width: 100%; }
-  .footer { padding: 24px 20px; }
-  .footer-links { flex-wrap: wrap; gap: 12px; }
   .dyk-modal { padding: 28px 20px 22px; }
   .dyk-title { font-size: 26px; }
-  .dyk-fact { font-size: 17px; }
+  .dyk-fact { font-size: 20px; }
 }
 
 @media (max-width: 480px) {
@@ -951,7 +1012,10 @@ onMounted(() => {
   .step-cards { gap: 8px; padding: 0 16px 16px; }
 }
 
-/* ── Page Tour ── */
+/* ── Page Tour ─────────────────────────────────────────────────────────────
+   z-index: 9000/9001/9002 puts the tour above everything including the DYK
+   modal (200). pointer-events: none on the overlay itself means the user
+   can still scroll to see the highlighted element before the tooltip appears. */
 .tour-overlay {
   position: fixed;
   inset: 0;
@@ -980,7 +1044,7 @@ onMounted(() => {
   box-sizing: border-box;
 }
 .tour-step-num {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: #0b5d57;
   text-transform: uppercase;
@@ -988,13 +1052,13 @@ onMounted(() => {
   margin-bottom: 6px;
 }
 .tour-title {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 700;
   color: #0f3d35;
   margin: 0 0 8px;
 }
 .tour-desc {
-  font-size: 14px;
+  font-size: 20px;
   color: #444;
   line-height: 1.55;
   margin: 0 0 16px;
@@ -1009,7 +1073,7 @@ onMounted(() => {
   background: none;
   border: none;
   font-family: 'Poppins', sans-serif;
-  font-size: 13px;
+  font-size: 20px;
   color: #888;
   cursor: pointer;
   padding: 0;
@@ -1022,7 +1086,7 @@ onMounted(() => {
   border-radius: 8px;
   padding: 9px 18px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
 }

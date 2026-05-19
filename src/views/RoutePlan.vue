@@ -2,16 +2,24 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
+import AppFooter from '../components/AppFooter.vue'
 
 const router = useRouter()
 
+// ── Route planning ──
+// Pushes to the RouteSurvey form which collects preferences (pace, start
+// location, activity type) before the Planner page generates route options.
 function planRoute() {
   router.push('/routesurvey')
 }
 
+// ── Event code lookup ──
 const codeInput    = ref('')
 const codeInputErr = ref('')
 
+// Uppercases before navigating so codes are case-insensitive for users.
+// Validation is intentionally minimal — the Planner page handles the actual
+// API lookup and will surface a proper error if the code is invalid/expired.
 function viewEvent() {
   const code = codeInput.value.trim().toUpperCase()
   if (!code) { codeInputErr.value = 'Please enter an event code.'; return }
@@ -25,7 +33,15 @@ function viewEvent() {
     <AppNavbar active="routeplan" />
     <div class="page-container">
 
-      <!-- Featured Card -->
+      <!--
+        FEATURED CARD — PLAN MY PATH
+        The hero section of this page. Left side explains what route planning
+        offers (pace choice, scenery preference, privacy options) with a
+        bullet list. Right side shows an inline SVG illustration of a sample
+        route — dashed path, start dot, bench stop, park view stop, and a
+        red destination star — to give users a visual sense of what their
+        route will look like before they commit to the survey.
+      -->
       <div class="feature-card">
 
         <!-- Left: Text content -->
@@ -93,7 +109,14 @@ function viewEvent() {
 
       </div>
 
-      <!-- Enter Code -->
+      <!--
+        EVENT CODE ENTRY
+        A secondary card for users who have been invited to a shared walking
+        event by a friend. They paste in the short code (e.g. AB1C2D) and
+        get taken straight to the Planner page with that event pre-loaded.
+        Sits below the main CTA so it doesn't compete for attention but is
+        easy to find when needed.
+      -->
       <div class="enter-code-card">
         <div class="enter-code-left">
           <div class="enter-code-icon">🔑</div>
@@ -118,14 +141,7 @@ function viewEvent() {
         </div>
       </div>
 
-      <!-- Footer -->
-      <footer class="footer">
-        <h3>ActiveAgeing</h3>
-        <div class="links">
-          <a @click="router.push('/privacy')" style="cursor:pointer">Privacy Policy</a>
-          <a @click="router.push('/terms')" style="cursor:pointer">Terms of Service</a>
-        </div>
-      </footer>
+      <AppFooter />
 
     </div>
   </div>
@@ -136,11 +152,16 @@ function viewEvent() {
 
 * { box-sizing: border-box; }
 
+/* ── Page shell ──────── cream background matches app palette */
 .page-wrapper {
   min-height: 100vh;
   background: #faf8f3;
 }
 
+/* ── Content container ──────── 100px top padding clears the fixed navbar
+   without using var(--navbar-h) because this page has a static layout
+   that doesn't need dynamic recalculation. flex-column so AppFooter
+   anchors below the enter-code card without extra spacers. */
 .page-container {
   max-width: 1100px;
   margin: 0 auto;
@@ -258,7 +279,9 @@ function viewEvent() {
 .summary-label { font-size: 20px; color: #888; }
 .summary-value { font-size: 20px; font-weight: 700; color: #0b5d57; }
 
-/* Enter Code card */
+/* ── Enter Code card ──────── secondary action below the hero; white
+   background makes it stand out from the cream page without competing
+   with the featured green card above. */
 .enter-code-card {
   margin-top: 24px;
   background: white;
@@ -351,11 +374,9 @@ function viewEvent() {
   padding-left: 4px;
 }
 
-.footer { text-align: center; padding: 40px 0; font-size: 20px; color: #777; margin-top: auto; }
-.footer h3 { font-family: 'Playfair Display', Georgia, serif; color: #0b5d57; margin-bottom: 10px; }
-.links a { margin: 0 10px; text-decoration: none; color: #777; transition: color 0.2s; cursor: pointer; }
-.links a:hover { color: #0b5d57; }
 
+/* ── Responsive ──────── feature card and enter-code card both stack
+   vertically; the map illustration goes full-width on mobile. */
 @media (max-width: 768px) {
   .page-container { padding: 100px 16px 0; }
   .feature-card { flex-direction: column; padding: 28px 20px; gap: 24px; }

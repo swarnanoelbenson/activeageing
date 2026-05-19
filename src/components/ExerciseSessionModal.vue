@@ -14,7 +14,9 @@ const props = defineProps({
 })
 const emit = defineEmits(['close'])
 
-// ── Timer ──
+// ── Timer ──────────────────────────────────────────────────────────────────
+// Only used in modal mode (not inline). Counts down from durationMinutes
+// and displays as MM:SS in the header badge.
 const timerSecs = ref(0)
 let timerInterval = null
 
@@ -32,7 +34,14 @@ function startTimer() {
   }, 1000)
 }
 
-// ── Pose config ──
+// ── Pose config ────────────────────────────────────────────────────────────
+// LM maps human-readable landmark names to MediaPipe's integer indices.
+// EXERCISE_POSE_CONFIG defines which three landmarks form the angle to measure
+// and how to interpret the angle as "resting" vs "active":
+//   threshA / labelA = resting stage (angle crosses threshA to enter it)
+//   threshB / labelB = active stage  (angle crosses threshB to enter it)
+//   reversed: false → angle HIGH (labelA) → LOW (labelB) → HIGH = 1 rep
+//   reversed: true  → angle LOW  (labelA) → HIGH (labelB) → LOW  = 1 rep
 const LM = {
   LEFT_SHOULDER: 11, RIGHT_SHOULDER: 12,
   LEFT_ELBOW:    13, RIGHT_ELBOW:    14,
@@ -57,7 +66,9 @@ const EXERCISE_POSE_CONFIG = {
   'standing balance hold':  { a: LM.LEFT_HIP,      b: LM.LEFT_KNEE,     c: LM.LEFT_ANKLE,        threshA: 165, labelA: 'STANDING', threshB: 158, labelB: 'HOLDING',  reversed: false },
 }
 
-// ── Camera tips per exercise ──
+// ── Camera tips per exercise ────────────────────────────────────────────────
+// Tells users exactly where to position the camera and themselves for
+// accurate rep counting. Shown in the tips panel beside the webcam view.
 const EXERCISE_TIPS = {
   'seated forward lean': {
     angle: 'Left side profile',
@@ -144,14 +155,17 @@ const EXERCISE_TIPS = {
 
 const currentTips = computed(() => EXERCISE_TIPS[props.exercise.name.toLowerCase()] ?? null)
 
-// ── MediaPipe ──
+// ── MediaPipe ──────────────────────────────────────────────────────────────
+// poseInstance / cameraStream / animFrameId are plain JS refs (not reactive)
+// because Vue reactivity on these objects would cause unnecessary overhead —
+// they only need to be held for cleanup in stopInteractiveMode.
 const interactiveMode = ref(false)
 const poseLoading     = ref(false)
 const cameraError     = ref(null)
-const videoEl         = ref(null)
-const canvasEl        = ref(null)
+const videoEl         = ref(null)   // <video> element ref for camera feed
+const canvasEl        = ref(null)   // <canvas> element ref for skeleton overlay
 const repCount        = ref(0)
-const poseStage       = ref(null)
+const poseStage       = ref(null)   // current stage label (e.g. 'UPRIGHT', 'LEANING')
 let poseInstance  = null
 let cameraStream  = null
 let animFrameId   = null
@@ -163,6 +177,8 @@ function calculateAngle(a, b, c) {
   return angle
 }
 
+// Injects a <script> tag dynamically and resolves when it loads. Skips if
+// the script is already present so switching exercises doesn't re-fetch it.
 function loadScript(src) {
   return new Promise((resolve, reject) => {
     if (document.querySelector(`script[src="${src}"]`)) { resolve(); return }
@@ -263,7 +279,9 @@ function handleClose() {
   emit('close')
 }
 
-// Start timer / camera when exercise changes
+// Restart the camera and (in modal mode) the timer whenever the exercise prop
+// changes — immediate: true means this also fires on first mount, so callers
+// don't need to separately kick off initialisation.
 watch(() => props.exercise, () => {
   stopInteractiveMode()
   if (props.inline) {
@@ -281,7 +299,13 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <!-- ── Inline mode: webcam + step panel side by side ── -->
+  <!--
+    INLINE MODE — used by ExerciseSession.vue (the full exercise page)
+    Renders the webcam feed and tips panel side by side without a modal
+    overlay. The camera starts immediately when the exercise loads. If
+    camera permission is denied or the device has no camera, an error
+    state is shown with a Retry button instead.
+  -->
   <template v-if="inline">
     <div v-if="cameraError" class="session-camera-error">
       <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -329,11 +353,23 @@ onBeforeUnmount(() => {
     </div>
   </template>
 
-  <!-- ── Modal mode: full overlay popup (used by Home.vue) ── -->
+  <!--
+    MODAL MODE — used by Home.vue (and Results.vue)
+    Full-screen overlay popup. Clicking the dark backdrop calls handleClose,
+    which stops the camera, clears the timer, and emits 'close' back to the
+    parent. The modal itself contains three sections: header, content area
+    (steps grid or webcam), and a footer close button.
+  -->
   <div v-else class="session-overlay" @click.self="handleClose">
     <div class="session-modal">
 
-      <!-- Header -->
+      <!--
+        MODAL HEADER
+        Exercise name on the left, then a countdown timer badge (turns red
+        under 30 seconds, green when done), an "Interactive Mode" toggle
+        button that switches between the step-image view and the live webcam
+        rep counter, and an X close button on the far right.
+      -->
       <div class="session-header">
         <h1 class="session-title">{{ exercise.name }}</h1>
         <span class="session-tag" :class="{ 'session-tag-warning': timerSecs <= 30 && timerSecs > 0, 'session-tag-done': timerSecs === 0 }">
@@ -350,7 +386,13 @@ onBeforeUnmount(() => {
         <button class="session-close" @click="handleClose">✕</button>
       </div>
 
-      <!-- Steps grid -->
+      <!--
+        STEP-IMAGE GRID (non-interactive mode)
+        Shows one card per exercise step — a teal title bar, a reference
+        image, and a description. This is the default view before the user
+        switches to Interactive Mode. Images come from the `exercise.steps`
+        array passed in as a prop.
+      -->
       <div class="session-steps" v-if="!interactiveMode">
         <div class="session-step" v-for="(step, i) in exercise.steps" :key="i">
           <div class="session-step-subtitle">{{ step.title }}</div>
@@ -359,7 +401,16 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <!-- Webcam view -->
+      <!--
+        WEBCAM + POSE DETECTION VIEW (interactive mode)
+        MediaPipe Pose is loaded on-demand from a CDN (not bundled) to keep
+        the initial page load fast. The video feed is mirrored (scaleX(-1))
+        so it feels like a mirror to the user. A canvas overlays the video
+        to draw the skeleton and landmark dots in real time. Two overlays
+        show the live REPS count (orange, top-right) and current STAGE label
+        (teal, bottom-right). The tips panel to the right tells users the
+        correct camera angle and positioning for accurate rep counting.
+      -->
       <div class="session-webcam-view" v-else>
         <div v-if="cameraError" class="session-camera-error">
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -404,7 +455,12 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <!-- Footer -->
+      <!--
+        MODAL FOOTER — CLOSE BUTTON
+        Sits at the bottom of the modal. Clicking it calls handleClose which
+        stops the camera stream, cancels the animation loop, clears the
+        countdown timer, and emits 'close' so the parent can hide the modal.
+      -->
       <div class="session-footer">
         <button class="session-close-btn" @click="handleClose">Close</button>
       </div>
@@ -414,6 +470,9 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* ── Modal overlay ─────────────────────────────────────────────────────────
+   z-index: 700 sits above the exercise grid (500) and preview (600) overlays
+   on the Home page, but below the tour spotlight (9000+). */
 .session-overlay {
   position: fixed; inset: 0; z-index: 700;
   background: rgba(0,0,0,0.55);
@@ -437,7 +496,7 @@ onBeforeUnmount(() => {
 .session-tag {
   display: flex; align-items: center; gap: 5px;
   border: 1.5px solid #000; border-radius: 8px;
-  padding: 6px 14px; font-size: 14px; color: #000;
+  padding: 6px 14px; font-size: 20px; color: #000;
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
 .session-tag-warning { border-color: #c14f4f; color: #c14f4f; }
@@ -446,20 +505,22 @@ onBeforeUnmount(() => {
   display: flex; align-items: center; gap: 6px; margin-left: auto;
   background: #0b5d57; color: #fff; border: none; border-radius: 8px;
   padding: 8px 14px; font-family: 'Poppins', sans-serif;
-  font-size: 13px; font-weight: 600; cursor: pointer;
+  font-size: 20px; font-weight: 600; cursor: pointer;
   transition: background 0.2s; white-space: nowrap;
 }
 .session-interactive-btn:hover { background: #0f3d35; }
 .session-interactive-exit { background: #0b5d57; }
 .session-interactive-exit:hover { background: #0f3d35; }
 .session-close {
-  background: none; border: none; font-size: 18px;
+  background: none; border: none; font-size: 20px;
   cursor: pointer; color: #666; padding: 4px 8px;
   border-radius: 6px; transition: background 0.2s;
 }
 .session-close:hover { background: #e0dbd2; color: #333; }
 
-/* Steps grid */
+/* ── Steps grid ─────────────────────────────────────────────────────────────
+   Three flex columns, one per exercise step. Each step card uses flex-column
+   layout so the description sits below the image regardless of text length. */
 .session-steps { display: flex; gap: 16px; padding: 20px 28px; }
 .session-step {
   flex: 1; border-radius: 12px; overflow: hidden;
@@ -468,13 +529,17 @@ onBeforeUnmount(() => {
 }
 .session-step-subtitle {
   background: #1a5c52; color: #fff;
-  font-weight: 700; font-size: 14px;
+  font-weight: 700; font-size: 20px;
   text-align: center; padding: 10px 8px;
 }
 .session-step-image { width: 100%; aspect-ratio: 4/3; object-fit: contain; background: #ffffff; display: block; }
-.session-step-desc { font-size: 13px; line-height: 1.55; color: #4a4a4a; padding: 10px 12px; margin: 0; }
+.session-step-desc { font-size: 20px; line-height: 1.55; color: #4a4a4a; padding: 10px 12px; margin: 0; }
 
-/* Webcam */
+/* ── Webcam view ───────────────────────────────────────────────────────────
+   The webcam-with-tips wrapper uses padding-right to reserve space for the
+   tips panel. The panel itself is positioned absolute to the right edge of
+   the wrapper, so video and tips sit side-by-side without needing a grid.
+   On mobile (<768px) this collapses to a vertical stack (tips go below). */
 .session-webcam-view { padding: 20px 28px; }
 
 /* Shared wrapper */
@@ -507,12 +572,13 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 16px;
   width: 300px; /* modal default */
+  overflow-y: auto;
 }
 
 /* Inline: wider panel */
 .exercise-tips-panel--inline { width: 500px; }
 .tips-section-title {
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 700;
   color: #0b5d57;
   text-transform: uppercase;
@@ -520,7 +586,7 @@ onBeforeUnmount(() => {
   margin-bottom: 7px;
 }
 .tips-angle {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: #1a1a1a;
   margin: 0;
@@ -536,12 +602,12 @@ onBeforeUnmount(() => {
   gap: 6px;
 }
 .tips-list li {
-  font-size: 15px;
+  font-size: 20px;
   color: #444;
   line-height: 1.5;
 }
 .tips-clothing-text {
-  font-size: 15px;
+  font-size: 20px;
   color: #444;
   line-height: 1.55;
   margin: 0;
@@ -550,6 +616,8 @@ onBeforeUnmount(() => {
   border-radius: 6px;
   padding: 8px 10px;
 }
+/* scaleX(-1) mirrors the video so it acts like a real mirror — movements
+   appear on the same side as the user expects from self-facing cameras. */
 .session-webcam-wrap {
   position: relative; width: 100%; border-radius: 12px;
   overflow: hidden; background: #000; aspect-ratio: 4/3;
@@ -560,7 +628,7 @@ onBeforeUnmount(() => {
 .session-webcam-loading {
   position: absolute; inset: 0; background: rgba(0,0,0,0.6);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 10px; color: #fff; font-size: 15px;
+  gap: 10px; color: #fff; font-size: 20px;
   transform: scaleX(-1);
 }
 .session-webcam-spinner {
@@ -570,7 +638,9 @@ onBeforeUnmount(() => {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Rep/stage overlays */
+/* ── Rep / stage overlays ──────────────────────────────────────────────────
+   REPS (orange) in the top-right, STAGE (teal) in the bottom-right of the
+   webcam wrap. z-index: 10 keeps them above the canvas drawing. */
 .pose-counter {
   position: absolute; top: 10px; right: 10px;
   background: rgba(245,117,16,0.9); border-radius: 10px;
@@ -590,7 +660,9 @@ onBeforeUnmount(() => {
   gap: 12px; padding: 32px; color: #7a3a2a; text-align: center;
 }
 
-/* Footer */
+/* ── Modal footer ──────────────────────────────────────────────────────────
+   Justified to the right so the Close button doesn't span the full width —
+   a full-width close button would be too easy to hit accidentally on mobile. */
 .session-footer {
   padding: 16px 28px 24px; border-top: 1px solid #e0dbd2;
   display: flex; justify-content: flex-end;
@@ -598,11 +670,15 @@ onBeforeUnmount(() => {
 .session-close-btn {
   background: #1a5c52; color: #fff; border: none; border-radius: 10px;
   padding: 12px 32px; font-family: 'Poppins', sans-serif;
-  font-size: 15px; font-weight: 600; cursor: pointer;
+  font-size: 20px; font-weight: 600; cursor: pointer;
   transition: background 0.2s;
 }
 .session-close-btn:hover { background: #0f3d35; }
 
+/* ── Responsive ────────────────────────────────────────────────────────────
+   On mobile the modal slides up from the bottom (align-items: flex-end,
+   no padding) and rounds only the top corners. The webcam + tips stack
+   vertically with the tips panel returning to static (non-absolute) flow. */
 @media (max-width: 768px) {
   /* Modal: slide up from bottom, full width */
   .session-overlay { padding: 0; align-items: flex-end; }
@@ -632,19 +708,19 @@ onBeforeUnmount(() => {
 
   .session-webcam-view { padding: 14px 16px; }
   .session-header { padding: 16px; flex-wrap: wrap; }
-  .session-title { font-size: 18px; }
+  .session-title { font-size: 20px; }
   .session-footer { padding: 12px 16px 20px; }
   .session-steps { flex-direction: column; padding: 16px; }
 }
 
 @media (max-width: 480px) {
   .session-header { padding: 12px 14px; gap: 8px; }
-  .session-title { font-size: 16px; }
+  .session-title { font-size: 18px; }
   .session-webcam-view { padding: 10px 12px; }
-  .tips-section-title { font-size: 12px; }
-  .tips-angle { font-size: 14px; }
-  .tips-list li { font-size: 12px; }
-  .tips-clothing-text { font-size: 12px; }
-  .session-interactive-btn { font-size: 12px; padding: 7px 10px; }
+  .tips-section-title { font-size: 16px; }
+  .tips-angle { font-size: 18px; }
+  .tips-list li { font-size: 16px; }
+  .tips-clothing-text { font-size: 16px; }
+  .session-interactive-btn { font-size: 18px; padding: 7px 10px; }
 }
 </style>

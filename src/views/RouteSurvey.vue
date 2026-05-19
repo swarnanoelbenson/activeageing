@@ -2,6 +2,7 @@
 import { useRouter } from 'vue-router'
 import { ref, onMounted, nextTick } from 'vue'
 import AppNavbar from '../components/AppNavbar.vue'
+import AppFooter from '../components/AppFooter.vue'
 
 const router = useRouter()
 
@@ -16,6 +17,9 @@ onMounted(() => {
   if (raw) { try { cachedRoute.value = JSON.parse(raw) } catch (_) {} }
 })
 
+// ── Survey answers ──
+// Five question keys (q1–q5) kept as separate named properties so the
+// template can bind each independently with isSelected/select helpers.
 const answers = ref({
   q1: null,
   q2: null,
@@ -24,14 +28,19 @@ const answers = ref({
   q5: null,
 })
 
+// ── Location state ──
 const startAddress   = ref('')
 const startLat       = ref(null)
 const startLng       = ref(null)
 const locationStatus = ref('')   // '', 'locating', 'found', 'error'
 const submitted      = ref(false)
+
+// ── Nominatim autocomplete ──
 const suggestions    = ref([])
 const showDropdown   = ref(false)
 
+// Plain `let` (not ref) — the timer ID doesn't need to trigger reactivity;
+// it's only used for clearTimeout before each new keystroke.
 let debounceTimer = null
 
 function select(q, value) {
@@ -56,6 +65,9 @@ function onAddressInput() {
     return
   }
 
+  // 300ms debounce avoids hammering Nominatim on every keystroke.
+  // Appending ", Victoria, Australia" biases results toward local suburbs
+  // before the state filter below runs, reducing irrelevant matches.
   debounceTimer = setTimeout(async () => {
     try {
       const url =
@@ -143,11 +155,14 @@ function useMyLocation() {
   )
 }
 
+// ── Form submission ──
 async function findMyRoute() {
   submitted.value = true
   const { q1, q2, q3, q4, q5 } = answers.value
   const locationMissing = !startLat.value && !startAddress.value.trim()
   if (!q1 || !q2 || !q3 || !q4 || !q5 || locationMissing) {
+    // Flip `.q-error` on unanswered blocks first, then scroll to the first
+    // one in DOM order so users can't miss what they missed.
     nextTick(() => {
       const first = document.querySelector('.q-error')
       if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -166,10 +181,13 @@ async function findMyRoute() {
     start_lng:        startLng.value,
   }
 
-  // Persist for Planner.vue to read
+  // sessionStorage so Planner.vue can read it after the router.push('/planner');
+  // sessionStorage is cleared when the tab closes, unlike localStorage.
   sessionStorage.setItem('routeSurvey', JSON.stringify(payload))
 
   try {
+    // Fire-and-forget analytics/logging endpoint — the route is generated
+    // client-side in Planner.vue, so this failing is non-blocking.
     await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api/routesurvey`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -197,7 +215,14 @@ async function findMyRoute() {
           activity path designed just for you.
         </p>
 
-        <!-- Recent route cache banner -->
+        <!--
+          RECENT ROUTE CACHE BANNER
+          If the user has already filled out this survey in the same browser
+          session, their previous answers are saved in sessionStorage. This
+          banner surfaces them as small pills (activity type, duration, pace,
+          start location) so returning users can jump straight back to the
+          Planner without re-answering everything.
+        -->
         <div v-if="cachedRoute" class="cache-banner">
           <div class="cache-banner-left">
             <div class="cache-banner-icon">🗺️</div>
@@ -214,7 +239,11 @@ async function findMyRoute() {
           <button class="cache-view-btn" @click="router.push('/planner')">View Route →</button>
         </div>
 
-        <!-- Q1 -->
+        <!--
+          Q1 — ACTIVITY TYPE
+          Walking, Cycling, or Light Jogging. Determines the kind of path the
+          route engine will look for (footpaths vs. bike lanes vs. mixed).
+        -->
         <div class="question-block" :class="{ 'q-error': submitted && !answers.q1 }">
           <div class="q-label">
             <span class="q-num">1</span>
@@ -236,7 +265,12 @@ async function findMyRoute() {
           </div>
         </div>
 
-        <!-- Q2 -->
+        <!--
+          Q2 — SESSION DURATION
+          15 min / 30 min / 45 min / 1 hour. Used to estimate how long a
+          loop the route should be, so the generated path actually fits into
+          the user's available time.
+        -->
         <div class="question-block" :class="{ 'q-error': submitted && !answers.q2 }">
           <div class="q-label">
             <span class="q-num">2</span>
@@ -262,7 +296,12 @@ async function findMyRoute() {
           </div>
         </div>
 
-        <!-- Q3 -->
+        <!--
+          Q3 — PREFERRED PACE
+          Easy, Moderate, or Brisk. Affects the steepness and terrain of
+          the suggested route — easier routes avoid hills and prioritise flat,
+          wide paths that are comfortable for users with mobility concerns.
+        -->
         <div class="question-block" :class="{ 'q-error': submitted && !answers.q3 }">
           <div class="q-label">
             <span class="q-num">3</span>
@@ -284,7 +323,12 @@ async function findMyRoute() {
           </div>
         </div>
 
-        <!-- Q4 -->
+        <!--
+          Q4 — ENVIRONMENT PREFERENCE
+          Parks and greenery, Streets and footpaths, or a Mix. Guides the
+          route planner towards open green space or urban paths depending on
+          what the user finds most enjoyable and accessible.
+        -->
         <div class="question-block" :class="{ 'q-error': submitted && !answers.q4 }">
           <div class="q-label">
             <span class="q-num">4</span>
@@ -306,7 +350,12 @@ async function findMyRoute() {
           </div>
         </div>
 
-        <!-- Q5 -->
+        <!--
+          Q5 — REST STOPS
+          Yes / Only if needed / No preference. Routes that include rest
+          stops will waypoint through benches or sheltered spots along the
+          path, which is important for users who need to pace themselves.
+        -->
         <div class="question-block" :class="{ 'q-error': submitted && !answers.q5 }">
           <div class="q-label">
             <span class="q-num">5</span>
@@ -328,7 +377,13 @@ async function findMyRoute() {
           </div>
         </div>
 
-        <!-- Q6: Starting Location -->
+        <!--
+          Q6 — STARTING LOCATION
+          Freetext address input with Nominatim autocomplete (filtered to
+          Victoria, Australia only). Users can also tap "Use my location" to
+          pull GPS coordinates. The resolved lat/lng is passed to the backend
+          so the route starts from an actual map point, not just a name.
+        -->
         <div class="question-block" :class="{ 'q-error': submitted && !startLat && !startAddress.trim() }">
           <div class="q-label">
             <span class="q-num">6</span>
@@ -365,7 +420,14 @@ async function findMyRoute() {
           <p v-if="locationStatus === 'error'" class="loc-status loc-err">Could not detect location — please type an address above.</p>
         </div>
 
-        <!-- Submit -->
+        <!--
+          FIND MY ROUTE BUTTON
+          Validates that all six questions have been answered before
+          proceeding. If anything is missing, the unanswered question block
+          turns red and auto-scrolls into view. On success, the answers are
+          saved to sessionStorage and sent to the backend, then the user is
+          taken to the Planner page where the generated route is displayed.
+        -->
         <div class="submit-row">
           <button class="find-btn" @click="findMyRoute">
             <span class="find-btn-icon">🗺️</span>
@@ -376,13 +438,7 @@ async function findMyRoute() {
       </div>
     </div>
 
-    <footer class="footer">
-      <div class="footer-brand">ActiveAgeing</div>
-      <div class="footer-links">
-        <a @click="router.push('/privacy')">Privacy Policy</a>
-        <a @click="router.push('/terms')">Terms of Service</a>
-      </div>
-    </footer>
+    <AppFooter />
 
   </div>
 </template>
@@ -392,6 +448,7 @@ async function findMyRoute() {
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ── Page shell ──────── flex-column so AppFooter anchors to the bottom */
 .page-wrapper {
   min-height: 100vh;
   background: #f5f5f2;
@@ -400,7 +457,8 @@ async function findMyRoute() {
   flex-direction: column;
 }
 
-
+/* ── Survey outer ──────── centred flex column; calc(var(--navbar-h))
+   offsets the fixed navbar; 1000px max-width keeps questions readable. */
 .survey-outer {
   flex: 1;
   display: flex;
@@ -428,6 +486,9 @@ async function findMyRoute() {
   margin-bottom: 32px;
 }
 
+/* ── Question blocks ──────── .q-error turns the block's background pink
+   and the number badge red when `submitted` is true and the answer is null,
+   making unanswered questions impossible to miss on validation. */
 .question-block { margin-bottom: 32px; }
 .q-error { padding: 12px; border-radius: 12px; background: #fff5f5; outline: 1.5px solid #e53935; }
 .q-error .q-num { background: #e53935; }
@@ -455,6 +516,9 @@ async function findMyRoute() {
   color: #1a1a1a;
 }
 
+/* ── Options grid ──────── CSS grid with .cols-3 / .cols-4 modifier classes
+   so activity/pace/environment questions get 3 columns and duration
+   gets 4; both collapse to 2-col on mobile. */
 .options-row { display: grid; gap: 10px; }
 .cols-3 { grid-template-columns: repeat(3, 1fr); }
 .cols-4 { grid-template-columns: repeat(4, 1fr); }
@@ -534,7 +598,9 @@ async function findMyRoute() {
   font-weight: 500;
 }
 
-/* ── Location ── */
+/* ── Location input ──────── autocomplete wrap is position: relative so the
+   dropdown list can be absolute-positioned below it without affecting layout.
+   The "Use my location" button sits to the right on desktop, stacks below on mobile. */
 .location-row {
   display: flex;
   gap: 10px;
@@ -607,7 +673,8 @@ async function findMyRoute() {
 .loc-ok  { color: #0b5d57; }
 .loc-err { color: #c0392b; }
 
-/* ── Submit ── */
+/* ── Submit button ──────── centred CTA with a lift-shadow on hover to
+   signal it's the primary action on the page. */
 .submit-row {
   display: flex;
   justify-content: center;
@@ -638,7 +705,9 @@ async function findMyRoute() {
 
 .find-btn-icon { font-size: 20px; }
 
-/* ── Recent route cache banner ── */
+/* ── Recent route cache banner ──────── shown when sessionStorage has a
+   previous survey; lets returning users skip the form entirely and jump
+   back to the Planner with their last configuration pre-loaded. */
 .cache-banner {
   display: flex;
   align-items: center;
@@ -711,53 +780,24 @@ async function findMyRoute() {
 }
 .cache-view-btn:hover { background: #084a45; transform: translateY(-1px); }
 
-/* ── Footer ── */
-.footer {
-  background: #0b5d57;
-  color: rgba(255,255,255,0.75);
-  text-align: center;
-  padding: 28px 24px 20px;
-  font-size: 20px;
-}
 
-.footer-brand {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 10px;
-}
-
-.footer-links {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-
-.footer-links a {
-  color: rgba(255,255,255,0.75);
-  text-decoration: none;
-  font-size: 20px;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-.footer-links a:hover { color: white; }
-
-.footer-copy { font-size: 20px; color: rgba(255,255,255,0.45); }
-
+/* ── Responsive (768px) ──────── cols-3 and cols-4 become 2-col;
+   location row stacks; cache banner goes vertical. */
 @media (max-width: 768px) {
   .survey-outer { padding: calc(var(--navbar-h, 60px) + 16px) 16px 40px; }
   .page-title { font-size: 32px; }
   .cols-3 { grid-template-columns: repeat(2, 1fr); }
   .cols-4 { grid-template-columns: repeat(2, 1fr); }
   .location-row { flex-direction: column; }
+  .autocomplete-wrap { width: 100%; }
+  .location-input { width: 100%; box-sizing: border-box; }
   .locate-btn { width: 100%; }
   .cache-banner { flex-direction: column; gap: 12px; }
   .cache-view-btn { width: 100%; }
 }
 
+/* ── Responsive (480px) ──────── cols-3 collapses to 1-col on very small
+   phones; <br> in subtitle hidden so it reflows naturally. */
 @media (max-width: 480px) {
   .survey-outer { padding: calc(var(--navbar-h, 60px) + 12px) 12px 32px; }
   .page-title { font-size: 26px; }

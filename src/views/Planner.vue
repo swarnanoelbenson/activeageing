@@ -4,11 +4,17 @@ import { useRouter } from 'vue-router'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import AppNavbar from '../components/AppNavbar.vue'
+import AppFooter from '../components/AppFooter.vue'
 
+// Token must be set before any mapboxgl.Map constructor runs — setting it
+// here at module evaluation time guarantees it's ready even if initMaps()
+// is called from inside an async onMounted.
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN
 
 const router = useRouter()
 const API    = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+// Pink/magenta chosen to contrast well against the streets-v12 basemap
+// greens and greys, keeping the route line visible at all zoom levels.
 const COLOUR = '#c2185b'
 
 const loading     = ref(true)
@@ -40,6 +46,9 @@ const catLabel = {
 }
 
 // ── POI visibility state ──
+// Sets are used rather than arrays because membership tests (has/delete) are
+// O(1). Vue cannot observe Set mutations, so any change must replace the ref
+// with a new Set — see toggleCategory() for the pattern.
 const activeCategories = ref(new Set(['shaded', 'seating', 'drinking_fountain', 'landmark', 'restroom']))
 const addedPOIIds      = ref(new Set())
 const removedPOIIds    = ref(new Set())
@@ -47,15 +56,23 @@ const selectedPOI      = ref(null)
 const showPOIModal     = ref(false)
 
 // ── Waypoint rerouting ──
+// `currentWaypoints` accumulates [lng, lat] pairs each time the user adds a
+// POI stop; it's passed to the waypoint endpoint so the route threads through
+// all chosen stops in insertion order.
 const currentWaypoints = ref([])   // [[lng, lat], ...] accumulated across Add actions
 const routeLoading     = ref(false)
 const poisLoading      = ref(false)
+// `poisLoaded` prevents re-fetching POIs when the user switches routes; POIs
+// are fetched once per page load and are reused across route switches.
 const poisLoaded       = ref(false)
 
 // ── Shared event banner (shown when a code is loaded) ──
 const sharedEventBanner = ref(null)
 
 // ── Fullscreen ──
+// onFullscreenChange calls mainMap.resize() after 100ms so Mapbox
+// recomputes the canvas dimensions after the browser finishes the
+// fullscreen transition animation.
 const isFullscreen = ref(false)
 function toggleFullscreen() {
   const el = document.getElementById('map-main')
@@ -72,6 +89,9 @@ function onFullscreenChange() {
 }
 
 // ── Open in Google Maps ──
+// Google Maps directions URL supports a maximum of 8 waypoints in the free
+// tier. The function samples evenly-spaced coords from the geometry to stay
+// under that limit while still approximating the full route shape.
 function openInGoogleMaps() {
   const route = routes.value[activeRoute.value]
   if (!route) return
@@ -92,12 +112,19 @@ function openInGoogleMaps() {
 }
 
 // ── Main map ──
+// Plain `let` (not ref) because Mapbox map instances are mutable objects
+// that Vue shouldn't wrap in a Proxy — deep reactivity on GL objects
+// causes internal errors.
 let mainMap         = null
 let mainStartMarker = null
 let mainEndMarker   = null
+// Guard so POI click listeners are added only once even if fetchAndDrawPOIs
+// is called again after a reroute.
 let poisListenersAdded = false
 
 // ── Thumbnail maps ──
+// Stored in a plain array so they can be cleaned up in onBeforeUnmount;
+// not reactive because the template references them only by DOM id.
 const thumbMaps = []
 
 // ── Helpers ──
@@ -147,6 +174,10 @@ function buildArrowImage() {
 }
 
 // ── POI path filtering (point-to-segment distance) ──
+// `ptSegDist` computes the perpendicular distance from a point to a
+// line segment in metric coordinates. `isNearRoute` uses it to discard
+// Overpass results that are within the bounding box but far from the
+// actual route line — 60m buffer keeps only genuinely accessible stops.
 function ptSegDist(px, py, ax, ay, bx, by) {
   const dx = bx - ax, dy = by - ay
   if (dx === 0 && dy === 0) return Math.hypot(px - ax, py - ay)
@@ -171,6 +202,10 @@ function isNearRoute(lon, lat, coords, bufferM = 60) {
 }
 
 // ── POI filter update ──
+// Builds Mapbox GL expression filters that combine category visibility,
+// the "added" set (gold ring layer), and the "removed" set (hidden). The
+// `__none__` sentinel is used to hide a layer without removing it — a
+// removed layer loses its source binding and is expensive to re-add.
 function applyPOIFilter() {
   if (!mainMap || !mainMap.getLayer('pois-layer')) return
 
@@ -201,6 +236,8 @@ function applyPOIFilter() {
   }
 }
 
+// Replace the Set rather than mutating it — Vue's reactivity system tracks
+// the ref value by identity, not by Set contents.
 function toggleCategory(cat) {
   const s = new Set(activeCategories.value)
   s.has(cat) ? s.delete(cat) : s.add(cat)
@@ -321,6 +358,10 @@ async function rerouteWithWaypoints(waypoints) {
 }
 
 // ── POI fetch (Overpass API) ──
+// Overpass is rate-limited and occasionally returns HTML error pages, so
+// three mirror URLs are tried in order. The 5s noticeTimer hides the loading
+// overlay if Overpass is slow — POIs will still appear when the fetch
+// resolves, but the user isn't blocked from interacting with the map.
 async function fetchAndDrawPOIs(coords) {
   if (!mainMap) return
   if (poisLoaded.value) return
@@ -456,6 +497,9 @@ async function fetchAndDrawPOIs(coords) {
 }
 
 // ── Ready modal ──
+// Two-step flow: openReady() → user picks "Begin" or "Schedule & Invite";
+// "Begin" calls openInGoogleMaps() directly; "Schedule & Invite" switches
+// to the schedule modal via openSchedule().
 const showReady = ref(false)
 function openReady()    { showReady.value = true }
 function closeReady()   { showReady.value = false }
@@ -463,6 +507,9 @@ function beginJourney() { closeReady(); openInGoogleMaps() }
 function goReady()      { openReady() }
 
 // ── Schedule & Invite modal ──
+// `shareCode` is empty until createEvent() succeeds; the modal template
+// switches between the "pick date" step and the "share code" step based
+// on whether shareCode is truthy.
 const showSchedule     = ref(false)
 const scheduleDate     = ref('')
 const scheduleCreating = ref(false)
@@ -526,6 +573,12 @@ function copyCodeUrl() {
   })
 }
 
+// ── PDF download ──
+// Opens a new window with hand-crafted HTML (not the Vue template) and
+// calls window.print() so the user's browser handles paper/PDF rendering.
+// `preserveDrawingBuffer: true` on the Mapbox map (set in initMaps) is
+// required for getCanvas().toDataURL() to succeed — without it, WebGL
+// clears the buffer after each frame and toDataURL returns a blank image.
 async function downloadPDF() {
   // Capture the current map view as a base64 image
   let mapImageData = null
@@ -587,6 +640,9 @@ ${mapHtml}
 }
 
 // ── Code lookup — loads shared route directly into planner ──
+// If route_geometry and survey_data are missing (old-format events that
+// only stored metadata), we surface a clear error asking the organiser
+// to reshare — partial data would silently break the map draw.
 const codeInput   = ref('')
 const codeLooking = ref(false)
 const codeError   = ref('')
@@ -645,6 +701,9 @@ async function lookupEvent() {
 }
 
 // ── Route selection ──
+// Switching routes resets all waypoints and added POIs so the new route
+// starts clean; dismisses the shared-event banner because the user is now
+// browsing their own generated routes rather than a friend's shared one.
 function selectRoute(index) {
   activeRoute.value      = index
   currentWaypoints.value = []
@@ -690,9 +749,12 @@ onMounted(async () => {
   document.addEventListener('fullscreenchange', onFullscreenChange)
   const urlParams = new URLSearchParams(window.location.search)
   const urlCode   = urlParams.get('code')
+  // Pre-fill the code input so it's visible even if lookupEvent() fails
   if (urlCode) codeInput.value = urlCode
 
-  // If a share code is in the URL, load that route directly — no survey needed
+  // URL code takes priority: load the shared route and skip the survey
+  // fetch entirely. If lookupEvent errors, fall through to the normal
+  // sessionStorage survey path so the user sees a useful error state.
   if (urlCode) {
     await lookupEvent()
     // lookupEvent sets loading=false and calls initMaps() on success
@@ -823,6 +885,13 @@ onBeforeUnmount(() => {
 
     <div class="container">
 
+      <!--
+        SHARED EVENT BANNER
+        Shown when a user arrives via a shared event code (e.g. from a friend's
+        invite link). It displays the event code, activity type, and date at the
+        top of the page so the user knows they're viewing a specific planned
+        outing rather than just browsing routes.
+      -->
       <!-- Shared event banner -->
       <Transition name="fade">
         <div v-if="sharedEventBanner" class="shared-banner">
@@ -845,6 +914,12 @@ onBeforeUnmount(() => {
       <h1>Route Planner</h1>
       <p class="subtitle">AI-optimized routes designed for accessibility, comfort, and scenic beauty.</p>
 
+      <!--
+        EVENT CODE ENTRY BAR
+        Lets users enter a short invite code to jump straight into a friend's
+        planned route. If no code is entered, this bar also explains how to
+        generate one — select a route below and hit "Schedule & Invite".
+      -->
       <!-- Code entry bar -->
       <div class="code-entry-bar">
         <div class="code-entry-inner">
@@ -880,6 +955,12 @@ onBeforeUnmount(() => {
 
       <template v-else>
 
+        <!--
+          METRICS ROW
+          Three at-a-glance cards showing the distance, estimated duration, and
+          difficulty of the currently selected route. Updates live whenever the
+          user switches to a different route option below.
+        -->
         <!-- Metrics row -->
         <div class="metrics-row">
           <div class="metric-card">
@@ -908,6 +989,13 @@ onBeforeUnmount(() => {
         <!-- Main layout -->
         <div class="main">
 
+          <!--
+            MAP PANEL (LEFT)
+            The interactive Mapbox map that draws the selected route. Below the
+            map is a legend explaining the S (start) and F (finish) markers, and
+            a row of checkboxes that toggle different categories of nearby stop
+            points (cafés, toilets, parks, etc.) on and off.
+          -->
           <!-- LEFT MAP -->
           <div class="map-card">
             <div id="map-main" style="position:relative">
@@ -965,6 +1053,13 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
+          <!--
+            ROUTE DETAIL PANEL (RIGHT)
+            Shows the name, distance, duration, activity type, pace, and a
+            short description for the currently active route. "Select This Route"
+            opens the Ready to Go modal, and "Open in Google Maps" hands the
+            route off to Google Maps for turn-by-turn navigation.
+          -->
           <!-- RIGHT PANEL -->
           <div class="side-card">
             <div class="tag">{{ ORDINAL_TAGS[activeRoute] ?? (activeRoute + 1 + 'th Recommendation') }}</div>
@@ -1004,6 +1099,12 @@ onBeforeUnmount(() => {
           Your personalized {{ activityLabel[survey?.activity_type]?.toLowerCase() }} route — {{ routes[activeRoute]?.distance_label }} at a {{ survey?.preferred_pace }} pace, designed for your comfort.
         </div>
 
+        <!--
+          ALL ROUTES THUMBNAILS
+          A horizontal strip of small map thumbnails — one per suggested route.
+          Clicking any thumbnail switches the main map and detail panel to that
+          route. The currently active one is highlighted with a border.
+        -->
         <!-- All Routes -->
         <div class="suggestions">
           <div class="header">
@@ -1033,15 +1134,14 @@ onBeforeUnmount(() => {
       </template>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="footer-brand">ActiveAgeing</div>
-      <div class="footer-links">
-        <a @click="router.push('/privacy')">Privacy Policy</a>
-        <a @click="router.push('/terms')">Terms of Service</a>
-      </div>
-    </footer>
+    <AppFooter />
 
+    <!--
+      READY TO GO MODAL
+      Pops up when the user clicks "Select This Route". It gives them two
+      paths: start the walk right now (Begin My Journey), or pick a date and
+      generate a share code so they can invite friends first (Schedule & Invite).
+    -->
     <!-- Ready to Go modal -->
     <Transition name="fade">
       <div v-if="showReady" class="ready-overlay" @click.self="closeReady">
@@ -1081,6 +1181,14 @@ onBeforeUnmount(() => {
       </div>
     </Transition>
 
+    <!--
+      SCHEDULE & INVITE MODAL
+      Opens after the user picks "Schedule and Invite" in the Ready to Go
+      modal. Step one is picking a date and hitting "Create Event", which
+      generates a short code. Step two shows that code alongside a shareable
+      URL that friends can use to load the same route directly in the planner.
+      A PDF download option is also available for users who prefer a printed copy.
+    -->
     <!-- Schedule & Invite modal -->
     <Transition name="fade">
       <div v-if="showSchedule" class="share-overlay" @click.self="showSchedule = false">
@@ -1201,7 +1309,8 @@ onBeforeUnmount(() => {
 h1 { font-size: 42px; color: #0b5d57; }
 .subtitle { color: #666; margin-bottom: 20px; }
 
-/* Code entry bar */
+/* ── Code entry bar ──────── inline flex row so the label, input, and
+   button sit side-by-side on desktop; wraps to column on mobile. */
 .code-entry-bar {
   background: white; border-radius: 14px;
   padding: 16px 20px; margin-bottom: 24px;
@@ -1232,7 +1341,8 @@ h1 { font-size: 42px; color: #0b5d57; }
 .code-entry-error { margin: 8px 0 0; font-size: 20px; color: #c0392b; }
 .code-entry-hint { margin: 10px 0 0; font-size: 20px; color: #666; line-height: 1.6; }
 
-/* Loading / error */
+/* ── Loading / error states ──────── centred column with a CSS spinner;
+   error-box uses red text to distinguish it from the normal loading copy. */
 .status-box {
   display: flex; flex-direction: column; align-items: center;
   gap: 16px; padding: 60px 20px; color: #555;
@@ -1245,7 +1355,8 @@ h1 { font-size: 42px; color: #0b5d57; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Metrics */
+/* ── Metrics row ──────── three equal-flex cards showing distance, duration,
+   difficulty; updates reactively when the user switches routes below. */
 .metrics-row { display: flex; gap: 16px; margin-bottom: 20px; }
 
 .metric-card {
@@ -1257,7 +1368,8 @@ h1 { font-size: 42px; color: #0b5d57; }
 .metric-value { font-size: 20px; font-weight: 700; color: #0b5d57; line-height: 1.2; }
 .metric-label { font-size: 20px; color: #888; margin-top: 2px; }
 
-/* Main layout */
+/* ── Main layout ──────── map card (flex: 2) + side card (flex: 1); the
+   map gets more horizontal space since it's the primary interaction area. */
 .main { display: flex; gap: 24px; }
 
 .map-card {
@@ -1288,11 +1400,12 @@ h1 { font-size: 42px; color: #0b5d57; }
 }
 .btn:hover { opacity: 0.92; transform: translateY(-1px); }
 
-/* S/F marker note */
+/* ── S/F marker note ──────── small legend below the map explaining the
+   green S (start) and red F (finish) markers; helps first-time users. */
 .map-marker-note {
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
   padding: 8px 16px; border-top: 1px solid #f0f0f0;
-  font-size: 13px; color: #555; background: white;
+  font-size: 20px; color: #555; background: white;
 }
 .marker-chip {
   display: inline-flex; align-items: center; justify-content: center;
@@ -1302,7 +1415,9 @@ h1 { font-size: 42px; color: #0b5d57; }
 .marker-s { background: #16a34a; }
 .marker-f { background: #dc2626; }
 
-/* Stop-point legend with checkboxes */
+/* ── Stop-point legend ──────── wrapping flex row of category checkboxes;
+   .stop-item-off strikes through the label and dims the dot to signal
+   that category is hidden without removing the checkbox from the layout. */
 .stop-legend {
   display: flex; flex-wrap: wrap; gap: 6px 16px;
   padding: 12px 16px; border-top: 1px solid #f0f0f0; background: white;
@@ -1323,13 +1438,17 @@ h1 { font-size: 42px; color: #0b5d57; }
 .stop-dot   { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; transition: opacity 0.2s; }
 .stop-label { font-size: 20px; color: #555; }
 
-/* Highlight */
+/* ── Highlight bar ──────── full-width teal banner summarising the active
+   route's key stats; gives a single sentence of context between the main
+   map and the route thumbnail strip. */
 .highlight {
   margin-top: 25px; background: #0b5d57;
   color: white; padding: 16px; border-radius: 12px;
 }
 
-/* All Routes */
+/* ── All Routes thumbnails ──────── horizontal strip of small non-interactive
+   Mapbox maps (interactive: false) so users can preview each route before
+   switching; .card-active pink border matches the route line colour. */
 .suggestions { margin-top: 30px; }
 .header { display: flex; justify-content: space-between; }
 .cards  { display: flex; gap: 20px; margin-top: 15px; }
@@ -1353,18 +1472,10 @@ h1 { font-size: 42px; color: #0b5d57; }
 .suggest-actions    { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; font-size: 20px;  }
 .distance           { color: #0b5d57; font-weight: 700; }
 
-/* Footer */
-.footer {
-  background: #0b5d57; color: rgba(255,255,255,0.75);
-  text-align: center; padding: 28px 24px 20px; font-size: 20px; margin-top: 40px;
-}
-.footer-brand { font-size: 20px; font-weight: 700; color: white; margin-bottom: 10px; }
-.footer-links { display: flex; justify-content: center; gap: 20px; margin-bottom: 12px; flex-wrap: wrap; }
-.footer-links a { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 20px; cursor: pointer; transition: color 0.2s; }
-.footer-links a:hover { color: white; }
-.footer-copy { font-size: 20px; color: rgba(255,255,255,0.45); }
 
-/* Ready modal */
+/* ── Ready modal ──────── teal-tinted frosted backdrop; slide-up spring
+   animation (cubic-bezier 0.34,1.56,0.64,1) gives it a bouncy feel that
+   signals a positive action rather than a neutral dialog. */
 .ready-overlay {
   position: fixed; inset: 0;
   background: rgba(160,210,205,0.45);
@@ -1418,7 +1529,8 @@ h1 { font-size: 42px; color: #0b5d57; }
 .slide-up-enter-from   { transform: translateY(32px); opacity: 0; }
 .slide-up-leave-to     { transform: translateY(16px); opacity: 0; }
 
-/* Share / Schedule modal */
+/* ── Share / Schedule modal ──────── darker semi-opaque backdrop than the
+   ready modal to signal this is a data-entry step rather than a choice. */
 .share-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.5);
@@ -1465,6 +1577,11 @@ h1 { font-size: 42px; color: #0b5d57; }
   box-sizing: border-box;
 }
 .sched-date-input:focus { border-color: #0b5d57; }
+.sched-date-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.7;
+  font-size: 20px;
+}
 .sched-error { font-size: 20px; color: #c0392b; margin: -8px 0 10px; }
 .sched-create-btn { margin-top: 4px; }
 
@@ -1514,7 +1631,9 @@ h1 { font-size: 42px; color: #0b5d57; }
 .share-done-btn:hover:not(:disabled) { background: #084a45; }
 .share-done-btn:disabled { opacity: 0.55; cursor: default; }
 
-/* Shared event banner */
+/* ── Shared event banner ──────── teal gradient bar shown when the page is
+   loaded via a friend's invite code; dismissed when the user selects their
+   own route, reverting to the normal planning flow. */
 .shared-banner {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   background: linear-gradient(135deg, #0b5d57, #0f7a72);
@@ -1544,7 +1663,8 @@ h1 { font-size: 42px; color: #0b5d57; }
 }
 .shared-banner-close:hover { background: rgba(255,255,255,0.25); }
 
-/* POI action modal */
+/* ── POI action modal ──────── z-index: 4000 so it sits above the ready
+   and schedule modals (3000) if any are somehow open simultaneously. */
 .poi-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.38);
@@ -1590,7 +1710,9 @@ h1 { font-size: 42px; color: #0b5d57; }
 }
 .poi-btn-remove:hover { background: #fecaca; }
 
-/* Fullscreen button */
+/* ── Fullscreen button ──────── absolute-positioned top-left inside #map-main
+   so it's always visible regardless of the map's rendered height; stays
+   visible in fullscreen mode via the :fullscreen pseudo-class rules below. */
 .map-fullscreen-btn {
   position: absolute;
   top: 10px; left: 10px;
@@ -1613,7 +1735,9 @@ h1 { font-size: 42px; color: #0b5d57; }
   width: 100vw; height: 100vh;
 }
 
-/* Google Maps button */
+/* ── Google Maps button ──────── white background with Google Blue border
+   on hover so it reads as a branded external-link action, distinct from
+   the primary teal "Select This Route" button above it. */
 .btn-gmaps {
   margin-top: 10px; width: 100%; padding: 13px 16px;
   background: white; color: #333;
@@ -1624,7 +1748,9 @@ h1 { font-size: 42px; color: #0b5d57; }
 }
 .btn-gmaps:hover { background: #90b3ee; border-color: #4285F4; transform: translateY(-1px); }
 
-/* Rerouting overlay on map */
+/* ── Rerouting overlay ──────── semi-transparent overlay with a spinner
+   that blocks map interaction while a waypoint reroute is in-flight;
+   pointer-events: none so the map pan/zoom still works underneath. */
 .reroute-overlay {
   position: absolute; inset: 0; z-index: 10;
   background: rgba(255,255,255,0.62);
@@ -1658,8 +1784,11 @@ h1 { font-size: 42px; color: #0b5d57; }
   .subtitle { font-size: 20px; }
   .container { padding: calc(var(--navbar-h, 70px) + 16px) 16px 20px; }
 
+  .code-entry-bar { padding: 14px 16px; }
   .code-entry-inner { flex-direction: column; align-items: stretch; }
-  .code-entry-input { min-width: 0; width: 100%; }
+  .code-entry-label { white-space: normal; }
+  .code-entry-input { min-width: 0; width: 100%; box-sizing: border-box; }
+  .code-entry-btn { width: 100%; box-sizing: border-box; white-space: normal; }
 
   .metrics-row { flex-wrap: wrap; }
   .metric-card { flex: 1 1 calc(50% - 8px); min-width: 0; }

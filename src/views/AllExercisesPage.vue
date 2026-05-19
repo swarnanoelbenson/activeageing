@@ -2,9 +2,15 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
+import AppFooter from '../components/AppFooter.vue'
 
 const router = useRouter()
 
+// ── Exercise library ──────────────────────────────────────────────────────────
+// Every exercise is defined here as a static list — no backend fetch needed.
+// Each entry has the card-level data (name, emoji, category, duration) plus a
+// `steps` array used by both the detail modal AND the interactive session modal.
+// Images live in /public/Images/ and are referenced by relative path.
 const allExercises = [
   { name: 'Seated Forward Lean',    emoji: '🪑', category: 'Flexibility', duration: '5 min',
     description: 'A gentle seated forward lean to improve flexibility and stretch the lower back.',
@@ -71,18 +77,27 @@ const allExercises = [
     ]},
 ]
 
+// Derive the category filter options dynamically from the exercise list so
+// adding a new exercise with a new category auto-appears in the filter bar.
 const ALL_CATS = ['All', ...new Set(allExercises.map(e => e.category))]
 
-const selectedCategory = ref('All')
-const selectedNames    = ref(new Set())
-const viewing          = ref(null)
+// ── Reactive state ────────────────────────────────────────────────────────────
+const selectedCategory = ref('All')      // currently active filter pill
+const selectedNames    = ref(new Set())  // Set of exercise names queued for the session
+const viewing          = ref(null)       // the exercise object whose detail modal is open (null = closed)
 
+// Returns the full list when 'All' is selected, otherwise filters by category.
 const filteredExercises = computed(() =>
   selectedCategory.value === 'All'
     ? allExercises
     : allExercises.filter(e => e.category === selectedCategory.value)
 )
 
+// ── Selection helpers ─────────────────────────────────────────────────────────
+
+// We replace the Set with a new one each time so Vue's reactivity system
+// detects the change — mutating the existing Set in place would not trigger
+// re-renders because Vue can't observe Set mutations directly.
 function toggleSelect(name) {
   const s = new Set(selectedNames.value)
   s.has(name) ? s.delete(name) : s.add(name)
@@ -91,6 +106,9 @@ function toggleSelect(name) {
 
 function clearSelection() { selectedNames.value = new Set() }
 
+// Saves the queued exercises to localStorage so ExerciseSession.vue can read
+// them on mount. The order matches the order they appear in allExercises,
+// not the order the user clicked them — keeping the session flow predictable.
 function startSession() {
   const selected = allExercises
     .filter(e => selectedNames.value.has(e.name))
@@ -99,6 +117,8 @@ function startSession() {
   router.push('/exercise')
 }
 
+// Plays a single exercise directly from the detail modal without touching the
+// user's existing checkbox selection. Closes the modal first to avoid a flash.
 function playSingle(ex) {
   viewing.value = null
   localStorage.setItem('customExercises', JSON.stringify([
@@ -113,15 +133,27 @@ function playSingle(ex) {
     <AppNavbar active="exercises" />
 
     <div class="container">
-      <div class="back-link" @click="router.push('/')">‹ Back to home</div>
 
-      <!-- Hero -->
+
+      <!--
+        PAGE HEADER
+        A simple headline and one-line description at the top of the page that
+        sets the expectation — this is the full library and users can hand-pick
+        exercises to build their own session.
+      -->
       <section class="hero">
         <h1>All <span>Exercises</span></h1>
         <p class="hero-sub">Browse our full library. Tick any exercises and start a personalised session.</p>
       </section>
 
-      <!-- Category filter -->
+      <!--
+        CATEGORY FILTER BAR
+        A row of pill buttons — All, Flexibility, Mobility, Strength, etc. —
+        that narrows the exercise grid to one category at a time. Selecting a
+        category immediately hides anything that doesn't match, so users aren't
+        overwhelmed by the full list if they already know what type of exercise
+        they want.
+      -->
       <div class="cat-filter">
         <button
           v-for="cat in ALL_CATS"
@@ -134,7 +166,13 @@ function playSingle(ex) {
         </button>
       </div>
 
-      <!-- Exercise grid -->
+      <!--
+        EXERCISE GRID
+        Each card shows an emoji, category tag, exercise name, and duration.
+        Users can tick the checkbox on any card to add it to their session, or
+        click "View →" to open the detail modal first. Cards turn green when
+        selected so it's easy to see what's already in the queue.
+      -->
       <div class="ex-grid">
         <div
           v-for="ex in filteredExercises"
@@ -161,7 +199,13 @@ function playSingle(ex) {
       </div>
     </div>
 
-    <!-- Detail modal -->
+    <!--
+      EXERCISE DETAIL MODAL
+      Opens when the user clicks "View →" on any exercise card. Shows the full
+      description, a photo for each step with instructions, and two action
+      buttons at the bottom — one to add (or remove) the exercise from the
+      current session queue, and one to simply close the modal and go back.
+    -->
     <Teleport to="body">
       <Transition name="fade">
         <div v-if="viewing" class="modal-overlay" @click.self="viewing = null">
@@ -202,7 +246,14 @@ function playSingle(ex) {
       </Transition>
     </Teleport>
 
-    <!-- Selection bar -->
+    <!--
+      SELECTION BAR
+      A sticky bar that slides up from the bottom of the screen the moment a
+      user ticks their first exercise. It shows a live count of how many
+      exercises are queued, a "Clear" button to start over, and the "Start
+      Session" button that saves the selection and takes the user straight
+      into their custom exercise session.
+    -->
     <Transition name="slide-bar">
       <div v-if="selectedNames.size > 0" class="selection-bar">
         <span class="sel-count">{{ selectedNames.size }} exercise{{ selectedNames.size !== 1 ? 's' : '' }} selected</span>
@@ -211,10 +262,7 @@ function playSingle(ex) {
       </div>
     </Transition>
 
-    <footer class="footer">
-      <h3>ActiveAgeing</h3>
-      <p class="footer-copy">© 2026 ActiveAgeing Australia. Your journey to wellness, certified.</p>
-    </footer>
+    <AppFooter />
   </div>
 </template>
 
@@ -234,24 +282,19 @@ function playSingle(ex) {
   flex: 1;
 }
 
-.back-link {
-  margin-top: 24px;
-  font-size: 18px;
-  color: #444;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.back-link:hover { color: #0b5d57; }
-
-/* Hero */
+/* ── Hero ────────────────────────────────────────────────────────────────────
+   Simple headline + subtitle. The word "Exercises" inside the <span> is
+   styled amber (#b45309) to visually break up the title without a second
+   line, giving it a bit of brand warmth against the teal heading. */
 .hero { margin-top: 28px; margin-bottom: 28px; }
 .hero h1 { font-size: 38px; font-weight: 700; color: #0b5d57; margin: 0 0 10px; }
 .hero h1 span { color: #b45309; }
-.hero-sub { font-size: 18px; color: #555; margin: 0; line-height: 1.6; }
+.hero-sub { font-size: 20px; color: #555; margin: 0; line-height: 1.6; }
 
-/* Category filter */
+/* ── Category filter ─────────────────────────────────────────────────────────
+   Pill buttons that wrap onto a second line on narrow screens. The active
+   pill swaps to a teal fill so it's clearly distinct from the outlined
+   inactive pills without needing a tick or icon. */
 .cat-filter { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
 .cat-btn {
   padding: 8px 20px;
@@ -260,7 +303,7 @@ function playSingle(ex) {
   background: white;
   color: #0b5d57;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.18s;
@@ -268,7 +311,10 @@ function playSingle(ex) {
 .cat-btn:hover { background: #e8f4f3; }
 .cat-btn.active { background: #0b5d57; color: white; }
 
-/* Exercise grid */
+/* ── Exercise grid ───────────────────────────────────────────────────────────
+   Three-column grid on desktop, dropping to two on tablet and one on mobile.
+   padding-bottom: 100px reserves space for the sticky selection bar so the
+   last row of cards is never hidden behind it when exercises are selected. */
 .ex-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -309,15 +355,15 @@ function playSingle(ex) {
 
 .ex-body { text-align: center; }
 .ex-cat-tag {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #9aafaa;
   margin-bottom: 4px;
 }
-.ex-name { font-size: 16px; font-weight: 700; color: #0b5d57; margin: 0 0 6px; }
-.ex-dur { font-size: 13px; color: #888; }
+.ex-name { font-size: 20px; font-weight: 700; color: #0b5d57; margin: 0 0 6px; }
+.ex-dur { font-size: 16px; color: #888; }
 
 .ex-view-btn {
   margin-top: 4px;
@@ -327,7 +373,7 @@ function playSingle(ex) {
   border: none;
   border-radius: 8px;
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
@@ -335,7 +381,11 @@ function playSingle(ex) {
 }
 .ex-view-btn:hover { background: #084a45; }
 
-/* Modal */
+/* ── Exercise detail modal ───────────────────────────────────────────────────
+   Standard centred overlay. max-height: 90vh + overflow-y: auto lets the
+   modal scroll internally on short screens without the backdrop shifting.
+   The step images use a fixed height (70px) so cards stay uniform even if
+   image aspect ratios differ. */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 800;
   background: rgba(0,0,0,0.48);
@@ -360,14 +410,14 @@ function playSingle(ex) {
 }
 .modal-emoji { font-size: 36px; flex-shrink: 0; }
 .modal-title-group { flex: 1; min-width: 0; }
-.modal-cat { font-size: 12px; font-weight: 600; color: #9aafaa; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+.modal-cat { font-size: 14px; font-weight: 600; color: #9aafaa; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
 .modal-name { font-size: 20px; font-weight: 700; color: #0b5d57; margin: 0; }
 .modal-play-btn {
   display: flex; align-items: center; gap: 6px;
   padding: 9px 18px;
   background: #0b5d57; color: white;
   border: none; border-radius: 8px;
-  font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600;
+  font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600;
   cursor: pointer; transition: background 0.2s; flex-shrink: 0;
 }
 .modal-play-btn:hover { background: #084a45; }
@@ -377,7 +427,7 @@ function playSingle(ex) {
   border-radius: 6px; flex-shrink: 0;
 }
 .modal-close:hover { background: #f0f0f0; }
-.modal-desc { font-size: 15px; color: #555; line-height: 1.6; margin: 0 0 20px; }
+.modal-desc { font-size: 20px; color: #555; line-height: 1.6; margin: 0 0 20px; }
 
 .modal-steps { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
 .modal-step {
@@ -393,18 +443,18 @@ function playSingle(ex) {
 .step-num {
   width: 22px; height: 22px; border-radius: 50%;
   background: #0b5d57; color: white;
-  font-size: 12px; font-weight: 700;
+  font-size: 14px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.step-title { font-size: 14px; font-weight: 700; color: #0b5d57; }
-.step-desc { font-size: 13px; color: #555; line-height: 1.5; margin: 0; }
+.step-title { font-size: 20px; font-weight: 700; color: #0b5d57; }
+.step-desc { font-size: 18px; color: #555; line-height: 1.5; margin: 0; }
 
 .modal-footer { display: flex; gap: 10px; }
 .modal-add-btn {
   flex: 1; padding: 12px;
   background: #e8f4f3; color: #0b5d57;
   border: 2px solid #0b5d57; border-radius: 10px;
-  font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600;
+  font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600;
   cursor: pointer; transition: background 0.2s;
 }
 .modal-add-btn:hover { background: #d0ece9; }
@@ -412,12 +462,16 @@ function playSingle(ex) {
   flex: 1; padding: 12px;
   background: #0b5d57; color: white;
   border: none; border-radius: 10px;
-  font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600;
+  font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 600;
   cursor: pointer; transition: background 0.2s;
 }
 .modal-close-btn:hover { background: #084a45; }
 
-/* Selection bar */
+/* ── Selection bar ───────────────────────────────────────────────────────────
+   Sticky teal strip fixed to the bottom of the viewport. z-index: 700 sits
+   below the modal (z-index: 800) so the modal can still open on top.
+   The bar slides up with a springy cubic-bezier so it feels like it's
+   snapping into place rather than just appearing. */
 .selection-bar {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -431,13 +485,13 @@ function playSingle(ex) {
   box-shadow: 0 -4px 20px rgba(0,0,0,0.18);
   flex-wrap: wrap;
 }
-.sel-count { font-size: 15px; font-weight: 600; flex: 1; }
+.sel-count { font-size: 20px; font-weight: 600; flex: 1; }
 .sel-clear {
   padding: 10px 20px;
   background: rgba(255,255,255,0.15);
   border: 1.5px solid rgba(255,255,255,0.3);
   border-radius: 8px; color: white;
-  font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 500;
+  font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 500;
   cursor: pointer; transition: background 0.2s;
 }
 .sel-clear:hover { background: rgba(255,255,255,0.25); }
@@ -445,24 +499,28 @@ function playSingle(ex) {
   padding: 10px 24px;
   background: white; color: #0b5d57;
   border: none; border-radius: 8px;
-  font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 700;
+  font-family: 'Poppins', sans-serif; font-size: 20px; font-weight: 700;
   cursor: pointer; transition: background 0.2s, transform 0.15s;
 }
 .sel-start:hover { background: #e8f4f3; transform: translateY(-1px); }
 
-/* Transition */
+/* ── Transitions ─────────────────────────────────────────────────────────────
+   `fade` is used by the detail modal overlay — a simple opacity crossfade.
+   `slide-bar` is used by the selection bar — enters with an overshoot spring
+   (cubic-bezier 0.34,1.56) and leaves with a plain ease so the dismissal
+   feels quick and clean rather than bouncing back out. */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.22s; }
 .fade-enter-from,  .fade-leave-to      { opacity: 0; }
 .slide-bar-enter-active { transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1); }
 .slide-bar-leave-active { transition: transform 0.22s ease; }
 .slide-bar-enter-from, .slide-bar-leave-to { transform: translateY(100%); }
 
-/* Footer */
-.footer { text-align: center; padding: 32px 0; font-size: 14px; color: #555; border-top: 1px solid #e5e5e5; }
-.footer h3 { color: #0b5d57; margin-bottom: 8px; font-size: 18px; }
-.footer-copy { color: #888; margin: 0; font-size: 13px; }
 
-/* Responsive */
+/* ── Responsive ──────────────────────────────────────────────────────────────
+   768px (tablet): grid drops to 2 columns, side padding tightens.
+   480px (phone): grid goes single column so cards aren't too squished;
+   modal steps stack vertically with a taller image so the reference photo
+   is actually readable on a small screen. */
 @media (max-width: 768px) {
   .container { padding: 0 20px; padding-top: var(--navbar-h, 60px); }
   .ex-grid { grid-template-columns: repeat(2, 1fr); }

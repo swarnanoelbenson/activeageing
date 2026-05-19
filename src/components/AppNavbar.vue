@@ -2,6 +2,8 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 
+// `active` is a string key (e.g. 'home', 'events') passed by each page so the
+// correct nav link gets the underline style. Defaults to '' (nothing active).
 const props = defineProps({
   active: {
     type: String,
@@ -10,10 +12,15 @@ const props = defineProps({
 })
 
 const router   = useRouter()
-const sideOpen = ref(false)
-const navEl    = ref(null)
-let   ro       = null
+const sideOpen = ref(false)  // controls mobile sidebar open/closed state
+const navEl    = ref(null)   // ref to the <nav> element for height measurement
+let   ro       = null        // ResizeObserver instance — disconnected on unmount
 
+// Writes the navbar's current pixel height to the CSS custom property --navbar-h.
+// Every page that has content directly below the fixed navbar uses this value
+// (via `padding-top: var(--navbar-h)`) so nothing gets hidden behind the bar.
+// A ResizeObserver keeps it accurate when the navbar height changes (e.g. text
+// wraps on a narrow screen or the browser font size is changed for accessibility).
 function setNavbarHeight() {
   if (navEl.value) {
     document.documentElement.style.setProperty('--navbar-h', navEl.value.offsetHeight + 'px')
@@ -30,6 +37,7 @@ onBeforeUnmount(() => {
   if (ro) ro.disconnect()
 })
 
+// Closes the sidebar before navigating so it doesn't stay open on the next page.
 function navigate(path) {
   sideOpen.value = false
   router.push(path)
@@ -41,7 +49,13 @@ function navigate(path) {
     <div class="nav-inner">
       <div class="logo" @click="navigate('/')">ActiveAgeing</div>
 
-      <!-- Desktop links -->
+      <!--
+        DESKTOP NAV LINKS
+        Six links rendered as spans so they behave consistently across
+        browsers without default button/anchor styling. The `active` prop
+        passed from each page highlights the current section with an
+        underline. Hidden on mobile — the hamburger takes over instead.
+      -->
       <div class="nav-links">
         <span class="nav-link" :class="{ active: active === 'home' }"      @click="navigate('/')">Home</span>
         <span class="nav-link" :class="{ active: active === 'checkin' }"   @click="navigate('/survey')">Check-In</span>
@@ -51,7 +65,12 @@ function navigate(path) {
         <span class="nav-link" :class="{ active: active === 'snapshot' }"  @click="navigate('/results')">My Snapshot</span>
       </div>
 
-      <!-- Hamburger (mobile only) -->
+      <!--
+        HAMBURGER BUTTON (mobile only)
+        Three-bar icon that animates into an X when the sidebar is open —
+        the top bar rotates 45°, the middle fades out, the bottom rotates
+        -45°. Shown only on screens ≤768px via CSS; invisible on desktop.
+      -->
       <button class="hamburger" :class="{ open: sideOpen }" @click="sideOpen = !sideOpen" aria-label="Menu">
         <span></span>
         <span></span>
@@ -59,12 +78,24 @@ function navigate(path) {
       </button>
     </div>
 
-    <!-- Mobile sidebar backdrop -->
+    <!--
+      MOBILE SIDEBAR BACKDROP
+      A semi-transparent dark overlay that sits behind the sidebar panel.
+      Clicking it closes the sidebar — same behaviour as tapping outside a
+      modal. Fades in/out with a 0.25s transition so it doesn't feel jarring.
+    -->
     <Transition name="fade-backdrop">
       <div v-if="sideOpen" class="sidebar-backdrop" @click="sideOpen = false"></div>
     </Transition>
 
-    <!-- Mobile sidebar -->
+    <!--
+      MOBILE SIDEBAR PANEL
+      Slides in from the right at 72vw width (capped at 300px). Contains
+      the same six links as the desktop nav but stacked vertically, with a
+      left-border accent on the active item. The `navigate()` helper closes
+      the sidebar before pushing the route so it doesn't stay open mid-
+      transition.
+    -->
     <Transition name="slide-sidebar">
       <div v-if="sideOpen" class="sidebar">
         <div class="sidebar-header">
@@ -87,6 +118,11 @@ function navigate(path) {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Poppins:wght@400;500;600;700&display=swap');
 
+/* ── Nav bar shell ────────────────────────────────────────────────────────────
+   Fixed at the top so it stays visible while the page scrolls. z-index: 100
+   sits above page content but below the sidebar (300) and backdrop (200).
+   env(safe-area-inset-top) pushes the bar down on notched phones (iPhone X+)
+   so content isn't clipped by the device status bar. */
 .nav {
   position: fixed;
   top: 0;
@@ -118,7 +154,10 @@ function navigate(path) {
   flex-shrink: 0;
 }
 
-/* ── Desktop links ── */
+/* ── Desktop links ─────────────────────────────────────────────────────────
+   font-size: 20px is larger than typical nav to serve older users who may
+   have lower vision. Gap of 28px keeps links breathable without crowding
+   on a 1200px container. Hidden entirely on mobile — hamburger takes over. */
 .nav-links {
   display: flex;
   gap: 28px;
@@ -142,7 +181,10 @@ function navigate(path) {
   text-decoration-thickness: 2px;
 }
 
-/* ── Hamburger ── */
+/* ── Hamburger ────────────────────────────────────────────────────────────
+   Hidden on desktop (display: none), shown on mobile via the media query
+   below. The three <span> bars animate into an X via CSS transforms when
+   `.open` is applied — no JS animation needed. */
 .hamburger {
   display: none;
   flex-direction: column;
@@ -167,7 +209,10 @@ function navigate(path) {
 .hamburger.open span:nth-child(2) { opacity: 0; }
 .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-/* ── Sidebar backdrop ── */
+/* ── Sidebar backdrop ─────────────────────────────────────────────────────
+   Full-screen dark overlay behind the sidebar panel. z-index: 200 puts it
+   above page content (100) but below the sidebar panel (300). Clicking it
+   closes the sidebar — standard "tap outside to dismiss" pattern. */
 .sidebar-backdrop {
   position: fixed;
   inset: 0;
@@ -175,7 +220,10 @@ function navigate(path) {
   z-index: 200;
 }
 
-/* ── Sidebar panel ── */
+/* ── Sidebar panel ────────────────────────────────────────────────────────
+   72vw wide (max 300px) so it reveals enough of the underlying page that
+   users know they can tap the backdrop to close. z-index: 300 sits above
+   the backdrop. Box-shadow gives depth without a hard border. */
 .sidebar {
   position: fixed;
   top: 0;
@@ -201,7 +249,7 @@ function navigate(path) {
 .sidebar-close {
   background: none;
   border: none;
-  font-size: 18px;
+  font-size: 20px;
   color: #555;
   cursor: pointer;
   padding: 4px 8px;
@@ -219,7 +267,7 @@ function navigate(path) {
 
 .sidebar-link {
   padding: 14px 28px;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 500;
   color: #0b5d57;
   cursor: pointer;
@@ -233,14 +281,19 @@ function navigate(path) {
   background: #e8f4f3;
 }
 
-/* ── Transitions ── */
+/* ── Transitions ──────────────────────────────────────────────────────────
+   `fade-backdrop` fades the overlay in/out so it doesn't pop abruptly.
+   `slide-sidebar` translates the panel in from the right — cubic-bezier
+   chosen for a smooth deceleration that feels native on mobile. */
 .fade-backdrop-enter-active, .fade-backdrop-leave-active { transition: opacity 0.25s; }
 .fade-backdrop-enter-from,   .fade-backdrop-leave-to     { opacity: 0; }
 
 .slide-sidebar-enter-active, .slide-sidebar-leave-active { transition: transform 0.28s cubic-bezier(0.4,0,0.2,1); }
 .slide-sidebar-enter-from,   .slide-sidebar-leave-to     { transform: translateX(100%); }
 
-/* ── Responsive ── */
+/* ── Responsive ───────────────────────────────────────────────────────────
+   At 768px and below, desktop links are hidden and the hamburger is shown.
+   Nav inner padding shrinks so the logo and hamburger don't feel cramped. */
 @media (max-width: 768px) {
   .nav-inner { padding: 14px 20px; }
   .nav-links  { display: none; }

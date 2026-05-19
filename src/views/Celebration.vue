@@ -1,14 +1,26 @@
 <template>
   <div class="celebration-page">
-    <!-- Header -->
+    <!--
+      PAGE HEADER
+      A minimal top bar showing only the ActiveAgeing logo — no navigation.
+      The session is over so there's nothing to navigate away to, and keeping
+      the header clean puts all the focus on the celebration moment itself.
+    -->
     <header class="header">
       <span class="logo">ActiveAgeing</span>
     </header>
 
-    <!-- Hero Section -->
+    <!--
+      CELEBRATION HERO
+      The heart of the page. It confirms the session is complete with an
+      encouraging headline and a short motivational line underneath.
+      The social proof row ("1,240 other Melburnians completed a session this
+      week") is shown with real-looking avatars to give the user a sense that
+      they're part of something bigger than themselves.
+    -->
     <main class="hero">
       <div class="hero-content">
-        <!-- Badge -->
+        <!-- Small "SESSION COMPLETE" pill badge that sits above the headline -->
         <div class="badge">
           <span class="badge-icon">✦</span>
           SESSION COMPLETE
@@ -42,7 +54,11 @@
           </div>
         </div>
 
-        <!-- CTAs -->
+        <!--
+          ACTION BUTTONS
+          Two options after finishing: go to the main dashboard (Home), or
+          jump straight to finding upcoming events to keep the momentum going.
+        -->
         <div class="cta-group">
           <button class="btn btn-primary" @click="goToDashboard">
             Go to Dashboard <span class="arrow">→</span>
@@ -53,7 +69,12 @@
         </div>
       </div>
 
-      <!-- Hero Image -->
+      <!--
+        HERO IMAGE
+        A photo of seniors doing yoga sits on the right side of the hero to
+        reinforce the positive, active feeling of the page without adding any
+        extra text or pressure.
+      -->
       <div class="hero-image-wrap">
         <img
           src="../assets/myphoto.png"
@@ -63,39 +84,40 @@
       </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="footer-brand">ActiveAgeing</div>
-      <nav class="footer-nav">
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-      </nav>
-    </footer>
+    <AppFooter />
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'  
-const router = useRouter()              
+import { useRouter } from 'vue-router'
+import AppFooter from '../components/AppFooter.vue'
+const router = useRouter()
 
+// pravatar.cc serves consistent placeholder faces keyed by img number.
+// Using fixed img IDs means the same three faces appear every time rather
+// than random photos that could change between renders.
 const avatars = ref([
   'https://i.pravatar.cc/40?img=47',
   'https://i.pravatar.cc/40?img=32',
   'https://i.pravatar.cc/40?img=15',
 ])
 
+// "Dashboard" maps to the Results page — the wellness snapshot is the
+// closest thing to a personal dashboard in the current information architecture.
 function goToDashboard() {
-  router.push({ name: 'Results' })  
+  router.push({ name: 'Results' })
 }
 
 function findEvents() {
-  router.push({ name: 'Events' })     
+  router.push({ name: 'Events' })
 }
 </script>
 
 <style scoped>
-/* ─── Reset & Base ─── */
+/* ─── Reset & Base ────────────────────────────────────────────────────────
+   Global box-sizing reset scoped to this component. flex column layout so
+   AppFooter sticks to the bottom even when hero content is short. */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -111,7 +133,9 @@ function findEvents() {
   flex-direction: column;
 }
 
-/* ─── Header ─── */
+/* ─── Header ──────────────────────────────────────────────────────────────
+   Minimal header with only the logo — no full AppNavbar — to keep the user
+   focused on the celebration moment rather than navigating away immediately. */
 .header {
   padding: 20px 48px;
 }
@@ -124,7 +148,10 @@ function findEvents() {
   letter-spacing: 0.02em;
 }
 
-/* ─── Hero ─── */
+/* ─── Hero ────────────────────────────────────────────────────────────────
+   Two-column flex layout: content left, image right. flex: 1 on hero-content
+   lets it fill available width while the photo has a fixed 320px column.
+   On mobile (<768px), these stack vertically. */
 .hero {
   display: flex;
   align-items: flex-start;
@@ -181,7 +208,9 @@ function findEvents() {
   max-width: 380px;
 }
 
-/* Social Proof */
+/* Social proof ────────────────────────────────────────────────────────────
+   Overlapping avatar images (negative margin-left) give the impression of
+   a crowd, reinforcing that the user is part of a larger community. */
 .social-proof {
   display: flex;
   align-items: center;
@@ -226,7 +255,9 @@ function findEvents() {
   font-size: 20px;
 }
 
-/* CTAs */
+/* CTAs ────────────────────────────────────────────────────────────────────
+   Primary (teal) and secondary (white/outline) button pair. translateY(-1px)
+   on hover gives a subtle lift without shifting layout. */
 .cta-group {
   display: flex;
   gap: 12px;
@@ -279,7 +310,9 @@ function findEvents() {
   font-size: 20px;
 }
 
-/* Hero Image */
+/* Hero image ──────────────────────────────────────────────────────────────
+   Fixed 320px column that shrinks to full-width on mobile. object-fit: cover
+   with a fixed height keeps the aspect ratio consistent across screen sizes. */
 .hero-image-wrap {
   flex: 0 0 auto;
   width: 320px;
@@ -293,51 +326,10 @@ function findEvents() {
   display: block;
 }
 
-/* ─── Footer ─── */
-.footer {
-  margin-top: auto;
-  background-color: #edeae4;
-  padding: 40px 48px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
 
-.footer-brand {
-  font-family: 'Georgia', serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a7a6a;
-}
-
-.footer-nav {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.footer-nav a {
-  font-family: 'Helvetica Neue', Arial, sans-serif;
-  font-size: 20px;
-  color: #4a6460;
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.footer-nav a:hover {
-  color: #1a5c50;
-}
-
-.footer-copy {
-  font-family: 'Helvetica Neue', Arial, sans-serif;
-  font-size: 20px;
-  color: #7a9490;
-}
-
-/* ─── Responsive ─── */
+/* ─── Responsive ──────────────────────────────────────────────────────────
+   On mobile the two-column hero stacks vertically and the hero image
+   shrinks in height so the content above stays accessible without scrolling. */
 @media (max-width: 768px) {
   .hero {
     flex-direction: column;
@@ -356,8 +348,5 @@ function findEvents() {
     padding: 16px 24px;
   }
 
-  .footer {
-    padding: 32px 24px;
-  }
 }
 </style>

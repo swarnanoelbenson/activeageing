@@ -6,7 +6,12 @@
     <!-- MAIN -->
     <main class="main">
 
-      <!-- HEADER -->
+      <!--
+        PAGE HEADER
+        Title and encouraging subtitle shown at the top of the results. Fades
+        in on mount via the `visible` class so the page feels like it's
+        revealing itself rather than just loading.
+      -->
       <div class="header" :class="{ visible }">
         <h1 class="title">
           Your Wellness<br />Snapshot Results
@@ -23,7 +28,13 @@
         <p class="fact-text">{{ randomFact }}</p>
       </div> -->
 
-      <!-- EMPTY STATE — no survey result -->
+      <!--
+        EMPTY STATE — NO SURVEY RESULT YET
+        Shown when the user arrives on this page without having completed the
+        check-in survey. Rather than just saying "no data", it walks them
+        through the three steps of the process and gives them a clear CTA to
+        start. This is the most common entry path for first-time visitors.
+      -->
       <div v-if="!surveyResult" class="checkin-empty" :class="{ visible }" style="transition-delay: 150ms;">
         <div class="checkin-empty-icon">📋</div>
         <h2 class="checkin-empty-title">No snapshot yet</h2>
@@ -48,7 +59,14 @@
         <button class="btn-checkin" @click="router.push('/survey')">Start Check-in →</button>
       </div>
 
-      <!-- TWO COLUMN GRID — has survey result -->
+      <!--
+        TWO-COLUMN RESULTS GRID — shown once a survey result exists
+        Left column: the circular activity chart comparing the user's score to
+        the Australian 65+ benchmark. Right column: their wellness category
+        card (colour-coded by result) plus three action buttons — exercise
+        session, events, and walking route — so users have an immediate next
+        step without needing to navigate anywhere.
+      -->
       <div v-else class="grid" :class="{ visible }" style="transition-delay: 150ms;">
 
         <!-- LEFT: Activity Comparison -->
@@ -130,7 +148,13 @@
         </div>
       </div>
 
-      <!-- YOUR ASSESSMENT ANSWERS -->
+      <!--
+        YOUR ASSESSMENT ANSWERS SUMMARY
+        Shown below the results grid as a gentle recap of what the user
+        answered. Displayed as small pill-shaped chips — one per question —
+        so users can quickly verify their answers without re-reading a wall
+        of text. Hidden entirely if there are no saved answers.
+      -->
       <div v-if="surveyResult && answeredSummary.length > 0" class="next-steps" :class="{ visible }" style="transition-delay: 450ms; margin-top: 40px;">
         <h2 class="section-title">Your Assessment Answers</h2>
         <div class="answers-summary">
@@ -143,7 +167,14 @@
 
     </main>
 
-    <!-- Exercise session modal -->
+    <!--
+      EXERCISE SESSION START MODAL
+      Appears when the user clicks "Guided Exercise Session" from the action
+      buttons. Acts as a heads-up so they can get into position before the
+      session begins — tells them it's a follow-along session and asks them
+      to find a comfortable space. Clicking outside or the button both
+      navigate to /exercise.
+    -->
     <div v-if="showExerciseModal" class="modal-overlay" @click.self="showExerciseModal = false">
       <div class="exercise-modal">
         <div class="exercise-modal-play" @click="showExerciseModal = false; router.push('/exercise')">
@@ -159,14 +190,7 @@
       </div>
     </div>
 
-    <!-- FOOTER -->
-    <footer class="footer">
-      <div class="footer-logo">ActiveAgeing</div>
-      <div class="footer-links">
-        <a style="cursor:pointer" @click="router.push('/privacy')">Privacy Policy</a>
-        <a style="cursor:pointer" @click="router.push('/terms')">Terms of Service</a>
-      </div>
-    </footer>
+    <AppFooter />
 
   </div>
 </template>
@@ -175,10 +199,14 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
+import AppFooter from '../components/AppFooter.vue'
 
 const router = useRouter()
 const showExerciseModal = ref(false)
 
+// ── Motivational facts (unused) ──
+// These were shown in a fact-box that is currently commented out in the
+// template. Kept here in case the feature is reinstated.
 const facts = [
   '"Every step counts!" - Telling us your routine helps us build a plan that fits your life, not someone else\'s.',
   '"You\'re not alone!" - Understanding your activity helps us recommend exercises that are safe and right for you.',
@@ -187,13 +215,22 @@ const facts = [
   '"Keep going!" - Your energy profile helps us schedule activity at the right intensity for you.',
 ]
 
+// Maps raw answer index → human-readable question label for the summary row
 const questionLabels = ['Physical Activity', 'Active Sessions', 'Inactive During Day', 'Sleep', 'How You Feel on Waking']
 
+// ── Animation gates ──
+// `visible` triggers the CSS translateY fade-in on mount (80ms delay so the
+// browser has painted before the transition starts).
+// `chartReady` is set 400ms later so the SVG arc animates after the card
+// is already visible, drawing attention to the percentage change.
 const visible = ref(false)
 const chartReady = ref(false)
 const surveyAnswers = ref(null)
 const surveyResult = ref(null)
 const randomFact = ref('')
+
+// `sessionCompleted` is written by ExerciseSession when a session finishes,
+// then read-and-removed here so the badge only shows once per completion.
 const sessionJustCompleted = ref(false)
 const sessionPointsEarned = ref(0)
 
@@ -205,6 +242,9 @@ const answeredSummary = computed(() =>
   }))
 )
 
+// ── SVG circle chart geometry ──
+// Fixed radius/stroke constants so the SVG viewBox dimensions (200×200) can
+// be set in the template without any reactive recalculation.
 const radius = 80
 const stroke = 12
 const normalizedRadius = radius - stroke / 2
@@ -212,6 +252,10 @@ const circumference = normalizedRadius * 2 * Math.PI
 
 const chartPercent = computed(() => surveyResult.value?.chartPercent ?? 75)
 
+// ── Category display maps ──
+// Keyed by `categoryName` string from the backend response.
+// Three separate maps (label / desc / color) so each concern can be
+// extended independently without touching the others.
 const categoryLabelMap = {
   'Just Getting Started': 'Just Getting Started',
   'Building Momentum':    'Building Momentum',
@@ -228,15 +272,21 @@ const catColorMap = {
   'Thriving':             '#1a5c52',
 }
 
+// Fallback chain: prefer new `categoryName` field → legacy `category.label`
+// → hardcoded default, so old-format cached results still render correctly.
 const momentumLabel = computed(() => categoryLabelMap[surveyResult.value?.categoryName] ?? surveyResult.value?.category?.label ?? 'Building Momentum')
 const momentumDesc  = computed(() => categoryDescMap[surveyResult.value?.categoryName]  ?? surveyResult.value?.category?.description ?? 'You\'re on the right path!')
 const catColor      = computed(() => catColorMap[surveyResult.value?.categoryName] ?? '#1a5c52')
 
+// `offset` drives stroke-dashoffset on the SVG arc; guarded by `chartReady`
+// so the arc starts at 0% and animates to the real value rather than jumping.
 const offset = computed(() => {
   return circumference - (chartReady.value ? chartPercent.value / 100 : 0) * circumference
 })
 
 onMounted(() => {
+  // Staggered delays: card fade-in at 80ms, arc animation at 400ms so the
+  // chart draws attention after the layout has settled.
   setTimeout(() => { visible.value = true }, 80)
   setTimeout(() => { chartReady.value = true }, 400)
 
@@ -246,6 +296,8 @@ onMounted(() => {
   const result = localStorage.getItem('surveyResult')
   if (result) surveyResult.value = JSON.parse(result)
 
+  // Read-once pattern: remove the key immediately so the points badge only
+  // appears on the first visit after a session, not on every subsequent load.
   const pts = localStorage.getItem('sessionCompleted')
   if (pts) {
     sessionJustCompleted.value = true
@@ -267,14 +319,16 @@ onMounted(() => {
   color: #1a2e2b;
 }
 
-/* MAIN */
+/* ── Main ──────── calc(var(--navbar-h)) clears the fixed navbar; 80px
+   bottom padding gives AppFooter breathing room. */
 .main {
   max-width: 1200px;
   margin: 0 auto;
   padding: calc(var(--navbar-h, 70px) + 16px) 40px 80px;
 }
 
-/* FACT BOX */
+/* ── Fact box ──────── currently commented out in the template; styles
+   kept so reinserting the element requires no CSS changes. */
 .fact-box {
   display: flex;
   align-items: center;
@@ -292,7 +346,9 @@ onMounted(() => {
 .fact-icon { font-size: 20px; flex-shrink: 0; }
 .fact-text { font-size: 20px; color: #1a5c52; font-style: italic; line-height: 1.5; margin: 0; }
 
-/* HEADER */
+/* ── Header ──────── starts invisible (opacity 0, translateY 18px) and
+   transitions to visible on mount via the `visible` class, giving the
+   page a gentle reveal rather than an abrupt load. */
 .header {
   margin-bottom: 36px;
   opacity: 0;
@@ -317,7 +373,9 @@ onMounted(() => {
   max-width: 80%;
 }
 
-/* GRID */
+/* ── Results grid ──────── two-column layout: activity chart left,
+   category + action buttons right; same fade-in transition as the header
+   but with a 150ms delay so cards appear after the title. */
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -332,7 +390,9 @@ onMounted(() => {
   transform: translateY(0);
 }
 
-/* CARDS */
+/* ── Cards ──────── three variants: light (activity chart bg), dark (dynamic
+   category colour from catColor computed), white (action buttons). Hover
+   transitions are disabled on cards that aren't interactive. */
 .card {
   border-radius: 20px;
   padding: 28px 24px;
@@ -371,7 +431,9 @@ onMounted(() => {
   line-height: 1.5;
 }
 
-/* EMPTY STATE — Start Check-in */
+/* ── Empty state ──────── shown when no survey result exists in localStorage;
+   walks the user through the three-step process so they know what to
+   expect before clicking Start — reduces bounce from uncertainty. */
 .checkin-empty {
   max-width: 560px;
   margin: 0 auto 48px;
@@ -446,7 +508,9 @@ onMounted(() => {
 }
 .btn-checkin:hover { background: #0f3d35; transform: translateY(-1px); }
 
-/* Session points badge */
+/* ── Session points badge ──────── appears only after completing an exercise
+   session; pop-in keyframe uses spring cubic-bezier so it bounces in
+   rather than linearly fading, making the reward feel more satisfying. */
 .points-badge {
   display: inline-block;
   background: #e6f9ec;
@@ -464,7 +528,10 @@ onMounted(() => {
   to   { transform: scale(1);   opacity: 1; }
 }
 
-/* CHART */
+/* ── SVG circle chart ──────── rotated -90deg so the arc starts at 12 o'clock.
+   The inner dashed circle represents the AU 65+ benchmark for visual
+   comparison. stroke-dashoffset animates via a 1.4s ease transition triggered
+   when `chartReady` flips true (400ms after mount). */
 .chart-wrap {
   position: relative;
   width: 200px;
@@ -498,7 +565,8 @@ onMounted(() => {
   margin-top: 4px;
 }
 
-/* LEGEND */
+/* ── Legend ──────── two items: user's level (solid, colour = catColor) and
+   the AU benchmark ring (dashed orange border, no fill). */
 .legend {
   display: flex;
   justify-content: center;
@@ -521,14 +589,18 @@ onMounted(() => {
 .dot-teal { background: #1a5c52; }
 .dot-orange { border: 1px dashed #e8824a; background: transparent; }
 
-/* RIGHT COLUMN */
+/* ── Right column ──────── flex-column so the dark category card and the
+   white action card stack with equal gap; each card uses flex: 1/2
+   to give more visual weight to the action buttons. */
 .right-col {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-/* BUILDING MOMENTUM */
+/* ── Momentum status card ──────── background colour comes from catColor
+   (red / orange / teal depending on category) so the card changes
+   personality based on the user's result. */
 .status-row {
   display: flex;
   align-items: center;
@@ -556,7 +628,9 @@ onMounted(() => {
   line-height: 1.6;
 }
 
-/* ACTION CARD */
+/* ── Action card ──────── three action rows (exercise, events, walk); the
+   first is dark teal (primary action) and the other two are light (secondary).
+   Hover lifts each row to signal they're clickable. */
 .action-card {
   display: flex;
   flex-direction: column;
@@ -602,7 +676,9 @@ onMounted(() => {
 }
 .action-btn-arrow-dark { color: #1a5c52; font-weight: 700; }
 
-/* NEXT STEPS */
+/* ── Answers summary ──────── shown below the results grid as a recap of
+   what the user answered; pill chips are compact so five answers fit in
+   a wrapping flex row without excessive vertical space. */
 .next-steps {
   opacity: 0;
   transform: translateY(18px);
@@ -672,35 +748,6 @@ onMounted(() => {
 }
 .step-arrow-dark { color: #5a6b67; opacity: 0.6; }
 
-/* FOOTER */
-.footer {
-  border-top: 1px solid #ddd;
-  text-align: center;
-  padding: 32px 48px 24px;
-}
-.footer-logo {
-  font-size: 20px;
-  font-weight: 700;
-  color: #0b5d57;
-  margin-bottom: 12px;
-}
-.footer-links {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  margin-bottom: 10px;
-}
-.footer-links a {
-  text-decoration: none;
-  font-size: 20px;
-  color: #555;
-  font-weight: 500;
-}
-.footer-links a:hover { color: #0b5d57; }
-.footer-copy {
-  font-size: 20px;
-  color: #888;
-}
 
 /* ANSWERS SUMMARY */
 .answers-summary {
@@ -722,7 +769,9 @@ onMounted(() => {
 .summary-label { color: #5a6b67; }
 .summary-answer { font-weight: 600; color: #0f3d35; }
 
-/* EXERCISE SESSION MODAL */
+/* ── Exercise session modal ──────── z-index: 200 sits above all page
+   content but below any tour overlay that might be active; the play
+   button doubles as the close + navigate trigger. */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -785,7 +834,8 @@ onMounted(() => {
 }
 .exercise-modal-btn:hover { background: #0f3d35; transform: translateY(-1px); }
 
-/* MOBILE */
+/* ── Mobile ──────── two-column grid collapses to single column; all cards
+   take full width with box-sizing: border-box to prevent overflow. */
 @media (max-width: 768px) {
   .page { overflow-x: hidden; width: 100%; }
   .nav { max-width: 100%; margin: 0; padding: 16px 20px; }
@@ -819,9 +869,6 @@ onMounted(() => {
     width: 100%;
     box-sizing: border-box;
   }
-
-  .footer { padding: 24px 20px; }
-  .footer-links { flex-wrap: wrap; gap: 12px; justify-content: center; }
 
   .checkin-empty { padding: 32px 20px; }
   .checkin-empty-title { font-size: 22px; }

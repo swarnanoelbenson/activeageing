@@ -27,14 +27,19 @@
 <script setup>
 import { ref } from 'vue'
 
+// Hard-coded demo access code — not a security boundary, just a soft gate
+// to prevent the public from stumbling onto an in-development deployment.
 const PASSWORD = 'T4M9KA'
 
 const input    = ref('')
 const failed   = ref(false)
+// Check sessionStorage on init so the gate doesn't re-appear on page refresh
+// within the same browser tab — only asks once per session.
 const unlocked = ref(sessionStorage.getItem('aa_auth') === '1')
 
 function attempt() {
   if (input.value === PASSWORD) {
+    // Persist auth in sessionStorage so navigating between routes stays unlocked
     sessionStorage.setItem('aa_auth', '1')
     unlocked.value = true
     failed.value = false
@@ -48,6 +53,8 @@ function attempt() {
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
+/* ── Gate wrapper ──────── full-viewport centred flex so the card sits in
+   the middle of the screen regardless of viewport height. */
 .gate {
   min-height: 100vh;
   background: #f4f1eb;
@@ -57,6 +64,8 @@ function attempt() {
   font-family: 'Poppins', sans-serif;
 }
 
+/* ── Gate card ──────── narrow white card (max 400px) with centred content;
+   generous padding ensures the input and button don't feel cramped. */
 .gate-card {
   background: #ffffff;
   border-radius: 20px;
@@ -109,6 +118,8 @@ function attempt() {
   transition: border-color 0.2s;
 }
 
+/* Focus turns border teal (positive); .error turns it red when the wrong
+   code is entered, giving immediate visual feedback without a separate label. */
 .gate-input:focus { border-color: #0b5d57; }
 .gate-input.error  { border-color: #c14f4f; }
 
@@ -135,6 +146,7 @@ function attempt() {
 
 .gate-btn:hover { background: #0f3d35; }
 
+/* ── Responsive ──────── reduce card padding on small phones */
 @media (max-width: 480px) {
   .gate-card { padding: 40px 24px; }
 }

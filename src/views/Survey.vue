@@ -2,9 +2,14 @@
 import { ref, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import AppNavbar from '../components/AppNavbar.vue'
+import AppFooter from '../components/AppFooter.vue'
 
 const router = useRouter()
 
+// ── Survey questions ──
+// Five questions covering physical activity frequency, session length,
+// sedentary time, sleep quantity, and sleep quality — the minimum set
+// needed to score against the Australian 65+ activity benchmark.
 const total = 5
 
 const questions = [
@@ -62,9 +67,13 @@ const questions = [
   }
 ]
 
+// ── Step + answer state ──
 const step    = ref(1)
 const answers = ref(Array(total).fill(null))
 
+// ── Derived UI state ──
+// progressPercent counts answered (non-null) questions so the bar fills
+// even if the user goes back and changes an answer.
 const isFinalStep    = computed(() => step.value === total)
 const progressPercent = computed(() => Math.round((answers.value.filter(a => a !== null).length / total) * 100))
 const currentQuestion = computed(() => questions[step.value - 1])
@@ -72,6 +81,8 @@ const showBack        = computed(() => step.value > 1)
 const showNext        = computed(() => answers.value[step.value - 1] !== null && step.value < total)
 const showSubmit      = computed(() => step.value === total && answers.value[step.value - 1] !== null)
 
+// Auto-advances on card click for speed; nextTick ensures the DOM has
+// updated before scrolling so the new question is at the top.
 function selectOption(option) {
   answers.value[step.value - 1] = option.label
   if (step.value < total) {
@@ -87,6 +98,8 @@ function goNext() {
   }
 }
 
+// On Q1 back press, exit to Home rather than doing nothing — there's no
+// "previous" step to return to at the very beginning.
 function goBack() {
   if (step.value === 1) {
     router.push({ name: 'Home' })
@@ -95,6 +108,10 @@ function goBack() {
   }
 }
 
+// ── Survey submission ──
+// Posts answers to the backend scoring endpoint; both raw answers and
+// the scored result are persisted to localStorage so the Results page
+// can display them without refetching.
 async function submitSurvey() {
   if (!answers.value[step.value - 1]) return
 
@@ -123,7 +140,13 @@ async function submitSurvey() {
 
     <!-- Main content -->
     <main class="survey-container">
-      <!-- Progress -->
+      <!--
+        PROGRESS BAR
+        Shows "STEP X OF 5" or "FINAL STEP" at the top with a thin animated
+        bar below. Fills as the user answers questions. Keeping progress
+        visible at all times reduces drop-off — users can see they're nearly
+        done rather than wondering how much is left.
+      -->
       <div class="progress-section">
         <div class="progress-meta">
           <div>
@@ -138,11 +161,24 @@ async function submitSurvey() {
         </div>
       </div>
 
-      <!-- Question -->
+      <!--
+        QUESTION TITLE AND SUBTITLE
+        The question text drives from the `questions` array in the script.
+        All five questions share the same subtitle ("We want to ensure your
+        journey is safe and comfortable") which reinforces that the check-in
+        is caring, not judgemental.
+      -->
       <h1 class="question-title">{{ currentQuestion.text }}</h1>
       <p class="question-subtitle">{{ currentQuestion.subtitle }}</p>
 
-      <!-- Options grid -->
+      <!--
+        ANSWER OPTIONS GRID
+        Four cards per question, two columns. Each card has an emoji icon,
+        a short label, and a supporting description so the choice is clear
+        even without much context. Clicking any card immediately selects it
+        AND auto-advances to the next question — the NEXT button is just a
+        fallback for users who want to review before moving on.
+      -->
       <div class="options-grid">
         <div
           v-for="option in currentQuestion.options"
@@ -159,7 +195,13 @@ async function submitSurvey() {
         </div>
       </div>
 
-      <!-- Buttons -->
+      <!--
+        NAVIGATION BUTTONS — BACK / NEXT / SUBMIT
+        BACK is red-outlined (goes to previous question; on Q1 it exits back
+        to Home). NEXT only appears once an option is selected and there are
+        still questions remaining. SUBMIT replaces NEXT on the final step and
+        posts answers to the backend, then navigates to the Results page.
+      -->
       <div class="btn-row">
         <button v-if="showBack" class="btn-back" @click="goBack">← BACK</button>
         <div v-else></div>
@@ -168,14 +210,7 @@ async function submitSurvey() {
       </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="footer-logo">ActiveAgeing</div>
-      <div class="footer-links">
-        <a @click="router.push('/privacy')">Privacy Policy</a>
-        <a @click="router.push('/terms')">Terms of Service</a>
-      </div>
-    </footer>
+    <AppFooter />
   </div>
 </template>
 
@@ -192,7 +227,10 @@ async function submitSurvey() {
   flex-direction: column;
 }
 
-/* ── Navbar ── */
+/* ── Inline navbar styles ──────── these rules exist for an older inline
+   navbar that is no longer rendered (AppNavbar is used instead).
+   Kept in place to avoid broken-selector warnings if any stale markup
+   references these classes, but they have no visual effect. */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -224,7 +262,8 @@ nav a.active {
   text-underline-offset: 4px;
 }
 
-/* ── Main ── */
+/* ── Main ──────── calc(var(--navbar-h)) offsets the fixed AppNavbar;
+   max-width 1100px with auto margins centres the survey on wide screens. */
 .survey-container {
   flex: 1;
   max-width: 1100px;
@@ -233,7 +272,9 @@ nav a.active {
   padding: calc(var(--navbar-h, 70px) + 16px) 48px 48px;
 }
 
-/* ── Progress ── */
+/* ── Progress bar ──────── thin teal fill with 0.4s transition; visible
+   at all times so users can see how many questions remain and are less
+   likely to abandon mid-way. */
 .progress-section { margin-bottom: 32px; }
 
 .progress-meta {
@@ -287,7 +328,8 @@ nav a.active {
   transition: width 0.4s ease;
 }
 
-/* ── Question ── */
+/* ── Question title ──────── large teal heading keeps focus on the question
+   text; subtitle is muted grey to recede visually. */
 .question-title {
   font-size: 32px;
   font-weight: 700;
@@ -303,7 +345,9 @@ nav a.active {
   line-height: 1.6;
 }
 
-/* ── Options ── */
+/* ── Options grid ──────── 2-col grid on desktop, 1-col on mobile;
+   teal border + background on .selected provides clear feedback that
+   the card was registered, since there's no separate "confirm" step. */
 .options-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -352,7 +396,9 @@ nav a.active {
 
 .option-text p { font-size: 20px; color: #555; line-height: 1.4; }
 
-/* ── Buttons ── */
+/* ── Navigation buttons ──────── Back is red-outlined (exit/reverse action),
+   Next/Submit are teal (forward action). Submit replaces Next only on the
+   final step once an option is selected. */
 .btn-row {
   display: flex;
   justify-content: space-between;
@@ -408,35 +454,10 @@ nav a.active {
 
 .btn-submit:hover { background: #074a46; }
 
-/* ── Footer ── */
-.footer {
-  background: #f0eeea;
-  border-top: 1px solid #ddd;
-  text-align: center;
-  padding: 32px 48px 24px;
-}
 
-.footer-logo { font-size: 20px; font-weight: 700; color: #0b5d57; margin-bottom: 12px; }
-
-.footer-links {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  margin-bottom: 10px;
-}
-
-.footer-links a {
-  text-decoration: none;
-  font-size: 20px;
-  color: #555;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.footer-links a:hover { color: #0b5d57; }
-.footer-copy { font-size: 20px; color: #888; }
-
-/* ── Responsive ── */
+/* ── Responsive ──────── options grid collapses to 1-col; btn-row stacks
+   in reverse so Submit/Next stays at the bottom (primary action lowest
+   on the screen — easier thumb reach on phones). */
 @media (max-width: 768px) {
   .page-wrapper { overflow-x: hidden; width: 100%; }
   .options-grid { grid-template-columns: 1fr; }
