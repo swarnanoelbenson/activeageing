@@ -1,3 +1,9 @@
+// backend/routes/routesurvey.js — POST /api/routesurvey
+// Persists a completed route survey for analytics.
+// The frontend (RouteSurvey.vue) calls this fire-and-forget — it does not
+// await this response before redirecting to the Planner, so a DB failure
+// here does not block the user's session.
+
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
@@ -11,6 +17,8 @@ router.post("/", async (req, res) => {
     start_address = null, start_lat = null, start_lng = null,
   } = req.body;
 
+  // Allowlist validation — rejects typos and unknown values before they reach the DB.
+  // duration_minutes is cast to Number because the frontend may send it as a string.
   const valid = {
     activity_type:    ["walking", "cycling", "jogging"],
     duration_minutes: [15, 30, 45, 60],
@@ -29,6 +37,7 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "Invalid or missing survey answers" });
   }
 
+  // parseFloat guards against strings being stored as text in the FLOAT columns
   const lat = start_lat  != null ? parseFloat(start_lat)  : null;
   const lng = start_lng  != null ? parseFloat(start_lng)  : null;
 

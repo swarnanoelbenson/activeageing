@@ -1,3 +1,11 @@
+// backend/routes/survey.js — POST /api/survey
+// Scores the 5-answer wellness survey, persists the result to the DB,
+// and returns the category + matching exercises to the frontend.
+//
+// Resilience pattern: scores are computed before the DB query so the
+// endpoint can still return a useful response (with hardcoded fallback
+// exercises) if the database is down.
+
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
@@ -9,7 +17,10 @@ const {
   getChartPercent,
 } = require("../utils/scoring");
 
-// Fallback exercises used when the DB is unavailable
+// ── Fallback exercises ──
+// Used when the DB is unavailable. One set per category, matching the
+// "standard" modifier so they're appropriate for the widest audience.
+// These are intentionally simple and safe — no equipment, low impact.
 const fallbackExercises = {
   "Just Getting Started": [
     { exercise_name: "Neck Rotations",       duration_minutes: 5 },
@@ -37,7 +48,9 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "Expected 5 answers" });
   }
 
-  // Compute scores before DB — these are always returned even if DB fails
+  // ── Scoring (DB-independent) ──
+  // All five score values are computed here so they're available in the
+  // catch block — if the DB insert fails we can still return a full result.
   const [q1, q2, q3, q4, q5] = answers;
   const activityScore = getActivityScore(answers);
   const modifierScore = getModifierScore(answers);
@@ -46,7 +59,7 @@ router.post("/", async (req, res) => {
   const chartPercent  = getChartPercent(activityScore);
 
   try {
-    // Store in user_checkins
+    // Persist check-in for analytics; failure here does not block the response
     await pool.query(
       `INSERT INTO user_checkins
         (exercise_frequency, session_duration, inactivity_level, sleep_hours, restedness,
@@ -55,13 +68,14 @@ router.post("/", async (req, res) => {
       [q1, q2, q3, q4, q5, activityScore, modifierScore, categoryName, modifierName]
     );
 
-    // Fetch category description
+    // Pull the human-readable description for the user's category
     const [[categoryRow]] = await pool.query(
       `SELECT category_name, description FROM category_thresholds WHERE category_name = ?`,
       [categoryName]
     );
 
-    // Fetch exercises for this category + modifier combination (max 3)
+    // Fetch exercises for this category × modifier combination (max 3)
+    // The LIMIT 3 matches the ExerciseSession page which always shows 3 exercises.
     const [exercises] = await pool.query(
       `SELECT exercise_name, duration_minutes, instructions, notes
        FROM exercise_recommendations

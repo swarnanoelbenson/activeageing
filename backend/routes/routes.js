@@ -1,15 +1,25 @@
+// backend/routes/routes.js — POST /api/routes  &  POST /api/routes/waypoint
+//
+// /api/routes       — generates up to 3 round-trip route variants via OpenRouteService
+//                     using seed 0/1/2 for variety (different random loops, same length).
+// /api/routes/waypoint — calculates a custom route through caller-supplied waypoints,
+//                     appending the start coordinate at the end to close the loop.
+
 const express = require("express");
 const router  = express.Router();
 
 const ORS_BASE = "https://api.openrouteservice.org/v2/directions";
 
-// Approximate speeds in km/h for distance estimation
+// Approximate speeds in km/h used to convert user-selected duration → target distance.
+// Jogging re-uses the foot-walking ORS profile because ORS has no separate jog profile;
+// the speed difference is handled client-side via SPEEDS, not by the routing engine.
 const SPEEDS = {
   walking: { easy: 3.5, moderate: 5.0, brisk:  6.5 },
   jogging: { easy: 6.0, moderate: 8.0, brisk: 10.0 },
   cycling: { easy: 10,  moderate: 15,  brisk:  20  },
 };
 
+// ORS profile strings — jogging maps to foot-walking because ORS has no jogging profile
 const ORS_PROFILE = {
   walking: "foot-walking",
   jogging: "foot-walking",
@@ -34,13 +44,16 @@ router.post("/", async (req, res) => {
   }
 
   const speedKmh   = (SPEEDS[activity_type] ?? SPEEDS.walking)[preferred_pace] ?? 5;
+  // Convert duration + pace to a target loop length in metres for ORS round_trip
   const targetMeters = Math.round(speedKmh * (Number(duration_minutes) / 60) * 1000);
 
   const profile = ORS_PROFILE[activity_type] ?? "foot-walking";
 
-  // avoid_features "highways" is only valid for driving profiles, not foot/cycling
+  // avoid_features "highways" is only valid for driving profiles — omitting it for foot/cycling
+  // avoids an ORS 400 error
   const avoidFeatures = [];
 
+  // seed produces distinct loop shapes for the same start + length; 0/1/2 gives 3 variety options
   const buildBody = (seed) => ({
     coordinates: [[Number(start_lng), Number(start_lat)]],
     options: {
@@ -56,7 +69,7 @@ router.post("/", async (req, res) => {
       "Authorization": process.env.ORS_API_KEY,
     };
 
-    // Fetch all 3 route variants in parallel
+    // All 3 seeds in parallel — ORS free tier allows concurrent requests
     const responses = await Promise.all(
       [0, 1, 2].map((seed) =>
         fetch(`${ORS_BASE}/${profile}/geojson`, {
@@ -67,7 +80,7 @@ router.post("/", async (req, res) => {
       )
     );
 
-    // Log raw ORS responses so we can see any errors in the terminal
+    // Log ORS errors so we can diagnose quota/profile issues without crashing the request
     responses.forEach((r, i) => {
       if (!r.features) console.error(`ORS seed ${i} error:`, JSON.stringify(r));
     });
@@ -122,10 +135,11 @@ router.post("/waypoint", async (req, res) => {
   }
 
   const profile = ORS_PROFILE[activity_type] ?? "foot-walking";
+  // Duplicate start coord at end so ORS routes back to the origin (round-trip via waypoints)
   const coordinates = [
     [Number(start_lng), Number(start_lat)],
     ...waypoints,
-    [Number(start_lng), Number(start_lat)],  // return to start
+    [Number(start_lng), Number(start_lat)],
   ];
 
   const headers = {

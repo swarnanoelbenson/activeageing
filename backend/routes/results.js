@@ -1,9 +1,15 @@
+// backend/routes/results.js — GET /api/results/:categoryName/:modifierName
+// Secondary lookup endpoint for category description + exercises by name.
+// The main survey flow uses /api/survey which scores and fetches in one call,
+// but this endpoint allows re-fetching results (e.g. after a page refresh)
+// when the scores are already known and stored client-side in localStorage.
+
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 
-// GET /api/results/:categoryName/:modifierName
-// Returns category info and exercises for a given category + modifier
+// Returns category description and all matching exercises (no LIMIT here,
+// unlike survey.js, so callers get the full set if they want to paginate).
 router.get("/:categoryName/:modifierName", async (req, res) => {
   const { categoryName, modifierName } = req.params;
 

@@ -1,7 +1,18 @@
+// backend/routes/shared-routes.js — POST /api/shared-routes  &  GET /api/shared-routes/:code
+//
+// Lets users share a planned route via a short code.
+// POST creates the record and returns a 6-char base36 code.
+// GET retrieves it, but only if the exact code is known — there is no public listing endpoint.
+// Routes expire 48 hours after the scheduled event date.
+
 const express = require("express");
 const router  = express.Router();
 const pool    = require("../db");
 
+// ensureTable runs once at module load. CREATE TABLE IF NOT EXISTS is idempotent so it's
+// safe to call on every cold start. The ALTER TABLE loop adds columns added in later
+// migrations (route_geometry, survey_data) to tables created before those columns existed;
+// ER_DUP_FIELDNAME is silently swallowed because the column already being there is success.
 async function ensureTable() {
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS shared_routes (
@@ -20,7 +31,6 @@ async function ensureTable() {
     )
   `);
 
-  // Add new columns to existing tables that were created before this migration
   for (const [col, def] of [["route_geometry", "LONGTEXT"], ["survey_data", "TEXT"]]) {
     try {
       await pool.execute(`ALTER TABLE shared_routes ADD COLUMN ${col} ${def}`);
@@ -31,6 +41,8 @@ async function ensureTable() {
 }
 ensureTable().catch(e => console.error("[shared-routes] Table init failed:", e.message));
 
+// 6-char base36 uppercase codes — short enough to read aloud, ~2B combinations before
+// a collision is likely, which is well above any expected usage volume.
 function generateCode() {
   return Math.random().toString(36).substr(2, 6).toUpperCase();
 }
@@ -43,9 +55,13 @@ router.post("/", async (req, res) => {
   } = req.body;
   if (!scheduled_date) return res.status(400).json({ error: "scheduled_date is required" });
 
+  // Expiry = event date + 48h so the code stays valid through the day-after in case
+  // participants are still looking it up while walking
   const expiry = new Date(scheduled_date + "T00:00:00");
   expiry.setHours(expiry.getHours() + 48);
 
+  // Retry loop handles the rare case where a generated code collides with an existing one.
+  // 5 attempts is generous — probability of 5 consecutive collisions is negligible.
   let code;
   for (let i = 0; i < 5; i++) {
     code = generateCode();
@@ -81,13 +97,14 @@ router.post("/", async (req, res) => {
 router.get("/:code", async (req, res) => {
   try {
     const [rows] = await pool.execute(
+      // expires_at > NOW() enforces expiry server-side so expired codes return 404
       "SELECT * FROM shared_routes WHERE code = ? AND expires_at > NOW()",
       [req.params.code.toUpperCase()]
     );
     if (!rows.length) return res.status(404).json({ error: "Event not found or has expired" });
 
     const row = rows[0];
-    // Parse stored JSON back to objects for the client
+    // Deserialise JSON columns — stored as text in MySQL, must be parsed before sending
     if (row.route_geometry && typeof row.route_geometry === "string") {
       try { row.route_geometry = JSON.parse(row.route_geometry); } catch (_) {}
     }

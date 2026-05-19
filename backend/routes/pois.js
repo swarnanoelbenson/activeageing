@@ -1,3 +1,10 @@
+// backend/routes/pois.js — POST /api/pois  (server-side Overpass proxy)
+//
+// NOTE: This endpoint is NOT currently used by the frontend. Planner.vue fetches
+// Overpass directly with its own 3-mirror fallback. This file is kept as a
+// server-side alternative in case the direct-fetch approach hits CORS issues in
+// a future deployment, but it can be deleted if the direct approach stays stable.
+
 const express = require("express");
 const router  = express.Router();
 
