@@ -23,8 +23,23 @@ const routes      = ref([])
 const survey      = ref(null)
 const activeRoute = ref(0)
 
-const ROUTE_NAMES = ['Sunrise Trail', 'Forest Walk', 'River Bend', 'Meadow Path', 'Ocean Breeze', 'Mountain Stream']
 const ORDINAL_TAGS = ['1st Recommendation', '2nd Recommendation', '3rd Recommendation', '4th Recommendation', '5th Recommendation', '6th Recommendation']
+
+// Derive a route name from the suburb in the user's start address.
+// start_address is formatted by RouteSurvey as "SuburbName 3000, Victoria" — everything
+// before the first digit (postcode) or comma is the suburb.
+// Falls back to activity + pace if no address was provided.
+function routeName(index) {
+  const addr = survey.value?.start_address ?? ''
+  const suburb = addr.split(/\s*[\d,]/)[0].trim()
+  const suffix = ` – Route ${index + 1}`
+  if (suburb) return suburb + suffix
+  const act  = activityLabel[survey.value?.activity_type] ?? 'Walk'
+  const pace = survey.value?.preferred_pace
+    ? survey.value.preferred_pace.charAt(0).toUpperCase() + survey.value.preferred_pace.slice(1)
+    : 'Moderate'
+  return `${pace} ${act}${suffix}`
+}
 
 const activityLabel   = { walking: 'Walking', jogging: 'Light Jogging', cycling: 'Cycling' }
 const difficultyLabel = { easy: 'Easy', moderate: 'Moderate', brisk: 'Challenging' }
@@ -1064,7 +1079,7 @@ onBeforeUnmount(() => {
           <div class="side-card">
             <div class="tag">{{ ORDINAL_TAGS[activeRoute] ?? (activeRoute + 1 + 'th Recommendation') }}</div>
 
-            <h2>{{ ROUTE_NAMES[activeRoute] ?? 'Route ' + (activeRoute + 1) }}</h2>
+            <h2>{{ routeName(activeRoute) }}</h2>
             <p class="meta">📍 {{ routes[activeRoute]?.distance_label }} &nbsp; ⏱ {{ routes[activeRoute]?.duration_label }}</p>
 
             <div class="info">
@@ -1121,7 +1136,7 @@ onBeforeUnmount(() => {
             >
               <div :id="`map-t${i}`" class="suggest-map"></div>
               <div class="suggest-info">
-                <h4>{{ ROUTE_NAMES[i] ?? 'Route ' + (i + 1) }}</h4>
+                <h4>{{ routeName(i) }}</h4>
                 <p>{{ route.duration_label }}</p>
               </div>
               <div class="suggest-actions">

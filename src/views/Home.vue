@@ -256,7 +256,7 @@ function goToEvents()      { router.push('/events') }
       </section>
 
       <!--
-        PLAN MY WALK SECTION
+        PLAN A WALK SECTION
         A featured card that highlights the route planning feature. It lists the
         key selling points (choose your pace, pick scenic spots, invite friends)
         and shows a small animated-style map preview on the right so users can
@@ -266,7 +266,7 @@ function goToEvents()      { router.push('/events') }
         <div class="plan-card">
           <div class="plan-left">
             <div class="featured-pill">★ Featured</div>
-            <h2 class="plan-title">Plan My Walk</h2>
+            <h2 class="plan-title">Plan A Walk</h2>
             <p class="plan-desc">
               Design a walking route that suits your pace, time, and comfort.
               Walk solo, or turn it into a private event and invite friends along.
